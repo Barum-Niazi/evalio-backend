@@ -1,0 +1,124 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id                Int       @id @default(autoincrement())
+  name              String
+  email             String    @unique
+  password          String
+  role              Role      @default(EMPLOYEE)
+  companyId         Int?
+  company           Company?  @relation("CompanyEmployees", fields: [companyId], references: [id])
+  managerId         Int?
+  manager           User?     @relation("ManagerEmployee", fields: [managerId], references: [id])
+  subordinates      User[]    @relation("ManagerEmployee")
+  departmentId      Int?
+  department        Department? @relation(fields: [departmentId], references: [id])
+  headOfDepartment  Department[] @relation("DepartmentHead")
+  feedbackGiven     Feedback[] @relation("FeedbackGiven")
+  feedbackReceived  Feedback[] @relation("FeedbackReceived")
+  meetingsScheduled Meeting[] @relation("ScheduledMeetings")
+  meetingsAttended  Meeting[] @relation("MeetingAttendees") // Opposite relation for meeting attendees
+  adminCompanies    Company[] @relation("CompanyAdmin")
+  assignedOKRs      OKR[]     @relation("UserOKRs")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Department {
+  id                Int       @id @default(autoincrement())
+  name              String
+  companyId         Int?
+  company           Company?  @relation(fields: [companyId], references: [id])
+  headId            Int?
+  head              User?     @relation("DepartmentHead", fields: [headId], references: [id])
+  employees         User[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+
+model Company {
+  id                 Int              @id @default(autoincrement())
+  name               String
+  address            String?
+  description        String?
+  adminId            Int?
+  admin              User?            @relation("CompanyAdmin", fields: [adminId], references: [id])
+  employees          User[]           @relation("CompanyEmployees")
+  departments        Department[]
+  okrs               OKR[]            @relation("CompanyOKRs")
+  companySetting     CompanySetting?  @relation("CompanyToSetting") // One-to-one relation
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model OKR {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  companyId   Int?
+  company     Company?  @relation("CompanyOKRs", fields: [companyId], references: [id]) // Bidirectional relation
+  userId      Int?
+  assignedTo  User?     @relation("UserOKRs", fields: [userId], references: [id]) // Bidirectional relation
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+
+model Feedback {
+  id          Int       @id @default(autoincrement())
+  feedbackText String
+  isAnonymous Boolean    @default(false)
+  visibility  Visibility @default(PUBLIC)
+  senderId    Int
+  receiverId  Int
+  sender      User       @relation("FeedbackGiven", fields: [senderId], references: [id])
+  receiver    User       @relation("FeedbackReceived", fields: [receiverId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Meeting {
+  id            Int       @id @default(autoincrement())
+  title         String
+  description   String?
+  scheduledById Int
+  scheduledBy   User      @relation("ScheduledMeetings", fields: [scheduledById], references: [id])
+  attendees     User[]    @relation("MeetingAttendees") // Relation for attendees
+  scheduledAt   DateTime  // Stores the date and time of the meeting
+  agenda        String?
+  notes         String?
+  noteToSelf    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model CompanySetting {
+  id                  Int        @id @default(autoincrement())
+  companyId           Int        @unique // Ensure this field is unique for one-to-one relation
+  company             Company    @relation("CompanyToSetting", fields: [companyId], references: [id]) // Match the relation name
+  allowAnonymousFeedback Boolean @default(true)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+}
+
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}

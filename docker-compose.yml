@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  dev-db:
+    image: postgres:15
+    container_name: dev-postgres-db
+    ports:
+      - '5434:5432' # Maps port 5434 on host to 5432 in the container
+    environment:
+      POSTGRES_USER: barum
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: evalio
+    networks:
+      - app-network # Network for the service
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persistent volume to store data
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
