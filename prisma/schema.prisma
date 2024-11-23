@@ -31,6 +31,8 @@ model User {
   assignedOKRs      OKR[]     @relation("UserOKRs")
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  RequestedFeedback FeedbackRequest[] @relation("RequestedFeedback")
+  FeedbackRequest FeedbackRequest[] @relation("FeedbackRequests")
 }
 
 model Department {
@@ -68,9 +70,20 @@ model OKR {
   companyId   Int?
   company     Company?  @relation("CompanyOKRs", fields: [companyId], references: [id]) // Bidirectional relation
   userId      Int?
+  keyResults  KeyResult[] // Relation for Key Results
   assignedTo  User?     @relation("UserOKRs", fields: [userId], references: [id]) // Bidirectional relation
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model KeyResult {
+  id          Int      @id @default(autoincrement())
+  title       String   // Description of the Key Result
+  okrId       Int      // Foreign key linking this Key Result to an OKR
+  okr         OKR      @relation(fields: [okrId], references: [id])
+  progress    Float    @default(0) // Progress percentage (0-100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 
@@ -86,6 +99,20 @@ model Feedback {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
+
+model FeedbackRequest {
+  id          Int          @id @default(autoincrement())
+  requesterId Int           // The user sending the feedback request
+  requester   User          @relation("RequestedFeedback", fields: [requesterId], references: [id])
+  recipientId Int           // The user receiving the feedback request
+  recipient   User          @relation("FeedbackRequests", fields: [recipientId], references: [id])
+  message     String?       // Optional message or specific questions
+  status      RequestStatus @default(PENDING) // Status of the feedback request
+  response    String?       // Optional response or reason for rejection
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
 
 model Meeting {
   id            Int       @id @default(autoincrement())
@@ -121,4 +148,11 @@ enum Role {
 enum Visibility {
   PUBLIC
   PRIVATE
+}
+
+enum RequestStatus {
+  PENDING      // Request is awaiting a response
+  COMPLETED    // Request has been accepted, and feedback has been provided
+  REJECTED     // Request was declined by the recipient
+  EXPIRED      // Request expired without a response
 }
