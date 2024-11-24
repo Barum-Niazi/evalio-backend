@@ -32,9 +32,24 @@ model User {
   assignedOKRs      OKR[]     @relation("UserOKRs")          // OKRs assigned to this user
   RequestedFeedback FeedbackRequest[] @relation("RequestedFeedback") // Feedback requests sent by this user
   FeedbackRequest   FeedbackRequest[] @relation("FeedbackRequests")   // Feedback requests for this user
+  notifications     Notification[] // Notifications for the user
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
+
+
+model Notification {
+  id          Int               @id @default(autoincrement())
+  userId      Int               // User receiving the notification
+  user        User              @relation(fields: [userId], references: [id]) // Relation to User
+  type        NotificationType  // Enum to categorize notifications
+  message     String            // Notification content
+  status      NotificationStatus @default(UNREAD) // Enum for read/unread status
+  link        String?           // Optional link for actionable notifications
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
 
 model Department {
   id                Int       @id @default(autoincrement())
@@ -166,4 +181,18 @@ enum RequestStatus {
   COMPLETED    // Request has been accepted, and feedback has been provided
   REJECTED     // Request was declined by the recipient
   EXPIRED      // Request expired without a response
+}
+
+enum NotificationType {
+  SYSTEM        // System-wide notifications
+  FEEDBACK      // Notifications about feedback
+  MEETING       // Notifications about meetings
+  OKR           // Notifications about OKR updates
+  GENERAL       // General-purpose notifications
+}
+
+
+enum NotificationStatus {
+  UNREAD        // Notification is unread
+  READ          // Notification has been read
 }
