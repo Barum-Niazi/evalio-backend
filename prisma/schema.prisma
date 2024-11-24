@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,31 +7,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
   id                Int       @id @default(autoincrement())
   name              String
   email             String    @unique
   password          String
-  role              Role      @default(EMPLOYEE)
-  companyId         Int?
+  role              Role      @default(EMPLOYEE) // Either ADMIN or EMPLOYEE
+  isAdmin           Boolean   @default(false)    // Indicates admin privileges for employees
+  companyId         Int?      // Relation to Company
   company           Company?  @relation("CompanyEmployees", fields: [companyId], references: [id])
-  managerId         Int?
+  managerId         Int?      // Relation to Manager (Self-Reference)
   manager           User?     @relation("ManagerEmployee", fields: [managerId], references: [id])
-  subordinates      User[]    @relation("ManagerEmployee")
-  departmentId      Int?
+  subordinates      User[]    @relation("ManagerEmployee") // Relation for subordinates
+  departmentId      Int?      // Relation to Department
   department        Department? @relation(fields: [departmentId], references: [id])
-  headOfDepartment  Department[] @relation("DepartmentHead")
-  feedbackGiven     Feedback[] @relation("FeedbackGiven")
-  feedbackReceived  Feedback[] @relation("FeedbackReceived")
-  meetingsScheduled Meeting[] @relation("ScheduledMeetings")
-  meetingsAttended  Meeting[] @relation("MeetingAttendees") // Opposite relation for meeting attendees
-  adminCompanies    Company[] @relation("CompanyAdmin")
-  assignedOKRs      OKR[]     @relation("UserOKRs")
+  designationId     Int?      // Relation to Designation
+  designation       Designation? @relation(fields: [designationId], references: [id])
+  headOfDepartment  Department[] @relation("DepartmentHead") // Relation for head of department
+  feedbackGiven     Feedback[] @relation("FeedbackGiven")    // Feedback sent by this user
+  feedbackReceived  Feedback[] @relation("FeedbackReceived") // Feedback received by this user
+  meetingsScheduled Meeting[] @relation("ScheduledMeetings") // Meetings created by this user
+  meetingsAttended  Meeting[] @relation("MeetingAttendees")  // Meetings attended by this user
+  adminCompanies    Company[] @relation("CompanyAdmin")      // Companies administered by this user
+  assignedOKRs      OKR[]     @relation("UserOKRs")          // OKRs assigned to this user
+  RequestedFeedback FeedbackRequest[] @relation("RequestedFeedback") // Feedback requests sent by this user
+  FeedbackRequest   FeedbackRequest[] @relation("FeedbackRequests")   // Feedback requests for this user
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
-  RequestedFeedback FeedbackRequest[] @relation("RequestedFeedback")
-  FeedbackRequest FeedbackRequest[] @relation("FeedbackRequests")
 }
 
 model Department {
@@ -62,6 +63,16 @@ model Company {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 }
+
+model Designation {
+  id          Int       @id @default(autoincrement())
+  title       String    @unique // Designation name (e.g., CEO, Developer, etc.)
+  description String?   // Optional description for the designation
+  users       User[]    // Users with this designation
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 
 model OKR {
   id          Int       @id @default(autoincrement())
