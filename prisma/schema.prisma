@@ -8,62 +8,67 @@ datasource db {
 }
 
 model user_auth {
-  userId          Int     @id @default(autoincrement())
-  email       String  @unique
-  password    String? // Nullable for OAuth users
-  provider    String? // Optional for OAuth (e.g., Google, Facebook)
-  providerId  String? // ID from OAuth provider
-  user        users   @relation(fields: [userId], references: [id]) // One-to-one relation
+  user_id      Int       @id // Same ID as users table for strict 1:1 mapping
+  email       String    @unique
+  password    String?   // Nullable for OAuth users
+  user        users     @relation(fields: [user_id], references: [id]) // One-to-one relation
+  audit       Json      @default("{}") // Audit JSON for metadata
 }
 
 model users {
-  id                Int                @id @default(autoincrement())
-  name              String
-  auth_user         user_auth?        // One-to-one relation
-  companyId         Int?               // Relation to Company
-  company           companies?         @relation("company_employees", fields: [companyId], references: [id])
-  managerId         Int?               // Relation to Manager (Self-Reference)
-  manager           users?             @relation("manager_employee", fields: [managerId], references: [id])
-  subordinates      users[]            @relation("manager_employee") // Relation for subordinates
-  departmentId      Int?               // Relation to Department
-  department        department?        @relation(fields: [departmentId], references: [id])
-  designationId     Int?               // Relation to Designation
-  designation       designation?       @relation(fields: [designationId], references: [id])
-  feedbackGiven     feedback[]         @relation("FeedbackGiven")    // Feedback sent by this user
-  feedbackReceived  feedback[]         @relation("FeedbackReceived") // Feedback received by this user
-  feedbackRequests  feedback_requests[] @relation("RequestedFeedback") // Feedback requests sent by this user
-  feedbackReceivedRequests feedback_requests[] @relation("FeedbackRequests") // Feedback requests received by this user
-  headOfDepartments department[]       @relation("DepartmentHead")   // Departments where the user is the head
-  meetingsScheduled meetings[]         @relation("ScheduledMeetings") // Meetings created by this user
+  id            Int             @id @default(autoincrement())
+  auth          user_auth?      // One-to-one relation with user_auth
+  roles         user_roles[]    // Many-to-many relationship with roles
+  audit         Json            @default("{}") // Audit JSON
+  details       user_details?   @relation("user_to_details") // Strict 1-to-1 relationship
+}
+
+model user_details {
+  user_id       Int             @id // Same ID as users table for strict 1:1 mapping
+  user          users           @relation("user_to_details", fields: [user_id], references: [id]) // Strict 1:1 mapping
+  name          String
+  company_id    Int?            // Relation to Company
+  company       companies?      @relation("company_employees", fields: [company_id], references: [id])
+  manager_id    Int?            // Relation to Manager (Self-Reference)
+  manager       user_details?   @relation("manager_employee", fields: [manager_id], references: [user_id])
+  subordinates  user_details[]  @relation("manager_employee") // Relation for subordinates
+  department_id Int?            // Relation to Department
+  department    department?     @relation(fields: [department_id], references: [id])
+  designation_id Int?           // Relation to Designation
+  designation   designation?    @relation(fields: [designation_id], references: [id])
+  feedback_given feedback[]      @relation("feedback_given")    // Feedback sent by this user
+  feedback_received feedback[]   @relation("feedback_received") // Feedback received by this user
+  feedback_requests feedback_requests[] @relation("requested_feedback") // Feedback requests sent by this user
+  feedback_received_requests feedback_requests[] @relation("feedback_requests") // Feedback requests received by this user
+  head_of_departments department[] @relation("department_head") // Departments where the user is the head
+  meetings_scheduled meetings[]    @relation("scheduled_meetings") // Meetings created by this user
   meeting_attendees meeting_attendees[]
-  adminCompanies    companies[]        @relation("CompanyAdmin")      // Companies administered by this user
-  assignedOKRs      okrs[]             @relation("UserOKRs")          // OKRs assigned to this user
-  roles             user_roles[]       // Many-to-many relationship with roles
-  notifications     notifications[]    // Notifications for the user
-  audit             Json               @default("{}") // Replaces createdAt and updatedAt
+  notifications  notifications[] // Notifications for the user
+  audit          Json            @default("{}") // Audit JSON for metadata
+  user_okrs      user_okrs[]
 }
 
 model roles {
   id    Int          @id @default(autoincrement())
   name  String       @unique
   users user_roles[] // Many-to-many relationship
+  audit Json         @default("{}") // Audit JSON
 }
-
 model user_roles {
-  userId Int
+  user_id Int
   roleId Int
-  user   users @relation(fields: [userId], references: [id])
+  user   users @relation(fields: [user_id], references: [id])
   role   roles @relation(fields: [roleId], references: [id])
-  @@id([userId, roleId]) // Composite primary key
+  @@id([user_id, roleId]) // Composite primary key
+  audit  Json   @default("{}") // Audit JSON
 }
-
 model notifications {
   id          Int     @id @default(autoincrement())
-  userId      Int     // User receiving the notification
-  user        users   @relation(fields: [userId], references: [id])
-  type        NotificationType
+  user_id      Int     // User receiving the notification
+  user        user_details   @relation(fields: [user_id], references: [user_id])
+  type        notification_type
   message     String
-  status      NotificationStatus @default(UNREAD)
+  status      notification_status @default(UNREAD)
   link        String?
   audit       Json    @default("{}") // Replaces createdAt and updatedAt
 }
@@ -71,11 +76,11 @@ model notifications {
 model department {
   id          Int       @id @default(autoincrement())
   name        String
-  companyId   Int?      // Relation to Company
-  company     companies? @relation(fields: [companyId], references: [id])
+  company_id   Int?      // Relation to Company
+  company     companies? @relation(fields: [company_id], references: [id])
   headId      Int?      // Relation to Head
-  head        users?    @relation("DepartmentHead", fields: [headId], references: [id])
-  employees   users[]
+  head        user_details?    @relation("department_head", fields: [headId], references: [user_id])
+  employees   user_details[]
   audit       Json      @default("{}") // Replaces createdAt and updatedAt
 }
 
@@ -83,7 +88,7 @@ model designation {
   id          Int       @id @default(autoincrement())
   title       String    @unique // Designation name (e.g., CEO, Developer, etc.)
   description String?   // Optional description for the designation
-  users       users[]   // Users with this designation
+  users       user_details[]   // Users with this designation
   audit       Json      @default("{}") // Replaces createdAt and updatedAt
 }
 
@@ -92,56 +97,62 @@ model companies {
   name               String
   address            String?
   description        String?
-  adminId            Int?
-  admin              users?            @relation("CompanyAdmin", fields: [adminId], references: [id])
-  employees          users[]           @relation("company_employees")
+  employees          user_details[]   @relation("company_employees") // Employees in the company
   departments        department[]
-  okrs               okrs[]            @relation("CompanyOKRs")
-  companySetting     company_settings? @relation("CompanyToSetting")
-  audit              Json              @default("{}") // Replaces createdAt and updatedAt
+  okrs               okrs[]           @relation("company_okrs")
+  company_setting     company_settings? @relation("company_to_setting")
+  audit              Json             @default("{}") // Audit JSON
 }
-
 model okrs {
   id          Int       @id @default(autoincrement())
   title       String
   description String?
-  companyId   Int?
-  company     companies? @relation("CompanyOKRs", fields: [companyId], references: [id])
-  userId      Int?
-  assignedTo  users?     @relation("UserOKRs", fields: [userId], references: [id])
-  keyResults  key_results[]
+  company_id   Int?
+  company     companies? @relation("company_okrs", fields: [company_id], references: [id])
+  user_id      Int?
+  assigned_to  user_okrs[]
+  key_results  key_results[]
   audit       Json       @default("{}") // Replaces createdAt and updatedAt
 }
+
+model user_okrs {
+  user_id Int
+  okr_id  Int
+  user   user_details @relation(fields: [user_id], references: [user_id])
+  okr    okrs         @relation(fields: [okr_id], references: [id])
+  @@id([user_id, okr_id]) // Composite primary key
+}
+
 
 model key_results {
   id          Int      @id @default(autoincrement())
   title       String   // Description of the Key Result
-  okrId       Int      // Relation to OKR
-  okr         okrs     @relation(fields: [okrId], references: [id])
+  okr_id       Int      // Relation to OKR
+  okr         okrs     @relation(fields: [okr_id], references: [id])
   progress    Float    @default(0) // Progress percentage (0-100)
   audit       Json     @default("{}") // Replaces createdAt and updatedAt
 }
 
 model feedback {
   id          Int       @id @default(autoincrement())
-  feedbackText String
-  isAnonymous Boolean    @default(false)
-  visibility  Visibility @default(PUBLIC)
-  senderId    Int
-  receiverId  Int
-  sender      users      @relation("FeedbackGiven", fields: [senderId], references: [id])
-  receiver    users      @relation("FeedbackReceived", fields: [receiverId], references: [id])
+  feedback_text String
+  is_anonymous Boolean    @default(false)
+  visibility  visibility @default(PUBLIC)
+  sender_id    Int
+  receiver_id  Int
+  sender      user_details      @relation("feedback_given", fields: [sender_id], references: [user_id])
+  receiver    user_details      @relation("feedback_received", fields: [receiver_id], references: [user_id])
   audit       Json       @default("{}") // Replaces createdAt and updatedAt
 }
 
 model feedback_requests {
   id          Int          @id @default(autoincrement())
-  requesterId Int           // User sending the feedback request
-  requester   users         @relation("RequestedFeedback", fields: [requesterId], references: [id])
-  recipientId Int           // User receiving the feedback request
-  recipient   users         @relation("FeedbackRequests", fields: [recipientId], references: [id])
+  requester_id Int           // User sending the feedback request
+  requester   user_details        @relation("requested_feedback", fields: [requester_id], references: [user_id])
+  recipient_id Int           // User receiving the feedback request
+  recipient   user_details      @relation("feedback_requests", fields: [recipient_id], references: [user_id])
   message     String?       // Optional message
-  status      RequestStatus @default(PENDING)
+  status      request_status @default(PENDING)
   response    String?       // Response or rejection reason
   audit       Json          @default("{}") // Replaces createdAt and updatedAt
 }
@@ -150,46 +161,46 @@ model meetings {
   id            Int                @id @default(autoincrement())
   title         String
   description   String?
-  scheduledById Int
-  scheduledBy   users              @relation("ScheduledMeetings", fields: [scheduledById], references: [id])
+  scheduled_by_id Int
+  scheduled_by   user_details              @relation("scheduled_meetings", fields: [scheduled_by_id], references: [user_id])
   attendees     meeting_attendees[] // Relation for attendees
-  scheduledAt   DateTime           // Stores the date and time of the meeting
+  scheduled_at   DateTime           // Stores the date and time of the meeting
   agenda        String?
   notes         String?
-  noteToSelf    String?
+  note_to_self    String?
   audit         Json               @default("{}") // Replaces createdAt and updatedAt
 }
 
 
 model company_settings {
   id                  Int     @id @default(autoincrement())
-  companyId           Int     @unique
-  company             companies @relation("CompanyToSetting", fields: [companyId], references: [id])
-  allowAnonymousFeedback Boolean @default(true)
+  company_id           Int     @unique
+  company             companies @relation("company_to_setting", fields: [company_id], references: [id])
+  allow_anonymous_feedback Boolean @default(true)
   audit               Json    @default("{}") // Replaces createdAt and updatedAt
 }
 
 model meeting_attendees {
-  meetingId Int
-  userId    Int
-  meeting   meetings @relation(fields: [meetingId], references: [id])
-  user      users    @relation(fields: [userId], references: [id])
-  @@id([meetingId, userId]) // Composite primary key
+  meeting_id Int
+  user_id    Int
+  meeting   meetings @relation(fields: [meeting_id], references: [id])
+  user      user_details    @relation(fields: [user_id], references: [user_id])
+  @@id([meeting_id, user_id]) // Composite primary key
 }
 
-enum Visibility {
+enum visibility {
   PUBLIC
   PRIVATE
 }
 
-enum RequestStatus {
+enum request_status {
   PENDING
   COMPLETED
   REJECTED
   EXPIRED
 }
 
-enum NotificationType {
+enum notification_type {
   SYSTEM
   FEEDBACK
   MEETING
@@ -197,7 +208,7 @@ enum NotificationType {
   GENERAL
 }
 
-enum NotificationStatus {
+enum notification_status {
   UNREAD
   READ
 }
