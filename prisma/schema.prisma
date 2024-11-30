@@ -56,10 +56,10 @@ model roles {
 }
 model user_roles {
   user_id Int
-  roleId Int
+  role_id Int
   user   users @relation(fields: [user_id], references: [id])
-  role   roles @relation(fields: [roleId], references: [id])
-  @@id([user_id, roleId]) // Composite primary key
+  role   roles @relation(fields: [role_id], references: [id])
+  @@id([user_id, role_id]) // Composite primary key
   audit  Json   @default("{}") // Audit JSON
 }
 model notifications {
