@@ -24,4 +24,23 @@ export class UserService {
       companyName,
     );
   }
+
+  async createEmployee(
+    name: string,
+    email: string,
+    password: string,
+    companyId: number,
+  ) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    return this.userRepository.createEmployee(
+      name,
+      email,
+      hashedPassword,
+      companyId,
+    );
+  }
+
+  async findCompanyUsers(companyId: number) {
+    return this.userRepository.findCompanyUsers(companyId);
+  }
 }

@@ -11,8 +11,28 @@ export class UserRepository {
    * @param email - The email of the user to find
    * @returns The user_auth record or null
    */
-  async findByEmail(email: string): Promise<user_auth | null> {
-    return this.prisma.user_auth.findUnique({ where: { email } });
+  async findByEmail(email: string): Promise<any> {
+    const userAuth = await this.prisma.user_auth.findUnique({
+      where: { email },
+      include: {
+        user: {
+          include: {
+            roles: {
+              select: {
+                role: {
+                  select: { name: true }, // Fetch the role name
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Debugging: Log the full result
+    console.log(JSON.stringify(userAuth, null, 2));
+
+    return userAuth;
   }
 
   /**
@@ -56,6 +76,62 @@ export class UserRepository {
               create: {
                 name: companyName, // Create the company with the provided name
               },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async createEmployee(
+    name: string,
+    email: string,
+    password: string,
+    companyId: number,
+  ): Promise<users> {
+    return this.prisma.users.create({
+      data: {
+        auth: {
+          create: {
+            email,
+            password,
+          },
+        },
+        roles: {
+          create: {
+            role: {
+              connectOrCreate: {
+                where: { name: 'Employee' },
+                create: { name: 'Employee' },
+              },
+            },
+          },
+        },
+        details: {
+          create: {
+            name,
+            company: {
+              connect: { id: companyId },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  // gimme function to find company users with their names and with their roles title as well
+
+  async findCompanyUsers(companyId: number): Promise<any[]> {
+    return this.prisma.users.findMany({
+      where: { details: { company: { id: companyId } } },
+      include: {
+        details: {
+          select: { name: true }, // Include the user's name
+        },
+        roles: {
+          select: {
+            role: {
+              select: { name: true }, // Include the role's name
             },
           },
         },

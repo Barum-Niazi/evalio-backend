@@ -27,6 +27,8 @@ model user_details {
   user_id       Int             @id // Same ID as users table for strict 1:1 mapping
   user          users           @relation("user_to_details", fields: [user_id], references: [id]) // Strict 1:1 mapping
   name          String
+  profile_blob  blob?        @relation(fields: [profile_blob_id], references: [id]) // Relation to the blob table
+  profile_blob_id Int?       // Foreign key to the blob table
   company_id    Int?            // Relation to Company
   company       companies?      @relation("company_employees", fields: [company_id], references: [id])
   manager_id    Int?            // Relation to Manager (Self-Reference)
@@ -44,6 +46,7 @@ model user_details {
   meetings_scheduled meetings[]    @relation("scheduled_meetings") // Meetings created by this user
   meeting_attendees meeting_attendees[]
   notifications  notifications[] // Notifications for the user
+  metadata       Json            @default("{}") // Additional metadata
   audit          Json            @default("{}") // Audit JSON for metadata
   user_okrs      user_okrs[]
 }
@@ -101,15 +104,21 @@ model companies {
   departments        department[]
   okrs               okrs[]           @relation("company_okrs")
   company_setting     company_settings? @relation("company_to_setting")
+  logo_blob          blob?            @relation(fields: [logo_blob_id], references: [id]) // Relation to blob for logo
+  logo_blob_id       Int?             // Foreign key to the blob table for the company logo
+  metadata           Json          @default("{}") // Additional metadata
   audit              Json             @default("{}") // Audit JSON
 }
 model okrs {
   id          Int       @id @default(autoincrement())
+  parent_okr_id Int?     // Relation to parent OKR
   title       String
   description String?
   company_id   Int?
   company     companies? @relation("company_okrs", fields: [company_id], references: [id])
   user_id      Int?
+  child_okrs  okrs[] @relation("parent_okr") // Relation for child OKRs
+  parent_okr  okrs? @relation("parent_okr", fields: [parent_okr_id], references: [id]) // Relation for parent OKR
   assigned_to  user_okrs[]
   key_results  key_results[]
   audit       Json       @default("{}") // Replaces createdAt and updatedAt
@@ -126,9 +135,12 @@ model user_okrs {
 
 model key_results {
   id          Int      @id @default(autoincrement())
+  parent_key_result_id Int? // Relation to parent key result
   title       String   // Description of the Key Result
   okr_id       Int      // Relation to OKR
   okr         okrs     @relation(fields: [okr_id], references: [id])
+  child_key_results key_results[] @relation("parent_key_result") // Relation for child key results
+  parent_key_result key_results? @relation("parent_key_result", fields: [parent_key_result_id], references: [id]) // Relation for parent key result
   progress    Float    @default(0) // Progress percentage (0-100)
   audit       Json     @default("{}") // Replaces createdAt and updatedAt
 }
@@ -187,6 +199,43 @@ model meeting_attendees {
   user      user_details    @relation(fields: [user_id], references: [user_id])
   @@id([meeting_id, user_id]) // Composite primary key
 }
+
+model blob {
+  id         Int      @id @default(autoincrement()) // Unique ID for the blob
+  name       String   
+  mime_type  String  
+  data       Bytes    // Binary data for storing the blob itself
+  size       Int      // Size of the file in bytes
+  audit     Json     @default("{}") // Audit JSON for metadata
+  user_details user_details[]
+  companies companies[]
+}
+
+model tags {
+  id         Int      @id @default(autoincrement()) // Unique ID for each tag
+  name       String   @unique                      // Name of the tag (e.g., "Teamwork")
+  description String?                              // Optional description of the tag
+  metadata   Json?                                 // Additional metadata for the tag
+  tagged_entities tagged_entities[]               // Relation to tagged entities
+  audit      Json     @default("{}")               // Audit JSON for metadata
+}
+
+model tagged_entities {
+  id            Int      @id @default(autoincrement())
+  tag_id        Int      // Foreign key to `tags`
+  entity_id     Int      // The entity being tagged (e.g., feedback)
+  entity_type   String   // The type of entity being tagged (e.g., "feedback", "okr", "meeting")
+  reference_id  Int?     // Optional: ID of the referenced entity (e.g., meeting ID)
+  reference_type String? // Optional: Type of the referenced entity (e.g., "meeting", "okr")
+  metadata      Json?    // Additional metadata
+  audit         Json     @default("{}") // Audit JSON for metadata
+  tag           tags     @relation(fields: [tag_id], references: [id]) // Relation to `tags`
+
+  @@index([entity_id, entity_type])             // For quick lookups
+  @@index([reference_id, reference_type])      // For efficient cross-referencing
+  @@unique([tag_id, entity_id, entity_type])   // Prevent duplicate tags for the same entity
+}
+
 
 enum visibility {
   PUBLIC
