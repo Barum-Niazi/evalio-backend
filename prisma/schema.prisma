@@ -66,14 +66,16 @@ model user_roles {
   audit  Json   @default("{}") // Audit JSON
 }
 model notifications {
-  id          Int     @id @default(autoincrement())
-  user_id      Int     // User receiving the notification
-  user        user_details   @relation(fields: [user_id], references: [user_id])
-  type        notification_type
+  id          Int                 @id @default(autoincrement())
+  user_id     Int                 // User receiving the notification
+  user        user_details        @relation(fields: [user_id], references: [user_id])
+  type_id     Int                 // Foreign key to `lookup` for notification type
+  type        lookup              @relation("notification_type", fields: [type_id], references: [id])
+  status_id   Int                 // Foreign key to `lookup` for notification status
+  status      lookup              @relation("notification_status", fields: [status_id], references: [id])
   message     String
-  status      notification_status @default(UNREAD)
   link        String?
-  audit       Json    @default("{}") // Replaces createdAt and updatedAt
+  audit       Json                @default("{}") // Audit metadata
 }
 
 model department {
@@ -146,27 +148,29 @@ model key_results {
 }
 
 model feedback {
-  id          Int       @id @default(autoincrement())
-  feedback_text String
-  is_anonymous Boolean    @default(false)
-  visibility  visibility @default(PUBLIC)
-  sender_id    Int
-  receiver_id  Int
-  sender      user_details      @relation("feedback_given", fields: [sender_id], references: [user_id])
-  receiver    user_details      @relation("feedback_received", fields: [receiver_id], references: [user_id])
-  audit       Json       @default("{}") // Replaces createdAt and updatedAt
+  id              Int       @id @default(autoincrement())
+  feedback_text   String
+  is_anonymous    Boolean   @default(false)
+  visibility_id   Int       // Foreign key to `lookup` for visibility
+  visibility      lookup    @relation(fields: [visibility_id], references: [id])
+  sender_id       Int
+  receiver_id     Int
+  sender          user_details @relation("feedback_given", fields: [sender_id], references: [user_id])
+  receiver        user_details @relation("feedback_received", fields: [receiver_id], references: [user_id])
+  audit           Json      @default("{}") // Audit metadata
 }
 
 model feedback_requests {
-  id          Int          @id @default(autoincrement())
-  requester_id Int           // User sending the feedback request
-  requester   user_details        @relation("requested_feedback", fields: [requester_id], references: [user_id])
-  recipient_id Int           // User receiving the feedback request
-  recipient   user_details      @relation("feedback_requests", fields: [recipient_id], references: [user_id])
-  message     String?       // Optional message
-  status      request_status @default(PENDING)
-  response    String?       // Response or rejection reason
-  audit       Json          @default("{}") // Replaces createdAt and updatedAt
+  id             Int            @id @default(autoincrement())
+  requester_id   Int            // User sending the feedback request
+  requester      user_details   @relation("requested_feedback", fields: [requester_id], references: [user_id])
+  recipient_id   Int            // User receiving the feedback request
+  recipient      user_details   @relation("feedback_requests", fields: [recipient_id], references: [user_id])
+  message        String?        // Optional message
+  status_id      Int            // Foreign key to `lookup` for status
+  status         lookup         @relation(fields: [status_id], references: [id])
+  response       String?        // Response or rejection reason
+  audit          Json           @default("{}") // Audit metadata
 }
 
 model meetings {
@@ -215,7 +219,6 @@ model tags {
   id         Int      @id @default(autoincrement()) // Unique ID for each tag
   name       String   @unique                      // Name of the tag (e.g., "Teamwork")
   description String?                              // Optional description of the tag
-  metadata   Json?                                 // Additional metadata for the tag
   tagged_entities tagged_entities[]               // Relation to tagged entities
   audit      Json     @default("{}")               // Audit JSON for metadata
 }
@@ -227,7 +230,6 @@ model tagged_entities {
   entity_type   String   // The type of entity being tagged (e.g., "feedback", "okr", "meeting")
   reference_id  Int?     // Optional: ID of the referenced entity (e.g., meeting ID)
   reference_type String? // Optional: Type of the referenced entity (e.g., "meeting", "okr")
-  metadata      Json?    // Additional metadata
   audit         Json     @default("{}") // Audit JSON for metadata
   tag           tags     @relation(fields: [tag_id], references: [id]) // Relation to `tags`
 
@@ -237,27 +239,32 @@ model tagged_entities {
 }
 
 
-enum visibility {
-  PUBLIC
-  PRIVATE
+model lookup_category {
+  id                Int              @id @default(autoincrement())
+  code              String           @unique           // Unique code for the category (e.g., "VISIBILITY")
+  name              String                              // Display name for the category (e.g., "Visibility")
+  parent_id         Int?                                // For hierarchical nesting (optional)
+  parentCategory    lookup_category? @relation("ParentCategory", fields: [parent_id], references: [id])
+  children          lookup_category[] @relation("ParentCategory")
+  audit             Json             @default("{}")    // Audit metadata
+
+  lookup lookup[]
 }
 
-enum request_status {
-  PENDING
-  COMPLETED
-  REJECTED
-  EXPIRED
-}
 
-enum notification_type {
-  SYSTEM
-  FEEDBACK
-  MEETING
-  OKR
-  GENERAL
-}
-
-enum notification_status {
-  UNREAD
-  READ
+model lookup {
+  id                Int              @id @default(autoincrement())
+  code              String           @unique           // Unique code for the value (e.g., "PUBLIC")
+  name              String                              // Display name for the value (e.g., "Public")
+  category_id       Int                                 // Foreign key to `lookup_category`
+  category          lookup_category  @relation(fields: [category_id], references: [id])
+  parent_id         Int?                                // Optional: Hierarchical relationship (e.g., sub-values)
+  parent            lookup?          @relation("ParentLookup", fields: [parent_id], references: [id])
+  children          lookup[]         @relation("ParentLookup")
+  metadata          Json?                               // Additional metadata for the lookup value
+  audit             Json             @default("{}")    // Audit metadata
+  feedback feedback[]
+  feedback_requests feedback_requests[]
+  notifications notifications[] @relation("notification_type")
+  notifications_status notifications[] @relation("notification_status")
 }
