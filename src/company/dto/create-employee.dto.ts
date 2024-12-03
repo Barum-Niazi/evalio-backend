@@ -8,10 +8,6 @@ export class CreateEmployeeDto {
   @IsEmail()
   email: string;
 
-  @IsString()
-  @IsNotEmpty()
-  password: string;
-
   @IsNumber()
   companyId: number;
 }

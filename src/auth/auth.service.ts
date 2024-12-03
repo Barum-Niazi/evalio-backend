@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
-import * as bcrypt from 'bcryptjs';
+import * as argon2 from 'argon2'; // Import Argon2
 
 @Injectable()
 export class AuthService {
@@ -25,18 +25,10 @@ export class AuthService {
       throw new ConflictException('Email is already in use');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await this.userService.createAdmin(
-      name,
-      email,
-      hashedPassword,
-      companyName,
-    );
+    await this.userService.createAdmin(name, email, password, companyName);
 
     return { message: 'Admin user successfully created' };
   }
-
   async validateUser(email: string, password: string): Promise<any> {
     const userAuth = await this.userService.findByEmail(email);
 
@@ -44,35 +36,41 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Validate the password
-    const isPasswordValid = await bcrypt.compare(password, userAuth.password);
+    const isPasswordValid = await argon2.verify(userAuth.password, password);
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Extract the user object and roles
     const { user } = userAuth;
 
     if (!user || !user.roles || user.roles.length === 0) {
       throw new UnauthorizedException('User has no assigned role');
     }
 
-    // Extract the first role name
-    const role = user.roles[0]?.role?.name || 'Unknown'; // Handle missing role gracefully
+    const role = user.roles[0]?.role?.name || 'Unknown';
 
     return {
       id: user.id,
       email: userAuth.email,
-      role: role,
+      role,
+      company_id: user.details?.company_id,
     };
   }
 
   async login(user: any) {
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      company_id: user.company_id,
+    };
     console.log(payload);
     return {
+      id: user.id,
       role: user.role,
       access_token: this.jwtService.sign(payload),
+      company_id: user.company_id,
     };
   }
 }

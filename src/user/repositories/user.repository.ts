@@ -24,12 +24,14 @@ export class UserRepository {
                 },
               },
             },
+            details: {
+              select: { name: true, company_id: true }, // Fetch the user name
+            },
           },
         },
       },
     });
 
-    // Debugging: Log the full result
     console.log(JSON.stringify(userAuth, null, 2));
 
     return userAuth;
@@ -48,6 +50,7 @@ export class UserRepository {
     password: string,
     companyName: string,
   ): Promise<users> {
+    console.log(password);
     return this.prisma.users.create({
       data: {
         // Link user to authentication credentials

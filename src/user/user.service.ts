@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
-import * as bcrypt from 'bcryptjs';
+import * as argon2 from 'argon2'; // Import Argon2
 
 @Injectable()
 export class UserService {
@@ -16,7 +16,7 @@ export class UserService {
     password: string,
     companyName: string,
   ) {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await argon2.hash(password);
     return this.userRepository.createAdmin(
       name,
       email,
@@ -31,7 +31,7 @@ export class UserService {
     password: string,
     companyId: number,
   ) {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await argon2.hash(password);
     return this.userRepository.createEmployee(
       name,
       email,
