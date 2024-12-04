@@ -17,8 +17,8 @@ export class AuthController {
 
   @Post('signup')
   async signUp(@Body() signUpDto: SignUpDto) {
-    const { name, email, password, companyName } = signUpDto;
-    return this.authService.signUp(name, email, password, companyName);
+    const { name, email, password } = signUpDto;
+    return this.authService.signUp(name, email, password);
   }
 
   @UseGuards(LocalAuthGuard)

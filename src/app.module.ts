@@ -9,9 +9,13 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { CompanyController } from './company/company.controller';
 import { CompanyModule } from './company/company.module';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
+    MulterModule.register({
+      limits: { fileSize: 5 * 1024 * 1024 }, // Limit to 5MB
+    }),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,

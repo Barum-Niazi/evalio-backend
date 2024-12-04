@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { user_auth, users, roles } from '@prisma/client'; // Import types from your Prisma schema
+import { users } from '@prisma/client'; // Import types from your Prisma schema
 
 @Injectable()
 export class UserRepository {
@@ -14,9 +14,12 @@ export class UserRepository {
   async findByEmail(email: string): Promise<any> {
     const userAuth = await this.prisma.user_auth.findUnique({
       where: { email },
-      include: {
+      select: {
+        email: true,
+        password: true, // Include the email field
         user: {
-          include: {
+          select: {
+            id: true, // Include user ID
             roles: {
               select: {
                 role: {
@@ -25,7 +28,10 @@ export class UserRepository {
               },
             },
             details: {
-              select: { name: true, company_id: true }, // Fetch the user name
+              select: {
+                name: true, // Fetch the user's name
+                company_id: true, // Fetch the company ID
+              },
             },
           },
         },
@@ -48,19 +54,15 @@ export class UserRepository {
     name: string,
     email: string,
     password: string,
-    companyName: string,
-  ): Promise<users> {
-    console.log(password);
-    return this.prisma.users.create({
+  ): Promise<any> {
+    const newUser = await this.prisma.users.create({
       data: {
-        // Link user to authentication credentials
         auth: {
           create: {
             email,
             password,
           },
         },
-        // Create or link the Admin role
         roles: {
           create: {
             role: {
@@ -71,21 +73,19 @@ export class UserRepository {
             },
           },
         },
-        // Create user details and the associated company
         details: {
           create: {
-            name, // Admin's name
-            company: {
-              create: {
-                name: companyName, // Create the company with the provided name
-              },
-            },
+            name,
           },
         },
       },
+      include: {
+        auth: { select: { email: true } },
+      },
     });
-  }
 
+    return newUser;
+  }
   async createEmployee(
     name: string,
     email: string,

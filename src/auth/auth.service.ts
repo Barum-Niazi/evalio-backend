@@ -14,21 +14,28 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signUp(
-    name: string,
-    email: string,
-    password: string,
-    companyName: string,
-  ): Promise<any> {
+  async signUp(name: string, email: string, password: string): Promise<any> {
     const existingUser = await this.userService.findByEmail(email);
     if (existingUser) {
       throw new ConflictException('Email is already in use');
     }
 
-    await this.userService.createAdmin(name, email, password, companyName);
+    const newUser = await this.userService.createAdmin(name, email, password);
 
-    return { message: 'Admin user successfully created' };
+    // Generate a JWT token for the new admin user
+    const payload = {
+      sub: newUser.id,
+      email: newUser.auth.email,
+      role: 'Admin',
+    };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      message: 'Admin user successfully created',
+      access_token: token,
+    };
   }
+
   async validateUser(email: string, password: string): Promise<any> {
     const userAuth = await this.userService.findByEmail(email);
 

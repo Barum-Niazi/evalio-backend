@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from './repositories/user.repository';
+import { UserRepository } from '../repositories/user.repository';
 import * as argon2 from 'argon2'; // Import Argon2
 
 @Injectable()
@@ -10,19 +10,9 @@ export class UserService {
     return this.userRepository.findByEmail(email);
   }
 
-  async createAdmin(
-    name: string,
-    email: string,
-    password: string,
-    companyName: string,
-  ) {
+  async createAdmin(name: string, email: string, password: string) {
     const hashedPassword = await argon2.hash(password);
-    return this.userRepository.createAdmin(
-      name,
-      email,
-      hashedPassword,
-      companyName,
-    );
+    return this.userRepository.createAdmin(name, email, hashedPassword);
   }
 
   async createEmployee(
