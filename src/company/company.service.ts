@@ -10,6 +10,7 @@ import { AddEmployeeDto } from './dto/create-employee.dto';
 import * as argon2 from 'argon2';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as ExcelJS from 'exceljs';
+import { Readable } from 'stream';
 
 @Injectable()
 export class CompanyService {
@@ -71,49 +72,70 @@ export class CompanyService {
   }
 
   async addEmployeesFromFile(adminId: number, file: Express.Multer.File) {
-    const companyId = await this.companyRepository.getAdminCompanyId(adminId);
+    const startTime = Date.now();
+    console.time('file-processing-time');
 
+    console.time('get-company-id-time');
+    const companyId = await this.companyRepository.getAdminCompanyId(adminId);
+    console.timeEnd('get-company-id-time');
+
+    console.time('excel-load-time');
+    const fileStream = Readable.from(file.buffer);
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(file.buffer);
+    await workbook.xlsx.read(fileStream); // Load the Excel file
+    console.timeEnd('excel-load-time');
 
     const worksheet = workbook.worksheets[0];
     if (!worksheet) {
       throw new BadRequestException('No worksheet found in the uploaded file.');
     }
 
-    const employees = [];
-    const rowCount = worksheet.rowCount;
+    console.time('row-parsing-time');
+    const employees: any[] = [];
+    const passwordPromises: Promise<any>[] = [];
 
-    for (let rowIndex = 2; rowIndex <= rowCount; rowIndex++) {
-      const row = worksheet.getRow(rowIndex);
-      const name = row.getCell(1).value?.toString().trim(); // First column
-      const email = row.getCell(2).value?.toString().trim(); // Second column
-      const designation = row.getCell(3).value?.toString().trim(); // Third column
-      const managerEmail = row.getCell(4)?.value?.toString().trim(); // Fourth column
+    worksheet.eachRow((row, rowIndex) => {
+      if (rowIndex === 1) return; // Skip the header row
+
+      const rowValues = row.values as (string | null)[];
+      const name = rowValues[1]?.toString().trim(); // First column
+      const email = rowValues[2]?.toString().trim(); // Second column
+      const designation = rowValues[3]?.toString().trim(); // Third column
+      const managerEmail = rowValues[4]?.toString().trim(); // Fourth column
 
       if (!name || !email || !designation) {
         console.warn(`Skipping invalid row ${rowIndex}`);
-        continue; // Skip invalid rows
+        return; // Skip invalid rows
       }
 
       const password = Math.random().toString(36).slice(-8);
-      const hashedPassword = await argon2.hash(password); // Hash password asynchronously
+      passwordPromises.push(
+        argon2.hash(password).then((hashedPassword) => {
+          employees.push({
+            name,
+            email,
+            designation,
+            password: hashedPassword,
+            companyId,
+            managerEmail,
+          });
+        }),
+      );
+    });
 
-      employees.push({
-        name,
-        email,
-        designation,
-        password: hashedPassword,
-        companyId,
-        managerEmail,
-      });
-    }
+    await Promise.all(passwordPromises); // Ensure all passwords are hashed
+    console.timeEnd('row-parsing-time');
 
     if (employees.length === 0) {
       throw new BadRequestException('No valid employees found in the file.');
     }
 
+    console.time('employee-creation-time');
     const result = await this.employeeRepository.createManyEmployees(employees);
+    console.timeEnd('employee-creation-time');
+
+    console.timeEnd('file-processing-time');
+    console.log('Total file processing time:', Date.now() - startTime, 'ms');
 
     return {
       message: 'Employees added successfully',
