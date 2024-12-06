@@ -49,7 +49,6 @@ export class CompanyService {
   async addEmployees(adminId: number, addEmployeeDto: { employees: any[] }) {
     const companyId = await this.companyRepository.getAdminCompanyId(adminId);
 
-    // Validate each employee and prepare for bulk insertion
     const employees = await Promise.all(
       addEmployeeDto.employees.map(async (employee) => {
         const { name, email, designation, managerId } = employee;
@@ -58,21 +57,11 @@ export class CompanyService {
         const password = Math.random().toString(36).slice(-8);
         const hashedPassword = await argon2.hash(password);
 
+        // Fetch the company name (optional, for sending welcome email)
         const company = await this.prisma.companies.findUnique({
           where: { id: companyId },
           select: { name: true },
         });
-
-        // Send email with credentials
-        await this.emailService.sendEmail(
-          email,
-          `Welcome to ${company.name}`,
-          `Hello ${name},
-           Your account has been created.
-           Email: ${email}
-           Password: ${password}
-           Please log in and change your password as soon as possible.`,
-        );
 
         return {
           name,
@@ -81,16 +70,42 @@ export class CompanyService {
           password: hashedPassword,
           companyId,
           managerId,
+          companyName: company?.name,
         };
       }),
     );
 
-    const addedEmployees =
-      await this.employeeRepository.createManyEmployees(employees);
+    // Insert all employees within a transaction
+    const createdEmployees = await this.prisma.$transaction(
+      employees.map((employee) => {
+        const { name, email, password, designation, companyId, managerId } =
+          employee;
 
+        return this.employeeRepository.createEmployee({
+          name,
+          email,
+          password,
+          designation,
+          companyId,
+          managerId,
+        });
+      }),
+    );
+
+    // // Send email with credentials
+    // await this.emailService.sendEmail(
+    //   email,
+    //   `Welcome to ${company.name}`,
+    //   `Hello ${name},
+    //    Your account has been created.
+    //    Email: ${email}
+    //    Password: ${password}
+    //    Please log in and change your password as soon as possible.`,
+    // );
+    // Return a response indicating success
     return {
       message: 'Employees added successfully',
-      addedEmployees,
+      addedEmployees: createdEmployees,
     };
   }
 
@@ -163,6 +178,40 @@ export class CompanyService {
     return {
       message: 'Employees added successfully',
       added: result.length,
+    };
+  }
+
+  async getOrganizationalChart(companyId: number) {
+    const employees =
+      await this.companyRepository.getOrganizationalData(companyId);
+
+    // Group employees by their `manager_id`
+    const groupedByManager = employees.reduce((acc, employee) => {
+      const managerId = employee.manager_id || null; // null for top-level nodes
+      if (!acc[managerId]) {
+        acc[managerId] = [];
+      }
+      acc[managerId].push(employee);
+      return acc;
+    }, {});
+
+    // Recursive function to build the hierarchy
+    const buildHierarchy = (managerId: number | null) => {
+      return (groupedByManager[managerId] || []).map((employee) => ({
+        id: employee.user_id,
+        name: employee.name,
+        designation: employee.designation?.title || 'N/A',
+        department: employee.department?.name || 'Unassigned',
+        subordinates: buildHierarchy(employee.user_id), // Recursively add subordinates
+      }));
+    };
+
+    // Build hierarchy starting from employees with no manager
+    const hierarchy = buildHierarchy(null);
+
+    return {
+      companyId,
+      hierarchy,
     };
   }
 }

@@ -82,4 +82,12 @@ export class CompanyController {
     const adminId = req.user.id;
     return this.companyService.addEmployeesFromFile(adminId, file);
   }
+
+  @Get('org-chart')
+  @UseGuards(JwtAuthGuard)
+  @Roles('Admin')
+  async getOrganizationalChart(@Request() req) {
+    const companyId = req.user.companyId;
+    return this.companyService.getOrganizationalChart(companyId);
+  }
 }

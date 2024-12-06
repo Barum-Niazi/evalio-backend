@@ -57,6 +57,8 @@ export class AuthService {
 
     const role = user.roles[0]?.role?.name || 'Unknown';
 
+    console.log(user.details.company_id);
+
     return {
       id: user.id,
       email: userAuth.email,

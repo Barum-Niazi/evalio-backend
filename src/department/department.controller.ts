@@ -15,20 +15,19 @@ import { CreateDepartmentDto } from './dto/create-department.dto';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Roles } from '../decorators/roles.decorators';
-import { AddEmployeeToDepartmentDto } from './dto/add-employees.dto';
+import { AddEmployeesToDepartmentsDto } from './dto/add-employees.dto';
 
 @Controller('departments')
 export class DepartmentController {
   constructor(private readonly departmentService: DepartmentService) {}
 
+  @Post('create')
   @UseGuards(JwtAuthGuard)
   @Roles('Admin')
-  @Post('create')
   async createDepartment(
     @Body() createDepartmentDto: CreateDepartmentDto,
     @Request() req,
   ) {
-    console.log(req.user.companyId, createDepartmentDto.companyId);
     if (
       !req.user.companyId ||
       req.user.companyId !== createDepartmentDto.companyId
@@ -47,17 +46,12 @@ export class DepartmentController {
 
   @UseGuards(JwtAuthGuard)
   @Roles('Admin')
-  @Get('company/:companyId')
-  async getDepartmentsByCompany(
-    @Param('companyId') companyId: number,
-    @Request() req,
-  ) {
-    const adminCompanyId = req.user.companyId;
+  @Get('all')
+  async getAllDepartments(@Request() req) {
+    const companyId = req.user.companyId;
 
-    if (companyId !== adminCompanyId) {
-      throw new ForbiddenException(
-        'You can only view departments for your company.',
-      );
+    if (!companyId) {
+      throw new ForbiddenException('You are not associated with a company.');
     }
 
     return this.departmentService.getDepartmentsByCompany(companyId);
@@ -86,26 +80,36 @@ export class DepartmentController {
   @UseGuards(JwtAuthGuard)
   @Roles('Admin')
   @Post('add-employees')
-  async addEmployeesToDepartment(
-    @Body() addEmployeeToDepartmentDto: AddEmployeeToDepartmentDto,
+  async addEmployeesToDepartments(
+    @Body() addEmployeesToDepartmentsDto: AddEmployeesToDepartmentsDto,
     @Request() req,
   ) {
-    const { departmentId, employeeIds } = addEmployeeToDepartmentDto;
-
     const adminCompanyId = req.user.companyId;
-    const department =
-      await this.departmentService.getDepartmentsByCompany(adminCompanyId);
-    const departmentExists = department.find((d) => d.id === departmentId);
 
-    if (!departmentExists) {
-      throw new ForbiddenException(
-        'You do not have access to this department.',
+    const results = [];
+    for (const department of addEmployeesToDepartmentsDto.departments) {
+      const { departmentId, employeeIds } = department;
+
+      const departmentExists =
+        await this.departmentService.getDepartmentsByCompany(adminCompanyId);
+      const validDepartment = departmentExists.find(
+        (d) => d.id === departmentId,
       );
+
+      if (!validDepartment) {
+        throw new ForbiddenException(
+          `You do not have access to department ID ${departmentId}.`,
+        );
+      }
+
+      // Add employees to the department
+      const result = await this.departmentService.addEmployeesToDepartment(
+        departmentId,
+        employeeIds,
+      );
+      results.push({ departmentId, addedEmployees: result });
     }
 
-    return this.departmentService.addEmployeesToDepartment(
-      departmentId,
-      employeeIds,
-    );
+    return results;
   }
 }

@@ -6,18 +6,28 @@ export class DepartmentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async createDepartment(name: string, companyId: number, headId?: number) {
-    return this.prisma.department.create({
-      data: {
-        name,
-        company_id: companyId,
-        headId: headId || null,
-      },
-      select: {
-        id: true,
-        name: true,
-        company_id: true,
-        headId: true,
-      },
+    return this.prisma.$transaction(async (prisma) => {
+      // Create the department
+      const department = await prisma.department.create({
+        data: {
+          name,
+          company_id: companyId,
+          headId: headId || null,
+        },
+      });
+
+      // If a headId is provided, update the user's department_id
+      if (headId) {
+        await prisma.user_details.update({
+          where: { user_id: headId },
+          data: { department_id: department.id },
+        });
+      }
+
+      return prisma.department.findUnique({
+        where: { id: department.id },
+        include: { employees: true },
+      });
     });
   }
 

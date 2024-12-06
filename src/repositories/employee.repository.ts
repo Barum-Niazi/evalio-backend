@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class EmployeeRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createEmployee(employee: any): Promise<any> {
+  createEmployee(employee: any): Prisma.PrismaPromise<any> {
     const { name, email, password, designation, companyId, managerId } =
       employee;
 

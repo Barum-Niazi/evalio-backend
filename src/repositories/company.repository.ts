@@ -60,13 +60,23 @@ export class CompanyRepository {
     return admin.company_id;
   }
 
-  // Fetch all users in a company
   async getUsersByCompany(
     companyId: number,
   ): Promise<{ user_id: number; name: string }[]> {
     return this.prisma.user_details.findMany({
       where: { company_id: companyId },
       select: { user_id: true, name: true },
+    });
+  }
+
+  async getOrganizationalData(companyId: number) {
+    return this.prisma.user_details.findMany({
+      where: { company_id: companyId },
+      include: {
+        manager: { select: { user_id: true, name: true } }, // Manager information
+        department: { select: { id: true, name: true } }, // Department information
+        designation: { select: { id: true, title: true } }, // Designation details
+      },
     });
   }
 }
