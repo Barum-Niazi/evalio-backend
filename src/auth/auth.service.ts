@@ -61,7 +61,7 @@ export class AuthService {
       id: user.id,
       email: userAuth.email,
       role,
-      company_id: user.details?.company_id,
+      companyId: user.details?.company_id,
     };
   }
 
@@ -70,14 +70,14 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
-      company_id: user.company_id,
+      companyId: user.companyId,
     };
     console.log(payload);
     return {
       id: user.id,
       role: user.role,
       access_token: this.jwtService.sign(payload),
-      company_id: user.company_id,
+      companyId: user.companyId,
     };
   }
 }

@@ -6,7 +6,8 @@ import {
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { CompanyRepository } from '../repositories/company.repository';
 import { EmployeeRepository } from 'src/repositories/employee.repository';
-import { AddEmployeeDto } from './dto/create-employee.dto';
+import { EmailService } from 'src/services/email.service';
+import { AddEmployeeDto } from './dto/add-employee.dto';
 import * as argon2 from 'argon2';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as ExcelJS from 'exceljs';
@@ -18,6 +19,7 @@ export class CompanyService {
     private readonly prisma: PrismaService,
     private readonly companyRepository: CompanyRepository,
     private readonly employeeRepository: EmployeeRepository,
+    private readonly emailService: EmailService,
   ) {}
 
   async createCompany(
@@ -44,30 +46,51 @@ export class CompanyService {
     return this.companyRepository.getUsersByCompany(companyId);
   }
 
-  async addEmployee(adminId: number, addEmployeeDto: AddEmployeeDto) {
-    const { name, email, designation, managerId } = addEmployeeDto;
-
+  async addEmployees(adminId: number, addEmployeeDto: { employees: any[] }) {
     const companyId = await this.companyRepository.getAdminCompanyId(adminId);
 
-    // Generate a random password
-    const password = Math.random().toString(36).slice(-8);
-    const hashedPassword = await argon2.hash(password);
+    // Validate each employee and prepare for bulk insertion
+    const employees = await Promise.all(
+      addEmployeeDto.employees.map(async (employee) => {
+        const { name, email, designation, managerId } = employee;
 
-    // Add the employee
-    const employee = await this.employeeRepository.createEmployee({
-      name,
-      email,
-      designation,
-      password: hashedPassword,
-      companyId: companyId,
-      managerId,
-    });
+        // Generate a random password
+        const password = Math.random().toString(36).slice(-8);
+        const hashedPassword = await argon2.hash(password);
 
-    // In a real app, send an email to the employee with their credentials
+        const company = await this.prisma.companies.findUnique({
+          where: { id: companyId },
+          select: { name: true },
+        });
+
+        // Send email with credentials
+        await this.emailService.sendEmail(
+          email,
+          `Welcome to ${company.name}`,
+          `Hello ${name},
+           Your account has been created.
+           Email: ${email}
+           Password: ${password}
+           Please log in and change your password as soon as possible.`,
+        );
+
+        return {
+          name,
+          email,
+          designation,
+          password: hashedPassword,
+          companyId,
+          managerId,
+        };
+      }),
+    );
+
+    const addedEmployees =
+      await this.employeeRepository.createManyEmployees(employees);
 
     return {
-      message: 'Employee added successfully',
-      employee,
+      message: 'Employees added successfully',
+      addedEmployees,
     };
   }
 

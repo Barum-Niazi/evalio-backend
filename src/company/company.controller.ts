@@ -17,7 +17,7 @@ import { CreateCompanyDto } from './dto/create-company.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorators/roles.decorators';
-import { AddEmployeeDto } from './dto/create-employee.dto';
+import { AddEmployeeDto } from './dto/add-employee.dto';
 
 @Controller('company')
 export class CompanyController {
@@ -50,9 +50,9 @@ export class CompanyController {
   @UseGuards(JwtAuthGuard)
   @Roles('Admin')
   @Post('employees/add')
-  async addEmployee(@Body() addEmployeeDto: AddEmployeeDto, @Req() req) {
+  async addEmployees(@Body() addEmployeeDto: AddEmployeeDto, @Request() req) {
     const adminId = req.user.id; // Retrieved from JWT payload
-    return this.companyService.addEmployee(adminId, addEmployeeDto);
+    return this.companyService.addEmployees(adminId, addEmployeeDto);
   }
 
   @UseInterceptors(
