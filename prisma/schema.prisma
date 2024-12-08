@@ -87,6 +87,8 @@ model department {
   head        user_details?    @relation("department_head", fields: [headId], references: [user_id])
   employees   user_details[]
   audit       Json      @default("{}") // Replaces createdAt and updatedAt
+
+  @@unique([name, company_id])
 }
 
 model designation {

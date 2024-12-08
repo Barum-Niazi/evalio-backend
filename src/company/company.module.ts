@@ -4,6 +4,7 @@ import { CompanyService } from './company.service';
 import { CompanyRepository } from 'src/repositories/company.repository';
 import { EmployeeRepository } from 'src/repositories/employee.repository';
 import { EmailService } from 'src/services/email.service';
+import { DepartmentRepository } from 'src/repositories/department.repository';
 
 @Module({
   controllers: [CompanyController],
@@ -12,6 +13,7 @@ import { EmailService } from 'src/services/email.service';
     CompanyRepository,
     EmployeeRepository,
     EmailService,
+    DepartmentRepository,
   ],
   exports: [CompanyService],
 })

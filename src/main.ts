@@ -8,6 +8,11 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+  });
   app.use(bodyParser.json({ limit: '50mb' })); // Adjust limits as needed
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   await app.listen(3333);

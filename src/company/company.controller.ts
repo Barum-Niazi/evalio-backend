@@ -11,32 +11,59 @@ import {
   Req,
   BadRequestException,
   Get,
+  UploadedFiles,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorators/roles.decorators';
 import { AddEmployeeDto } from './dto/add-employee.dto';
 
 @Controller('company')
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
-
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      // Allow up to 10 files
+      limits: {
+        fileSize: 5 * 1024 * 1024, // Limit file size to 5MB per file
+      },
+      fileFilter: (req, file, callback) => {
+        // Allow only Excel, CSV, PNG, JPG, and JPEG files
+        if (!file.originalname.match(/\.(xlsx|xls|csv|png|jpg|jpeg)$/)) {
+          return callback(
+            new BadRequestException(
+              'Only Excel, CSV, PNG, JPG, and JPEG files are allowed!',
+            ),
+            false,
+          );
+        }
+        callback(null, true); // Accept the file
+      },
+    }),
+  )
   @UseGuards(JwtAuthGuard)
   @Post('create')
-  @UseInterceptors(FileInterceptor('logo'))
   async createCompany(
     @Request() req,
     @Body() createCompanyDto: CreateCompanyDto,
-    @UploadedFile() logo?: Express.Multer.File,
+    @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    if (req.user.role !== 'Admin') {
-      throw new ForbiddenException('Only admins can create a company');
-    }
-
     const adminId = req.user.id;
-    return this.companyService.createCompany(createCompanyDto, adminId, logo);
+
+    // Separate logo and employee file
+    const logo = files?.find((file) => file.mimetype.startsWith('image/'));
+    const employeesFile = files?.find((file) =>
+      file.originalname.match(/\.(xlsx|xls|csv)$/),
+    );
+
+    return this.companyService.createCompany(
+      createCompanyDto,
+      adminId,
+      logo,
+      employeesFile,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

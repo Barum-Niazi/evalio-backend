@@ -31,6 +31,39 @@ export class DepartmentRepository {
     });
   }
 
+  async createOrUpdateDepartment(
+    name: string,
+    companyId: number,
+    headEmail: string | null,
+    employees: any[],
+  ) {
+    // Resolve headId from the newly created employees
+    const head = headEmail
+      ? employees.find((emp) => emp.email === headEmail)
+      : null;
+
+    return this.prisma.department.upsert({
+      where: {
+        name_company_id: {
+          name,
+          company_id: companyId,
+        },
+      },
+      update: {
+        headId: head?.user_id || null,
+      },
+      create: {
+        name,
+        company_id: companyId,
+        headId: head?.user_id || null,
+      },
+      include: {
+        head: true,
+        employees: true,
+      },
+    });
+  }
+
   async getDepartmentsByCompany(companyId: number) {
     const departments = await this.prisma.department.findMany({
       where: { company_id: companyId },

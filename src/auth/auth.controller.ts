@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
-import { LoginDto } from './dto/login.dto';
 import { LocalAuthGuard } from 'src/guards/local-auth.guard';
 
 @Controller('auth')
@@ -17,6 +16,7 @@ export class AuthController {
 
   @Post('signup')
   async signUp(@Body() signUpDto: SignUpDto) {
+    console.log(signUpDto);
     const { name, email, password } = signUpDto;
     return this.authService.signUp(name, email, password);
   }

@@ -11,7 +11,9 @@ import { AddEmployeeDto } from './dto/add-employee.dto';
 import * as argon2 from 'argon2';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as ExcelJS from 'exceljs';
+import * as csvParser from 'csv-parser';
 import { Readable } from 'stream';
+import { DepartmentRepository } from 'src/repositories/department.repository';
 
 @Injectable()
 export class CompanyService {
@@ -19,6 +21,7 @@ export class CompanyService {
     private readonly prisma: PrismaService,
     private readonly companyRepository: CompanyRepository,
     private readonly employeeRepository: EmployeeRepository,
+    private readonly departmentRepository: DepartmentRepository,
     private readonly emailService: EmailService,
   ) {}
 
@@ -26,6 +29,7 @@ export class CompanyService {
     createCompanyDto: CreateCompanyDto,
     adminId: number,
     logo?: Express.Multer.File,
+    employeesFile?: Express.Multer.File,
   ) {
     const { name, description, address } = createCompanyDto;
 
@@ -35,8 +39,35 @@ export class CompanyService {
       logo,
     );
 
+    if (!employeesFile) {
+      return {
+        message: 'Company created successfully without employee data.',
+        company,
+      };
+    }
+
+    // Step 2: Parse the file for employees and departments
+    const { employees, departments } = await this.parseInitialSetupFile(
+      employeesFile,
+      company.id,
+    );
+
+    // Step 3: Create employees
+    await this.employeeRepository.createManyEmployees(employees);
+
+    // Step 4: Create or update departments
+    for (const department of departments) {
+      await this.departmentRepository.createOrUpdateDepartment(
+        department.name,
+        company.id,
+        department.headEmail,
+        employees,
+      );
+    }
+
     return {
-      message: 'Company created successfully',
+      message:
+        'Company and associated employees and departments created successfully.',
       company,
     };
   }
@@ -113,56 +144,26 @@ export class CompanyService {
     const startTime = Date.now();
     console.time('file-processing-time');
 
-    console.time('get-company-id-time');
     const companyId = await this.companyRepository.getAdminCompanyId(adminId);
-    console.timeEnd('get-company-id-time');
-
-    console.time('excel-load-time');
-    const fileStream = Readable.from(file.buffer);
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.read(fileStream); // Load the Excel file
-    console.timeEnd('excel-load-time');
-
-    const worksheet = workbook.worksheets[0];
-    if (!worksheet) {
-      throw new BadRequestException('No worksheet found in the uploaded file.');
+    if (!companyId) {
+      throw new BadRequestException('Invalid admin company association.');
     }
 
-    console.time('row-parsing-time');
-    const employees: any[] = [];
-    const passwordPromises: Promise<any>[] = [];
+    const fileStream = Readable.from(file.buffer);
 
-    worksheet.eachRow((row, rowIndex) => {
-      if (rowIndex === 1) return; // Skip the header row
+    let employees: any[] = [];
 
-      const rowValues = row.values as (string | null)[];
-      const name = rowValues[1]?.toString().trim(); // First column
-      const email = rowValues[2]?.toString().trim(); // Second column
-      const designation = rowValues[3]?.toString().trim(); // Third column
-      const managerEmail = rowValues[4]?.toString().trim(); // Fourth column
-
-      if (!name || !email || !designation) {
-        console.warn(`Skipping invalid row ${rowIndex}`);
-        return; // Skip invalid rows
-      }
-
-      const password = Math.random().toString(36).slice(-8);
-      passwordPromises.push(
-        argon2.hash(password).then((hashedPassword) => {
-          employees.push({
-            name,
-            email,
-            designation,
-            password: hashedPassword,
-            companyId,
-            managerEmail,
-          });
-        }),
-      );
-    });
-
-    await Promise.all(passwordPromises); // Ensure all passwords are hashed
-    console.timeEnd('row-parsing-time');
+    if (file.originalname.match(/\.(csv)$/)) {
+      console.time('csv-parsing-time');
+      employees = await this.parseCSVFile(fileStream, companyId);
+      console.timeEnd('csv-parsing-time');
+    } else if (file.originalname.match(/\.(xlsx|xls)$/)) {
+      console.time('excel-parsing-time');
+      employees = await this.parseExcelFile(fileStream, companyId);
+      console.timeEnd('excel-parsing-time');
+    } else {
+      throw new BadRequestException('Unsupported file format.');
+    }
 
     if (employees.length === 0) {
       throw new BadRequestException('No valid employees found in the file.');
@@ -181,6 +182,74 @@ export class CompanyService {
     };
   }
 
+  private async parseCSVFile(
+    fileStream: Readable,
+    companyId: number,
+  ): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const employees: any[] = [];
+
+      fileStream
+        .pipe(csvParser())
+        .on('data', (row) => {
+          const name = row['Name']?.trim();
+          const email = row['Email']?.trim();
+          const designation = row['Designation']?.trim();
+          const managerEmail = row['ManagerEmail']?.trim();
+
+          if (name && email && designation) {
+            const password = Math.random().toString(36).slice(-8);
+            employees.push({
+              name,
+              email,
+              designation,
+              password,
+              companyId,
+              managerEmail,
+            });
+          }
+        })
+        .on('end', () => resolve(employees))
+        .on('error', (error) => reject(error));
+    });
+  }
+
+  private async parseExcelFile(
+    fileStream: Readable,
+    companyId: number,
+  ): Promise<any[]> {
+    const employees: any[] = [];
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.read(fileStream);
+    const worksheet = workbook.worksheets[0];
+
+    if (!worksheet) {
+      throw new BadRequestException('No worksheet found in the uploaded file.');
+    }
+
+    worksheet.eachRow((row, rowIndex) => {
+      if (rowIndex === 1) return; // Skip the header row
+
+      const name = row.getCell(1)?.value?.toString().trim();
+      const email = row.getCell(2)?.value?.toString().trim();
+      const designation = row.getCell(3)?.value?.toString().trim();
+      const managerEmail = row.getCell(4)?.value?.toString().trim();
+
+      if (name && email && designation) {
+        const password = Math.random().toString(36).slice(-8);
+        employees.push({
+          name,
+          email,
+          designation,
+          password,
+          companyId,
+          managerEmail,
+        });
+      }
+    });
+
+    return employees;
+  }
   async getOrganizationalChart(companyId: number) {
     const employees =
       await this.companyRepository.getOrganizationalData(companyId);
@@ -213,5 +282,111 @@ export class CompanyService {
       companyId,
       hierarchy,
     };
+  }
+
+  private async parseInitialSetupFile(
+    file: Express.Multer.File,
+    companyId: number,
+  ): Promise<{ employees: any[]; departments: any[] }> {
+    const employees: any[] = [];
+    const departments: Map<string, { name: string; headEmail?: string }> =
+      new Map();
+
+    const fileStream = Readable.from(file.buffer);
+
+    if (file.originalname.match(/\.(csv)$/)) {
+      await this.parseInitialCSV(fileStream, employees, departments, companyId);
+    } else if (file.originalname.match(/\.(xlsx|xls)$/)) {
+      await this.parseInitialExcel(
+        fileStream,
+        employees,
+        departments,
+        companyId,
+      );
+    } else {
+      throw new BadRequestException('Unsupported file format.');
+    }
+
+    return { employees, departments: Array.from(departments.values()) };
+  }
+
+  private async parseInitialCSV(
+    fileStream: Readable,
+    employees: any[],
+    departments: Map<string, { name: string; headEmail?: string }>,
+    companyId: number,
+  ) {
+    return new Promise<void>((resolve, reject) => {
+      fileStream
+        .pipe(csvParser())
+        .on('data', (row) => {
+          const name = row['Name']?.trim();
+          const email = row['Email']?.trim();
+          const designation = row['Designation']?.trim();
+          const managerEmail = row['ManagerEmail']?.trim();
+          const departmentName = row['Department']?.trim();
+          const departmentHeadEmail = row['DepartmentHeadEmail']?.trim();
+
+          if (name && email && designation) {
+            employees.push({
+              name,
+              email,
+              designation,
+              companyId,
+              managerEmail,
+              departmentName,
+            });
+
+            if (departmentName) {
+              departments.set(departmentName, {
+                name: departmentName,
+                headEmail: departmentHeadEmail || null,
+              });
+            }
+          }
+        })
+        .on('end', () => resolve())
+        .on('error', (error) => reject(error));
+    });
+  }
+
+  private async parseInitialExcel(
+    fileStream: Readable,
+    employees: any[],
+    departments: Map<string, { name: string; headEmail?: string }>,
+    companyId: number,
+  ) {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.read(fileStream);
+    const worksheet = workbook.worksheets[0];
+
+    worksheet.eachRow((row, rowIndex) => {
+      if (rowIndex === 1) return; // Skip header row
+
+      const name = row.getCell(1)?.value?.toString().trim();
+      const email = row.getCell(2)?.value?.toString().trim();
+      const designation = row.getCell(3)?.value?.toString().trim();
+      const managerEmail = row.getCell(4)?.value?.toString().trim();
+      const departmentName = row.getCell(5)?.value?.toString().trim();
+      const departmentHeadEmail = row.getCell(6)?.value?.toString().trim();
+
+      if (name && email && designation) {
+        employees.push({
+          name,
+          email,
+          designation,
+          companyId,
+          managerEmail,
+          departmentName,
+        });
+
+        if (departmentName) {
+          departments.set(departmentName, {
+            name: departmentName,
+            headEmail: departmentHeadEmail || null,
+          });
+        }
+      }
+    });
   }
 }
