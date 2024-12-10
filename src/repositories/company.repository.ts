@@ -60,12 +60,50 @@ export class CompanyRepository {
     return admin.company_id;
   }
 
-  async getUsersByCompany(
-    companyId: number,
-  ): Promise<{ user_id: number; name: string }[]> {
+  async getUsersByCompany(companyId: number): Promise<
+    {
+      user_id: number;
+      name: string;
+      manager: { user_id: number; name: string } | null;
+      designation: { id: number; title: string } | null;
+      department: { id: number; name: string } | null;
+    }[]
+  > {
     return this.prisma.user_details.findMany({
-      where: { company_id: companyId },
-      select: { user_id: true, name: true },
+      where: {
+        company_id: companyId,
+        user: {
+          roles: {
+            none: {
+              role: {
+                name: 'Admin', // Exclude users with the Admin role
+              },
+            },
+          },
+        },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        manager: {
+          select: {
+            user_id: true,
+            name: true,
+          },
+        },
+        designation: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
   }
 
