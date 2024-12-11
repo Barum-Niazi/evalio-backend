@@ -33,6 +33,7 @@ export class CompanyService {
   ) {
     const { name, description, address } = createCompanyDto;
 
+    // Step 1: Create the company
     const company = await this.companyRepository.createCompanyWithLogo(
       adminId,
       { name, description, address },
@@ -52,16 +53,51 @@ export class CompanyService {
       company.id,
     );
 
-    // Step 3: Create employees
-    await this.employeeRepository.createManyEmployees(employees);
+    // Step 3: Create employees in the database
+    const createdEmployees =
+      await this.employeeRepository.createManyEmployees(employees);
 
-    // Step 4: Create or update departments
+    // Step 4: Fetch email-to-user_id mapping
+    const emailToUserId: Record<string, number> = {};
+    createdEmployees.createdEmployees.forEach((employee) => {
+      const email = employee.email?.trim().toLowerCase(); // Normalize email
+      if (email) {
+        emailToUserId[email] = employee.user_id; // Store in the object
+      }
+    });
+
+    console.log('Email to User ID mapping:', emailToUserId);
+
+    // Step 5: Create or update departments with resolved head and employee IDs
     for (const department of departments) {
+      const normalizedDepartmentName = department.name.trim().toLowerCase();
+      const headId = department.headEmail
+        ? emailToUserId[department.headEmail.trim().toLowerCase()] || null
+        : null;
+      console.log(`Department head email: ${department.headEmail}`);
+
+      const employeeIds = employees
+        .filter(
+          (emp) =>
+            emp.departmentName.trim().toLowerCase() ===
+            normalizedDepartmentName,
+        )
+        .map((emp) => emailToUserId[emp.email.trim().toLowerCase()])
+        .filter((id) => id !== undefined); // Remove undefined IDs
+
+      console.log(`Employees assigned to ${department.name}:`, employeeIds);
+
+      if (employeeIds.length === 0) {
+        console.warn(
+          `No employees to assign to department: ${department.name}`,
+        );
+      }
+
       await this.departmentRepository.createOrUpdateDepartment(
         department.name,
         company.id,
-        department.headEmail,
-        employees,
+        headId,
+        employeeIds, // Pass resolved user IDs
       );
     }
 
@@ -338,10 +374,15 @@ export class CompanyService {
             });
 
             if (departmentName) {
-              departments.set(departmentName, {
-                name: departmentName,
-                headEmail: departmentHeadEmail || null,
-              });
+              const existingDepartment = departments.get(departmentName);
+              if (!existingDepartment) {
+                departments.set(departmentName, {
+                  name: departmentName,
+                  headEmail: departmentHeadEmail || null,
+                });
+              } else if (departmentHeadEmail) {
+                existingDepartment.headEmail = departmentHeadEmail;
+              }
             }
           }
         })
@@ -381,10 +422,15 @@ export class CompanyService {
         });
 
         if (departmentName) {
-          departments.set(departmentName, {
-            name: departmentName,
-            headEmail: departmentHeadEmail || null,
-          });
+          const existingDepartment = departments.get(departmentName);
+          if (!existingDepartment) {
+            departments.set(departmentName, {
+              name: departmentName,
+              headEmail: departmentHeadEmail || null,
+            });
+          } else if (departmentHeadEmail) {
+            existingDepartment.headEmail = departmentHeadEmail;
+          }
         }
       }
     });

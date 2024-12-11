@@ -52,6 +52,7 @@ export class EmployeeRepository {
   async createManyEmployees(employees: any[]) {
     return this.prisma.$transaction(async (prisma) => {
       const userIds = new Map(); // Store user IDs mapped by email
+      const createdEmployees: { user_id: number; email: string }[] = []; // Accumulate created employee data
 
       // Step 1: Create `users` and `user_auth` entries for all employees
       for (const employee of employees) {
@@ -81,9 +82,16 @@ export class EmployeeRepository {
               },
             },
           },
+          include: {
+            auth: true, // Include email for mapping
+          },
         });
 
         userIds.set(employee.email, user.id); // Map email to user ID
+        createdEmployees.push({
+          user_id: user.id,
+          email: user.auth?.email, // Include email for mapping
+        });
       }
 
       // Step 2: Update employees with their correct manager references
@@ -127,7 +135,35 @@ export class EmployeeRepository {
       return {
         message: 'Employees added successfully',
         length: userIds.size,
+        createdEmployees, // Include created employees in the return
       };
     });
+  }
+
+  async getEmailToUserId(companyId: number): Promise<Map<string, number>> {
+    const employees = await this.prisma.user_details.findMany({
+      where: { company_id: companyId },
+      select: {
+        user_id: true,
+        user: {
+          select: {
+            auth: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Build and return the map
+    return employees.reduce((map, employee) => {
+      const email = employee.user?.auth?.email;
+      if (email) {
+        map[email] = employee.user_id;
+      }
+      return map;
+    }, new Map<string, number>());
   }
 }

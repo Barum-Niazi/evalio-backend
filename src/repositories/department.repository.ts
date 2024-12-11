@@ -34,34 +34,49 @@ export class DepartmentRepository {
   async createOrUpdateDepartment(
     name: string,
     companyId: number,
-    headEmail: string | null,
-    employees: any[],
+    headId: number | null,
+    employeeIds: number[],
   ) {
-    // Resolve headId from the newly created employees
-    const head = headEmail
-      ? employees.find((emp) => emp.email === headEmail)
-      : null;
-
-    return this.prisma.department.upsert({
-      where: {
-        name_company_id: {
+    return this.prisma.department
+      .upsert({
+        where: {
+          name_company_id: {
+            name,
+            company_id: companyId,
+          },
+        },
+        update: {
+          headId,
+        },
+        create: {
           name,
           company_id: companyId,
+          headId,
         },
-      },
-      update: {
-        headId: head?.user_id || null,
-      },
-      create: {
-        name,
-        company_id: companyId,
-        headId: head?.user_id || null,
-      },
-      include: {
-        head: true,
-        employees: true,
-      },
-    });
+        include: {
+          head: true,
+          employees: true,
+        },
+      })
+      .then(async (department) => {
+        // Only update employees if `employeeIds` is not empty
+        if (employeeIds.length > 0) {
+          await this.prisma.user_details.updateMany({
+            where: {
+              user_id: { in: employeeIds },
+            },
+            data: {
+              department_id: department.id,
+            },
+          });
+        } else {
+          console.warn(
+            `No employees to assign to department: ${department.name}`,
+          );
+        }
+
+        return department;
+      });
   }
 
   async getDepartmentsByCompany(companyId: number) {
