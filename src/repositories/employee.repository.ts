@@ -22,8 +22,8 @@ export class EmployeeRepository {
           create: {
             role: {
               connectOrCreate: {
-                where: { name: designation },
-                create: { name: designation },
+                where: { name: 'Employee' }, // Assuming 'Employee' is a general role for all users
+                create: { name: 'Employee' },
               },
             },
           },
@@ -35,6 +35,12 @@ export class EmployeeRepository {
             manager: managerId
               ? { connect: { user_id: managerId } }
               : undefined,
+            designation: {
+              connectOrCreate: {
+                where: { title: designation },
+                create: { title: designation },
+              },
+            },
           },
         },
       },
@@ -140,7 +146,7 @@ export class EmployeeRepository {
     });
   }
 
-  async getEmailToUserId(companyId: number): Promise<Map<string, number>> {
+  async getEmailToEmployeeId(companyId: number): Promise<Map<string, number>> {
     const employees = await this.prisma.user_details.findMany({
       where: { company_id: companyId },
       select: {

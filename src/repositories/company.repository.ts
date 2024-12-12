@@ -65,8 +65,8 @@ export class CompanyRepository {
       user_id: number;
       name: string;
       manager: { user_id: number; name: string } | null;
-      designation: { id: number; title: string } | null;
-      department: { id: number; name: string } | null;
+      designation: { title: string } | null;
+      department: { name: string } | null;
     }[]
   > {
     return this.prisma.user_details.findMany({
@@ -93,13 +93,11 @@ export class CompanyRepository {
         },
         designation: {
           select: {
-            id: true,
             title: true,
           },
         },
         department: {
           select: {
-            id: true,
             name: true,
           },
         },

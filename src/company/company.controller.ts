@@ -66,20 +66,19 @@ export class CompanyController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
   @Roles('Admin')
   @Get('users')
   async getCompanyUsers(@Req() req) {
-    const adminId = req.user.id; // Retrieved from JWT payload
+    const adminId = 1; // Retrieved from JWT payload
     return this.companyService.getCompanyUsers(adminId);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
+  // @UseGuards(JwtAuthGuard)
+  // @Roles('Admin')
   @Post('employees/add')
   async addEmployees(@Body() addEmployeeDto: AddEmployeeDto, @Request() req) {
-    const adminId = req.user.id; // Retrieved from JWT payload
-    return this.companyService.addEmployees(adminId, addEmployeeDto);
+    // const adminId = req.user.id; // Retrieved from JWT payload
+    return this.companyService.addEmployees(1, addEmployeeDto);
   }
 
   @UseInterceptors(

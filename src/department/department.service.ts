@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { DepartmentRepository } from '../repositories/department.repository';
+import { UserRepository } from 'src/repositories/user.repository';
 
 @Injectable()
 export class DepartmentService {
-  constructor(private readonly departmentRepository: DepartmentRepository) {}
+  constructor(
+    private readonly departmentRepository: DepartmentRepository,
+    private readonly userRepository: UserRepository,
+  ) {}
 
   async createDepartment(name: string, companyId: number, headId?: number) {
     return this.departmentRepository.createDepartment(name, companyId, headId);
@@ -19,6 +23,10 @@ export class DepartmentService {
 
   async deleteDepartment(id: number) {
     return this.departmentRepository.deleteDepartment(id);
+  }
+
+  async getUserIdsByEmails(emails: string[]) {
+    return this.userRepository.getUserIdsByEmails(emails);
   }
 
   async addEmployeesToDepartment(departmentId: number, employeeIds: number[]) {

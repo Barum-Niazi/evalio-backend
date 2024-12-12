@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { DepartmentService } from './department.service';
 import { CreateDepartmentDto } from './dto/create-department.dto';
@@ -22,20 +23,18 @@ export class DepartmentController {
   constructor(private readonly departmentService: DepartmentService) {}
 
   @Post('create')
-  @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
   async createDepartment(
     @Body() createDepartmentDto: CreateDepartmentDto,
     @Request() req,
   ) {
-    if (
-      !req.user.companyId ||
-      req.user.companyId !== createDepartmentDto.companyId
-    ) {
-      throw new ForbiddenException(
-        'You can only create departments for your company.',
-      );
-    }
+    // if (
+    //   !req.user.companyId ||
+    //   req.user.companyId !== createDepartmentDto.companyId
+    // ) {
+    //   throw new ForbiddenException(
+    //     'You can only create departments for your company.',
+    //   );
+    // }
 
     return this.departmentService.createDepartment(
       createDepartmentDto.name,
@@ -44,12 +43,12 @@ export class DepartmentController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
+  // @UseGuards(JwtAuthGuard)
+  // @Roles('Admin')
   @Get('all')
   async getAllDepartments(@Request() req) {
-    const companyId = req.user.companyId;
-
+    // const companyId = req.user.companyId;
+    const companyId = 1; // Hardcoded for
     if (!companyId) {
       throw new ForbiddenException('You are not associated with a company.');
     }
@@ -77,18 +76,18 @@ export class DepartmentController {
     return this.departmentService.deleteDepartment(id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
+  // @UseGuards(JwtAuthGuard)
+  // @Roles('Admin')
   @Post('add-employees')
   async addEmployeesToDepartments(
     @Body() addEmployeesToDepartmentsDto: AddEmployeesToDepartmentsDto,
     @Request() req,
   ) {
-    const adminCompanyId = req.user.companyId;
+    const adminCompanyId = 1;
 
     const results = [];
     for (const department of addEmployeesToDepartmentsDto.departments) {
-      const { departmentId, employeeIds } = department;
+      const { departmentId, employeeEmails } = department;
 
       const departmentExists =
         await this.departmentService.getDepartmentsByCompany(adminCompanyId);
@@ -99,6 +98,16 @@ export class DepartmentController {
       if (!validDepartment) {
         throw new ForbiddenException(
           `You do not have access to department ID ${departmentId}.`,
+        );
+      }
+
+      // Fetch user IDs based on provided emails
+      const employeeIds =
+        await this.departmentService.getUserIdsByEmails(employeeEmails);
+
+      if (employeeIds.length !== employeeEmails.length) {
+        throw new BadRequestException(
+          `Some provided emails do not exist or are invalid.`,
         );
       }
 

@@ -141,4 +141,13 @@ export class UserRepository {
       },
     });
   }
+
+  async getUserIdsByEmails(emails: string[]): Promise<number[]> {
+    const users = await this.prisma.user_auth.findMany({
+      where: { email: { in: emails } },
+      select: { user_id: true },
+    });
+
+    return users.map((user) => user.user_id);
+  }
 }
