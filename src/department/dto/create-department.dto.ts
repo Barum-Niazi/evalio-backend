@@ -5,9 +5,6 @@ export class CreateDepartmentDto {
   name: string;
 
   @IsInt()
-  companyId: number;
-
-  @IsInt()
   @IsOptional()
   headId?: number;
 }

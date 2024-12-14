@@ -77,14 +77,18 @@ export class CompanyService {
       console.log(`Department head email: ${department.headEmail}`);
 
       const employeeIds = employees
-        .filter(
-          (emp) =>
-            emp.departmentName.trim().toLowerCase() ===
-            normalizedDepartmentName,
-        )
+        .filter((emp) => {
+          // Ensure departmentName exists before accessing .trim()
+          if (emp.departmentName && emp.email) {
+            return (
+              emp.departmentName.trim().toLowerCase() ===
+              normalizedDepartmentName
+            );
+          }
+          return false; // Skip undefined or null departmentName/email
+        })
         .map((emp) => emailToUserId[emp.email.trim().toLowerCase()])
         .filter((id) => id !== undefined); // Remove undefined IDs
-
       console.log(`Employees assigned to ${department.name}:`, employeeIds);
 
       if (employeeIds.length === 0) {
@@ -111,6 +115,13 @@ export class CompanyService {
   async getCompanyUsers(adminId: number) {
     const companyId = await this.companyRepository.getAdminCompanyId(adminId);
     return this.companyRepository.getUsersByCompany(companyId);
+  }
+
+  async getCompanyStats(adminId: number) {
+    const companyId = await this.companyRepository.getAdminCompanyId(adminId);
+    const data = await this.companyRepository.getCompanyStats(companyId);
+
+    return data;
   }
 
   async addEmployees(adminId: number, addEmployeeDto: { employees: any[] }) {

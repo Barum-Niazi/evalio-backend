@@ -66,6 +66,7 @@ export class CompanyController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
   @Roles('Admin')
   @Get('users')
   async getCompanyUsers(@Req() req) {
@@ -73,11 +74,11 @@ export class CompanyController {
     return this.companyService.getCompanyUsers(adminId);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Roles('Admin')
+  @UseGuards(JwtAuthGuard)
+  @Roles('Admin')
   @Post('employees/add')
   async addEmployees(@Body() addEmployeeDto: AddEmployeeDto, @Request() req) {
-    // const adminId = req.user.id; // Retrieved from JWT payload
+    const adminId = req.user.id; // Retrieved from JWT payload
     return this.companyService.addEmployees(1, addEmployeeDto);
   }
 
@@ -115,5 +116,13 @@ export class CompanyController {
   async getOrganizationalChart(@Request() req) {
     const companyId = req.user.companyId;
     return this.companyService.getOrganizationalChart(companyId);
+  }
+
+  @Get('dashboard')
+  @UseGuards(JwtAuthGuard)
+  @Roles('Admin')
+  async getCompanyDashboard(@Request() req) {
+    const companyId = req.user.companyId;
+    return this.companyService.getCompanyStats(companyId);
   }
 }

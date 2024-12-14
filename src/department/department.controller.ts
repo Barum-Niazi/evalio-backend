@@ -22,6 +22,8 @@ import { AddEmployeesToDepartmentsDto } from './dto/add-employees.dto';
 export class DepartmentController {
   constructor(private readonly departmentService: DepartmentService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Roles('Admin')
   @Post('create')
   async createDepartment(
     @Body() createDepartmentDto: CreateDepartmentDto,
@@ -35,20 +37,21 @@ export class DepartmentController {
     //     'You can only create departments for your company.',
     //   );
     // }
+    // companyId = req.user.companyId; // Hardcoded for now
 
     return this.departmentService.createDepartment(
       createDepartmentDto.name,
-      createDepartmentDto.companyId,
+      req.user.companyId,
       createDepartmentDto.headId,
     );
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Roles('Admin')
+  @UseGuards(JwtAuthGuard)
+  @Roles('Admin')
   @Get('all')
   async getAllDepartments(@Request() req) {
-    // const companyId = req.user.companyId;
-    const companyId = 1; // Hardcoded for
+    const companyId = req.user.companyId;
+    // const companyId = 1; // Hardcoded for
     if (!companyId) {
       throw new ForbiddenException('You are not associated with a company.');
     }
@@ -76,14 +79,14 @@ export class DepartmentController {
     return this.departmentService.deleteDepartment(id);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Roles('Admin')
+  @UseGuards(JwtAuthGuard)
+  @Roles('Admin')
   @Post('add-employees')
   async addEmployeesToDepartments(
     @Body() addEmployeesToDepartmentsDto: AddEmployeesToDepartmentsDto,
     @Request() req,
   ) {
-    const adminCompanyId = 1;
+    const adminCompanyId = req.user.companyId;
 
     const results = [];
     for (const department of addEmployeesToDepartmentsDto.departments) {

@@ -105,6 +105,22 @@ export class CompanyRepository {
     });
   }
 
+  async getCompanyStats(companyId: number) {
+    const [departmentCount, employeeCount] = await this.prisma.$transaction([
+      this.prisma.department.count({
+        where: { company_id: companyId },
+      }),
+      this.prisma.user_details.count({
+        where: { company_id: companyId },
+      }),
+    ]);
+
+    return {
+      departments: departmentCount,
+      employees: employeeCount,
+    };
+  }
+
   async getOrganizationalData(companyId: number) {
     return this.prisma.user_details.findMany({
       where: { company_id: companyId },
