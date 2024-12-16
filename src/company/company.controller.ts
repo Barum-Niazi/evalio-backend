@@ -4,11 +4,8 @@ import {
   Post,
   UseGuards,
   Body,
-  UploadedFile,
   UseInterceptors,
   Request,
-  ForbiddenException,
-  Req,
   BadRequestException,
   Get,
   UploadedFiles,
@@ -16,9 +13,8 @@ import {
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorators/roles.decorators';
-import { AddEmployeeDto } from './dto/add-employee.dto';
 
 @Controller('company')
 export class CompanyController {
@@ -64,50 +60,6 @@ export class CompanyController {
       logo,
       employeesFile,
     );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
-  @Get('users')
-  async getCompanyUsers(@Req() req) {
-    const adminId = 1; // Retrieved from JWT payload
-    return this.companyService.getCompanyUsers(adminId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
-  @Post('employees/add')
-  async addEmployees(@Body() addEmployeeDto: AddEmployeeDto, @Request() req) {
-    const adminId = req.user.id; // Retrieved from JWT payload
-    return this.companyService.addEmployees(1, addEmployeeDto);
-  }
-
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: {
-        fileSize: 5 * 1024 * 1024, // Limit file size to 5MB
-      },
-      fileFilter: (req, file, callback) => {
-        // Allow only Excel or CSV files
-        if (!file.originalname.match(/\.(xlsx|xls|csv)$/)) {
-          return callback(
-            new BadRequestException('Only Excel or CSV files are allowed!'),
-            false,
-          );
-        }
-        callback(null, true); // Accept the file
-      },
-    }),
-  )
-  @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
-  @Post('employees/upload')
-  async uploadEmployees(@UploadedFile() file: Express.Multer.File, @Req() req) {
-    if (!file) {
-      throw new BadRequestException('File must be provided.');
-    }
-    const adminId = req.user.id;
-    return this.companyService.addEmployeesFromFile(adminId, file);
   }
 
   @Get('org-chart')

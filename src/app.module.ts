@@ -12,6 +12,9 @@ import { CompanyModule } from './company/company.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { DepartmentController } from './department/department.controller';
 import { DepartmentModule } from './department/department.module';
+import { EmployeeController } from './employee/employee.controller';
+import { EmployeeService } from './employee/employee.service';
+import { EmployeeModule } from './employee/employee.module';
 
 @Module({
   imports: [
@@ -24,6 +27,7 @@ import { DepartmentModule } from './department/department.module';
     UserModule,
     CompanyModule,
     DepartmentModule,
+    EmployeeModule,
   ],
   controllers: [
     AppController,
@@ -31,6 +35,7 @@ import { DepartmentModule } from './department/department.module';
     UserController,
     CompanyController,
     DepartmentController,
+    EmployeeController,
   ],
   providers: [AppService],
 })

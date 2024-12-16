@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -171,5 +171,61 @@ export class EmployeeRepository {
       }
       return map;
     }, new Map<string, number>());
+  }
+
+  async getEmployeesByCompany(companyId: number): Promise<
+    {
+      user_id: number;
+      name: string;
+      manager: { user_id: number; name: string } | null;
+      designation: { title: string } | null;
+      department: { name: string } | null;
+    }[]
+  > {
+    return this.prisma.user_details.findMany({
+      where: {
+        company_id: companyId,
+        user: {
+          roles: {
+            none: {
+              role: {
+                name: 'Admin', // Exclude users with the Admin role
+              },
+            },
+          },
+        },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        manager: {
+          select: {
+            user_id: true,
+            name: true,
+          },
+        },
+        designation: {
+          select: {
+            title: true,
+          },
+        },
+        department: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getAdminCompanyId(adminId: number): Promise<number | null> {
+    const admin = await this.prisma.user_details.findUnique({
+      where: { user_id: adminId },
+      select: { company_id: true },
+    });
+    if (!admin || !admin.company_id) {
+      throw new ForbiddenException('Admin is not associated with any company.');
+    }
+    return admin.company_id;
   }
 }
