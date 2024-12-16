@@ -29,16 +29,6 @@ export class DepartmentController {
     @Body() createDepartmentDto: CreateDepartmentDto,
     @Request() req,
   ) {
-    // if (
-    //   !req.user.companyId ||
-    //   req.user.companyId !== createDepartmentDto.companyId
-    // ) {
-    //   throw new ForbiddenException(
-    //     'You can only create departments for your company.',
-    //   );
-    // }
-    // companyId = req.user.companyId; // Hardcoded for now
-
     return this.departmentService.createDepartment(
       createDepartmentDto.name,
       req.user.companyId,
