@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { EmployeeRepository } from 'src/repositories/employee.repository';
+import { EmployeeRepository } from 'src/employee/employee.repository';
 import { EmailService } from 'src/services/email.service';
 import * as argon2 from 'argon2';
 import { Readable } from 'stream';

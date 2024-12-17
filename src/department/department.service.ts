@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DepartmentRepository } from '../repositories/department.repository';
-import { UserRepository } from 'src/repositories/user.repository';
+import { DepartmentRepository } from './department.repository';
+import { UserRepository } from 'src/user/user.repository';
 
 @Injectable()
 export class DepartmentService {

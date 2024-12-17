@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { CompanyController } from './company.controller';
 import { CompanyService } from './company.service';
-import { CompanyRepository } from 'src/repositories/company.repository';
-import { EmployeeRepository } from 'src/repositories/employee.repository';
+import { CompanyRepository } from 'src/company/company.repository';
+import { EmployeeRepository } from 'src/employee/employee.repository';
 import { EmailService } from 'src/services/email.service';
-import { DepartmentRepository } from 'src/repositories/department.repository';
+import { DepartmentRepository } from 'src/department/department.repository';
 
 @Module({
   controllers: [CompanyController],

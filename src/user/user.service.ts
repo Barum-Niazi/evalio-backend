@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../repositories/user.repository';
+import { UserRepository } from './user.repository';
 import * as argon2 from 'argon2'; // Import Argon2
 
 @Injectable()

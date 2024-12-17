@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
-import { CompanyRepository } from '../repositories/company.repository';
-import { EmployeeRepository } from 'src/repositories/employee.repository';
+import { CompanyRepository } from './company.repository';
+import { EmployeeRepository } from 'src/employee/employee.repository';
 import { EmailService } from 'src/services/email.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as ExcelJS from 'exceljs';
 import * as csvParser from 'csv-parser';
 import { Readable } from 'stream';
-import { DepartmentRepository } from 'src/repositories/department.repository';
+import { DepartmentRepository } from 'src/department/department.repository';
 
 @Injectable()
 export class CompanyService {
