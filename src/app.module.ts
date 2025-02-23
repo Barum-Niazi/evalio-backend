@@ -15,6 +15,8 @@ import { DepartmentModule } from './department/department.module';
 import { EmployeeController } from './employee/employee.controller';
 import { EmployeeService } from './employee/employee.service';
 import { EmployeeModule } from './employee/employee.module';
+import { FeedbackController } from './feedback/feedback.controller';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -28,6 +30,7 @@ import { EmployeeModule } from './employee/employee.module';
     CompanyModule,
     DepartmentModule,
     EmployeeModule,
+    FeedbackModule,
   ],
   controllers: [
     AppController,
@@ -36,6 +39,7 @@ import { EmployeeModule } from './employee/employee.module';
     CompanyController,
     DepartmentController,
     EmployeeController,
+    FeedbackController,
   ],
   providers: [AppService],
 })
