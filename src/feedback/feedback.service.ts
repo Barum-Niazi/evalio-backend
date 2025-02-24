@@ -1,55 +1,56 @@
 import { Injectable } from '@nestjs/common';
 import { FeedbackRepository } from './feedback.repository';
-// import { TagsService } from '../tags/tags.service';
+import { TagsService } from '../tags/tags.service';
 import { CreateFeedbackDto, UpdateFeedbackDto } from './dto/feedback.dto';
 
 @Injectable()
 export class FeedbackService {
   constructor(
     private readonly feedbackRepo: FeedbackRepository,
-    // private readonly tagsService: TagsService, // Using TagsService for tagging operations
+    private readonly tagsService: TagsService,
   ) {}
 
   async createFeedback(dto: CreateFeedbackDto) {
+    // Step 1: Create Feedback Entry
     const feedback = await this.feedbackRepo.createFeedback(dto);
 
-    // Delegate tagging to TagsService
-    // if (dto.tag_ids?.length) {
-    //   await this.tagsService.tagEntity(feedback.id, 'feedback', dto.tag_ids);
-    // }
+    // Step 2: Automatically create a tag for this feedback
+    await this.tagsService.autoCreateTagForEntity({
+      entityId: feedback.id,
+      entityType: 'feedback',
+      entityName: dto.feedbackText,
+      tagIds: [],
+    });
+
+    // Step 3: Associate feedback with provided tags (if any)
+    if (dto.tagIds?.length) {
+      await this.tagsService.tagEntity({
+        entityId: feedback.id,
+        entityType: 'feedback',
+        tagIds: dto.tagIds,
+        entityName: '',
+      });
+    }
 
     return feedback;
   }
 
   async updateFeedback(id: number, dto: UpdateFeedbackDto) {
-    const feedback = await this.feedbackRepo.updateFeedback(id, dto);
-
-    // Update tags using TagsService
-    // if (dto.tag_ids) {
-    //   await this.tagsService.untagEntity(id, 'feedback', dto.tag_ids);
-    //   await this.tagsService.tagEntity(id, 'feedback', dto.tag_ids);
-    // }
-
-    return feedback;
+    return this.feedbackRepo.updateFeedback(id, dto);
   }
 
   async getFeedbackById(id: number) {
     const feedback = await this.feedbackRepo.getFeedbackById(id);
-    // const tags = await this.tagsService.getTagsForEntity(id, 'feedback'); // Fetch tags separately
-    // return { ...feedback, tags };
-    return feedback;
-  }
-
-  async getUserFeedback(userId: number, type: 'sent' | 'received') {
-    return this.feedbackRepo.getUserFeedback(userId, type);
+    const tags = await this.tagsService.getTagsForEntity(id, 'feedback');
+    return { ...feedback, tags };
   }
 
   async getAllFeedback() {
     return this.feedbackRepo.getAllFeedback();
   }
 
-  async deleteFeedback(id: number) {
-    // await this.tagsService.removeTagsFromEntity(id, 'feedback'); // Remove tags before deleting feedback
-    return this.feedbackRepo.deleteFeedback(id);
-  }
+  //   async deleteFeedback(id: number) {
+  //     await this.tagsService.removeTagsFromEntity(id, 'feedback');
+  //     return this.feedbackRepo.deleteFeedback(id);
+  //   }
 }

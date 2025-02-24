@@ -23,12 +23,13 @@ export class TagEntityDto {
   @IsString()
   entityType: string; // Example: "feedback", "meeting", "okr"
 
-  @IsArray()
-  @IsInt({ each: true }) // Ensures all tagIds are integers
-  tagIds: number[];
-
   @IsString()
-  entityName: string;
+  entityName: string; //
+
+  @IsArray()
+  @IsOptional() //
+  @IsInt({ each: true })
+  tagIds?: number[];
 
   @IsInt()
   @IsOptional()

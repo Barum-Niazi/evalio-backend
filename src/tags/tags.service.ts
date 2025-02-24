@@ -21,11 +21,18 @@ export class TagsService {
 
   // Automatically create a tag when a new entity (Feedback, OKR, etc.) is created
   async autoCreateTagForEntity(dto: TagEntityDto) {
-    let existingTag = await this.tagsRepo.findTagByName(dto.entityName);
+    if (!dto.entityName) {
+      throw new Error('entityName is required for auto-tagging.');
+    }
+
+    // Generate a unique tag name using entity name + entity ID
+    const uniqueTagName = `${dto.entityName} #${dto.entityId}`;
+
+    let existingTag = await this.tagsRepo.findTagByName(uniqueTagName);
 
     if (!existingTag) {
       existingTag = await this.tagsRepo.createTag(
-        dto.entityName,
+        uniqueTagName,
         `Auto-generated tag for ${dto.entityType}`,
       );
     }

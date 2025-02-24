@@ -5,81 +5,76 @@ import {
   IsString,
   MinLength,
   IsArray,
-  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 export class CreateFeedbackDto {
   @IsString()
   @MinLength(5, { message: 'Feedback text must be at least 5 characters long' })
-  feedback_text: string;
+  feedbackText: string;
 
   @IsBoolean()
   @IsOptional()
-  is_anonymous?: boolean;
+  isAnonymous?: boolean;
 
   @IsInt()
-  visibility_id: number; // Refers to visibility settings in `lookup`
+  visibilityId: number;
 
   @IsInt()
-  sender_id: number;
+  senderId: number;
 
   @IsInt()
-  receiver_id: number;
+  receiverId: number;
 
   @IsArray()
   @IsOptional()
   @IsInt({ each: true })
-  tag_ids?: number[]; // General tags for this feedback
+  tagIds?: number[];
 
   @IsArray()
   @IsOptional()
   @IsInt({ each: true })
-  feedback_tag_ids?: number[]; // IDs of other feedback to tag this feedback with
+  feedbackTagIds?: number[];
 
   @IsArray()
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => TaggedEntityDto)
-  tagged_entities?: TaggedEntityDto[]; // Tagging with other system entities
+  taggedEntities?: { entityId: number; entityType: string }[];
 }
 
 export class UpdateFeedbackDto {
   @IsString()
   @IsOptional()
   @MinLength(5, { message: 'Feedback text must be at least 5 characters long' })
-  feedback_text?: string;
+  feedbackText?: string;
 
   @IsBoolean()
   @IsOptional()
-  is_anonymous?: boolean;
+  isAnonymous?: boolean;
 
   @IsInt()
   @IsOptional()
-  visibility_id?: number;
+  visibilityId?: number;
 
   @IsArray()
   @IsOptional()
   @IsInt({ each: true })
-  tag_ids?: number[]; // Updated general tags
-
-  @IsArray()
-  @IsOptional()
-  @IsInt({ each: true })
-  feedback_tag_ids?: number[]; // Updated feedback-to-feedback tagging
-
-  @IsArray()
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => TaggedEntityDto)
-  tagged_entities?: TaggedEntityDto[]; // Updated tagged system entities
+  tagIds?: number[];
 }
 
-// DTO for tagging with other entities (OKRs, Meetings, etc.)
-export class TaggedEntityDto {
+export class GetFeedbackDto {
   @IsInt()
-  entity_id: number; // ID of the tagged entity
+  @IsOptional()
+  senderId?: number;
 
-  @IsString()
-  entity_type: string; // Type of the tagged entity (e.g., "okr", "meeting")
+  @IsInt()
+  @IsOptional()
+  receiverId?: number;
+
+  @IsInt()
+  @IsOptional()
+  visibilityId?: number;
+
+  @IsArray()
+  @IsOptional()
+  @IsInt({ each: true })
+  tagIds?: number[];
 }

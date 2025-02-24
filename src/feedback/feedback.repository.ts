@@ -8,7 +8,13 @@ export class FeedbackRepository {
 
   async createFeedback(dto: CreateFeedbackDto) {
     return this.prisma.feedback.create({
-      data: { ...dto },
+      data: {
+        feedback_text: dto.feedbackText,
+        is_anonymous: dto.isAnonymous,
+        visibility_id: dto.visibilityId,
+        sender_id: dto.senderId,
+        receiver_id: dto.receiverId,
+      },
     });
   }
 
@@ -18,7 +24,11 @@ export class FeedbackRepository {
 
     return this.prisma.feedback.update({
       where: { id },
-      data: dto,
+      data: {
+        feedback_text: dto.feedbackText,
+        is_anonymous: dto.isAnonymous,
+        visibility_id: dto.visibilityId,
+      },
     });
   }
 
