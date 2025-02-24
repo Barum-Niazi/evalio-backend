@@ -1,4 +1,19 @@
-import { Controller } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { FeedbackService } from './feedback.service';
+import { Roles } from 'src/decorators/roles.decorators';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { CreateFeedbackDto, UpdateFeedbackDto } from './dto/feedback.dto';
 
 @Controller('feedback')
 @UseGuards(JwtAuthGuard) // Require authentication

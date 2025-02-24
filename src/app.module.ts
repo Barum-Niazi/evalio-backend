@@ -17,6 +17,7 @@ import { EmployeeService } from './employee/employee.service';
 import { EmployeeModule } from './employee/employee.module';
 import { FeedbackController } from './feedback/feedback.controller';
 import { FeedbackModule } from './feedback/feedback.module';
+import { TagsModule } from './tags/tags.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     DepartmentModule,
     EmployeeModule,
     FeedbackModule,
+    TagsModule,
   ],
   controllers: [
     AppController,
