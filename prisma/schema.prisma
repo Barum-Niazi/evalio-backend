@@ -153,8 +153,8 @@ model feedback {
   id              Int       @id @default(autoincrement())
   feedback_text   String
   is_anonymous    Boolean   @default(false)
-  visibility_id   Int       // Foreign key to `lookup` for visibility
-  visibility      lookup    @relation(fields: [visibility_id], references: [id])
+  visibility_id   Int?       // Foreign key to `lookup` for visibility
+  visibility      lookup?    @relation(fields: [visibility_id], references: [id])
   sender_id       Int
   receiver_id     Int
   sender          user_details @relation("feedback_given", fields: [sender_id], references: [user_id])

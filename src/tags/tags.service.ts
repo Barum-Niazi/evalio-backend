@@ -68,4 +68,8 @@ export class TagsService {
   async getEntitiesByTag(tagId: number) {
     return this.tagsRepo.getEntitiesByTag(tagId);
   }
+
+  async removeTagsFromEntity(entityId: number, entityType: string) {
+    return this.tagsRepo.removeTagsFromEntity(entityId, entityType);
+  }
 }

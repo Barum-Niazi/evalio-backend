@@ -30,7 +30,7 @@ export class FeedbackController {
 
   @Get(':id')
   async getFeedbackById(@Param('id') id: number) {
-    return this.feedbackService.getFeedbackById(id);
+    return this.feedbackService.getFeedbackById(Number(id));
   }
 
   @Patch(':id')

@@ -28,7 +28,7 @@ export class FeedbackService {
         entityId: feedback.id,
         entityType: 'feedback',
         tagIds: dto.tagIds,
-        entityName: '',
+        entityName: dto.feedbackText,
       });
     }
 
@@ -49,8 +49,8 @@ export class FeedbackService {
     return this.feedbackRepo.getAllFeedback();
   }
 
-  //   async deleteFeedback(id: number) {
-  //     await this.tagsService.removeTagsFromEntity(id, 'feedback');
-  //     return this.feedbackRepo.deleteFeedback(id);
-  //   }
+  async deleteFeedback(id: number) {
+    await this.tagsService.removeTagsFromEntity(id, 'feedback');
+    return this.feedbackRepo.deleteFeedback(id);
+  }
 }

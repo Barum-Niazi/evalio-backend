@@ -65,4 +65,10 @@ export class TagsRepository {
       include: { tag: true }, // Fetch related tag details
     });
   }
+
+  async removeTagsFromEntity(entityId: number, entityType: string) {
+    return this.prisma.tagged_entities.deleteMany({
+      where: { entity_id: entityId, entity_type: entityType },
+    });
+  }
 }

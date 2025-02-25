@@ -11,9 +11,9 @@ export class FeedbackRepository {
       data: {
         feedback_text: dto.feedbackText,
         is_anonymous: dto.isAnonymous,
-        visibility_id: dto.visibilityId,
         sender_id: dto.senderId,
         receiver_id: dto.receiverId,
+        visibility_id: null,
       },
     });
   }
@@ -27,7 +27,7 @@ export class FeedbackRepository {
       data: {
         feedback_text: dto.feedbackText,
         is_anonymous: dto.isAnonymous,
-        visibility_id: dto.visibilityId,
+        // visibility_id: dto.visibilityId,
       },
     });
   }
