@@ -3,10 +3,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { notifications } from '@prisma/client';
 
 @Injectable()
-export class notificationsRepository {
+export class NotificationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createnotifications(
+  async createNotification(
     userId: number,
     typeId: number,
     message: string,
@@ -24,7 +24,7 @@ export class notificationsRepository {
     });
   }
 
-  async getUsernotificationss(userId: number): Promise<notifications[]> {
+  async getUserNotifications(userId: number): Promise<notifications[]> {
     return this.prisma.notifications.findMany({
       where: { user_id: userId },
       orderBy: { id: 'desc' },
@@ -38,7 +38,7 @@ export class notificationsRepository {
     });
   }
 
-  async deletenotifications(notificationsId: number): Promise<void> {
+  async deleteNotification(notificationsId: number): Promise<void> {
     await this.prisma.notifications.delete({ where: { id: notificationsId } });
   }
 }
