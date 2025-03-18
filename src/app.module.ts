@@ -18,6 +18,13 @@ import { EmployeeModule } from './employee/employee.module';
 import { FeedbackController } from './feedback/feedback.controller';
 import { FeedbackModule } from './feedback/feedback.module';
 import { TagsModule } from './tags/tags.module';
+import { NotificationController } from './notification/notification.controller';
+import { NotificationModule } from './notification/notification.module';
+import { NotifcationService } from './notifcation/notifcation.service';
+import { OkrsController } from './okrs/okrs.controller';
+import { OkrsService } from './okrs/okrs.service';
+import { OkrsModule } from './okrs/okrs.module';
+import { MeetingsModule } from './meetings/meetings.module';
 
 @Module({
   imports: [
@@ -33,6 +40,9 @@ import { TagsModule } from './tags/tags.module';
     EmployeeModule,
     FeedbackModule,
     TagsModule,
+    NotificationModule,
+    OkrsModule,
+    MeetingsModule,
   ],
   controllers: [
     AppController,
@@ -42,7 +52,9 @@ import { TagsModule } from './tags/tags.module';
     DepartmentController,
     EmployeeController,
     FeedbackController,
+    NotificationController,
+    OkrsController,
   ],
-  providers: [AppService],
+  providers: [AppService, NotifcationService, OkrsService],
 })
 export class AppModule {}
