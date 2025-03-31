@@ -1,69 +1,83 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateFeedbackDto, UpdateFeedbackDto } from './dto/feedback.dto';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { feedback } from '@prisma/client';
 
 @Injectable()
 export class FeedbackRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createFeedback(dto: CreateFeedbackDto) {
+  /**
+   * ✅ Create new feedback entry in the database.
+   */
+  async createFeedback(
+    feedbackText: string,
+    senderId: number,
+    receiverId: number,
+    isAnonymous: boolean,
+    visibilityId: number,
+  ): Promise<feedback> {
     return this.prisma.feedback.create({
       data: {
-        feedback_text: dto.feedbackText,
-        is_anonymous: dto.isAnonymous,
-        sender_id: dto.senderId,
-        receiver_id: dto.receiverId,
-        visibility_id: null,
+        feedback_text: feedbackText,
+        is_anonymous: isAnonymous,
+        visibility_id: visibilityId,
+        sender_id: senderId,
+        receiver_id: receiverId,
+        audit: {},
       },
     });
   }
 
-  async updateFeedback(id: number, dto: UpdateFeedbackDto) {
-    const feedback = await this.prisma.feedback.findUnique({ where: { id } });
-    if (!feedback) throw new NotFoundException('Feedback not found');
-
-    return this.prisma.feedback.update({
-      where: { id },
-      data: {
-        feedback_text: dto.feedbackText,
-        is_anonymous: dto.isAnonymous,
-        // visibility_id: dto.visibilityId,
-      },
-    });
-  }
-
-  async getFeedbackById(id: number) {
+  /**
+   * ✅ Fetch a specific feedback entry by ID.
+   */
+  async getFeedbackById(feedbackId: number): Promise<feedback | null> {
     return this.prisma.feedback.findUnique({
-      where: { id },
-      include: {
-        sender: true,
-        receiver: true,
-      },
+      where: { id: feedbackId },
     });
   }
 
-  async getUserFeedback(userId: number, type: 'sent' | 'received') {
-    const condition =
-      type === 'sent' ? { sender_id: userId } : { receiver_id: userId };
+  /**
+   * ✅ Fetch all feedback with optional sender/receiver filters.
+   */
+  async getAllFeedback(
+    senderId?: number,
+    receiverId?: number,
+  ): Promise<feedback[]> {
     return this.prisma.feedback.findMany({
-      where: condition,
-      include: {
-        sender: true,
-        receiver: true,
+      where: {
+        sender_id: senderId ? senderId : undefined,
+        receiver_id: receiverId ? receiverId : undefined,
+      },
+      orderBy: { id: 'desc' }, // Latest feedback first
+    });
+  }
+
+  /**
+   * ✅ Update feedback entry.
+   */
+  async updateFeedback(
+    feedbackId: number,
+    feedbackText?: string,
+    isAnonymous?: boolean,
+    visibilityId?: number,
+  ): Promise<feedback> {
+    return this.prisma.feedback.update({
+      where: { id: feedbackId },
+      data: {
+        feedback_text: feedbackText,
+        is_anonymous: isAnonymous,
+        visibility_id: visibilityId,
       },
     });
   }
 
-  async getAllFeedback() {
-    return this.prisma.feedback.findMany({
-      include: {
-        sender: true,
-        receiver: true,
-      },
+  /**
+   * ✅ Delete feedback entry.
+   */
+  async deleteFeedback(feedbackId: number): Promise<void> {
+    await this.prisma.feedback.delete({
+      where: { id: feedbackId },
     });
-  }
-
-  async deleteFeedback(id: number) {
-    return this.prisma.feedback.delete({ where: { id } });
   }
 }

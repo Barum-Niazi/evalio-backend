@@ -4,45 +4,58 @@ import {
   Get,
   Patch,
   Delete,
-  Param,
   Body,
+  Param,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { FeedbackService } from './feedback.service';
-import { CreateFeedbackDto, UpdateFeedbackDto } from './dto/feedback.dto';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { CreateFeedbackDto } from './dto/feedback.dto';
+import { UpdateFeedbackDto } from './dto/feedback.dto';
+import { GetFeedbackDto } from './dto/feedback.dto';
+import { DeleteFeedbackDto } from './dto/feedback.dto';
+import { ListFeedbackDto } from './dto/feedback.dto';
 
 @Controller('feedback')
-@UseGuards(JwtAuthGuard) // Requires authentication
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
+  /**
+   * ✅ Create new feedback
+   */
   @Post()
   async createFeedback(@Body() createFeedbackDto: CreateFeedbackDto) {
     return this.feedbackService.createFeedback(createFeedbackDto);
   }
 
+  /**
+   * ✅ Fetch a single feedback entry by ID
+   */
+  @Get('/:feedbackId')
+  async getFeedback(@Param() getFeedbackDto: GetFeedbackDto) {
+    return this.feedbackService.getFeedback(getFeedbackDto);
+  }
+
+  /**
+   * ✅ Fetch all feedback with optional filters
+   */
   @Get()
-  async getAllFeedback() {
-    return this.feedbackService.getAllFeedback();
+  async listFeedback(@Query() listFeedbackDto: ListFeedbackDto) {
+    return this.feedbackService.listFeedback(listFeedbackDto);
   }
 
-  @Get(':id')
-  async getFeedbackById(@Param('id') id: number) {
-    return this.feedbackService.getFeedbackById(Number(id));
+  /**
+   * ✅ Update an existing feedback entry
+   */
+  @Patch()
+  async updateFeedback(@Body() updateFeedbackDto: UpdateFeedbackDto) {
+    return this.feedbackService.updateFeedback(updateFeedbackDto);
   }
 
-  @Patch(':id')
-  async updateFeedback(
-    @Param('id') id: number,
-    @Body() updateFeedbackDto: UpdateFeedbackDto,
-  ) {
-    return this.feedbackService.updateFeedback(id, updateFeedbackDto);
+  /**
+   * ✅ Delete a feedback entry
+   */
+  @Delete()
+  async deleteFeedback(@Body() deleteFeedbackDto: DeleteFeedbackDto) {
+    return this.feedbackService.deleteFeedback(deleteFeedbackDto);
   }
-
-  //   @Delete(':id')
-  //   async deleteFeedback(@Param('id') id: number) {
-  //     return this.feedbackService.deleteFeedback(id);
-  //   }
 }

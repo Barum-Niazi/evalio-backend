@@ -1,49 +1,42 @@
 import {
-  IsBoolean,
   IsInt,
-  IsOptional,
   IsString,
   MinLength,
-  IsArray,
+  IsOptional,
+  IsBoolean,
 } from 'class-validator';
 
+/**
+ * ✅ DTO for creating new feedback
+ */
 export class CreateFeedbackDto {
   @IsString()
-  @MinLength(5, { message: 'Feedback text must be at least 5 characters long' })
+  @MinLength(5, { message: 'Feedback must be at least 5 characters long' })
   feedbackText: string;
 
   @IsBoolean()
-  @IsOptional()
-  isAnonymous?: boolean;
+  isAnonymous: boolean;
 
   @IsInt()
-  visibilityId: number;
+  visibilityId: number; // Foreign key to lookup visibility
 
   @IsInt()
-  senderId: number;
+  senderId: number; // User ID of the sender
 
   @IsInt()
-  receiverId: number;
-
-  @IsArray()
-  @IsOptional()
-  @IsInt({ each: true })
-  tagIds?: number[];
-
-  @IsArray()
-  @IsOptional()
-  @IsInt({ each: true })
-  feedbackTagIds?: number[];
-
-  @IsArray()
-  @IsOptional()
-  taggedEntities?: { entityId: number; entityType: string }[];
+  receiverId: number; // User ID of the receiver
 }
 
+/**
+ * ✅ DTO for updating existing feedback
+ */
 export class UpdateFeedbackDto {
+  @IsInt()
+  feedbackId: number;
+
   @IsString()
+  @MinLength(5, { message: 'Feedback must be at least 5 characters long' })
   @IsOptional()
-  @MinLength(5, { message: 'Feedback text must be at least 5 characters long' })
   feedbackText?: string;
 
   @IsBoolean()
@@ -53,28 +46,33 @@ export class UpdateFeedbackDto {
   @IsInt()
   @IsOptional()
   visibilityId?: number;
-
-  @IsArray()
-  @IsOptional()
-  @IsInt({ each: true })
-  tagIds?: number[];
 }
 
+/**
+ * ✅ DTO for fetching a single feedback entry by ID
+ */
 export class GetFeedbackDto {
   @IsInt()
+  feedbackId: number;
+}
+
+/**
+ * ✅ DTO for deleting a feedback entry
+ */
+export class DeleteFeedbackDto {
+  @IsInt()
+  feedbackId: number;
+}
+
+/**
+ * ✅ DTO for listing multiple feedback entries with optional filters
+ */
+export class ListFeedbackDto {
+  @IsInt()
   @IsOptional()
-  senderId?: number;
+  senderId?: number; // Filter by sender
 
   @IsInt()
   @IsOptional()
-  receiverId?: number;
-
-  @IsInt()
-  @IsOptional()
-  visibilityId?: number;
-
-  @IsArray()
-  @IsOptional()
-  @IsInt({ each: true })
-  tagIds?: number[];
+  receiverId?: number; // Filter by receiver
 }

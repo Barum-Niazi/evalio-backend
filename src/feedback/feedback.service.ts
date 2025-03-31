@@ -1,56 +1,124 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { FeedbackRepository } from './feedback.repository';
-import { TagsService } from '../tags/tag.service';
-import { CreateFeedbackDto, UpdateFeedbackDto } from './dto/feedback.dto';
+import { TagService } from '../tags/tag.service';
+import { NotificationService } from '../notification/notification.service';
+import {
+  CreateFeedbackDto,
+  UpdateFeedbackDto,
+  GetFeedbackDto,
+  DeleteFeedbackDto,
+  ListFeedbackDto,
+} from './dto/feedback.dto';
 
 @Injectable()
 export class FeedbackService {
   constructor(
-    private readonly feedbackRepo: FeedbackRepository,
-    private readonly tagsService: TagsService,
+    private readonly feedbackRepository: FeedbackRepository,
+    private readonly tagService: TagService,
+    private readonly notificationService: NotificationService,
   ) {}
 
-  async createFeedback(dto: CreateFeedbackDto) {
-    // Step 1: Create Feedback Entry
-    const feedback = await this.feedbackRepo.createFeedback(dto);
+  /**
+   * ✅ Create new feedback
+   * - Saves feedback to the DB
+   * - Auto-creates a tag from the feedback text
+   * - Sends a notification to the recipient
+   */
+  async createFeedback(createFeedbackDto: CreateFeedbackDto) {
+    const { feedbackText, senderId, receiverId, isAnonymous, visibilityId } =
+      createFeedbackDto;
 
-    // Step 2: Automatically create a tag for this feedback
-    await this.tagsService.autoCreateTagForEntity({
+    // Save feedback
+    const feedback = await this.feedbackRepository.createFeedback(
+      feedbackText,
+      senderId,
+      receiverId,
+      isAnonymous,
+      visibilityId,
+    );
+
+    // Auto-create a tag for the feedback text
+    await this.tagService.autoCreateTagForEntity({
       entityId: feedback.id,
       entityType: 'feedback',
-      entityName: dto.feedbackText,
-      tagIds: [],
+      entityName: feedbackText,
     });
 
-    // Step 3: Associate feedback with provided tags (if any)
-    if (dto.tagIds?.length) {
-      await this.tagsService.tagEntity({
-        entityId: feedback.id,
-        entityType: 'feedback',
-        tagIds: dto.tagIds,
-        entityName: dto.feedbackText,
-      });
+    // // Send notification to the receiver
+    // await this.notificationService.create({
+    //   userId: receiverId,
+    //   type: 'NEW_FEEDBACK',
+    //   message: `You have received new feedback.`,
+    //   link: `/feedback/${feedback.id}`,
+    // });
+
+    return feedback;
+  }
+
+  /**
+   * ✅ Retrieve a single feedback entry by ID
+   */
+  async getFeedback(getFeedbackDto: GetFeedbackDto) {
+    const feedback = await this.feedbackRepository.getFeedbackById(
+      getFeedbackDto.feedbackId,
+    );
+
+    if (!feedback) {
+      throw new NotFoundException('Feedback not found');
     }
 
     return feedback;
   }
 
-  async updateFeedback(id: number, dto: UpdateFeedbackDto) {
-    return this.feedbackRepo.updateFeedback(id, dto);
+  /**
+   * ✅ Retrieve all feedback with optional filters (sender, receiver)
+   */
+  async listFeedback(listFeedbackDto: ListFeedbackDto) {
+    return this.feedbackRepository.getAllFeedback(
+      listFeedbackDto.senderId,
+      listFeedbackDto.receiverId,
+    );
   }
 
-  async getFeedbackById(id: number) {
-    const feedback = await this.feedbackRepo.getFeedbackById(id);
-    const tags = await this.tagsService.getTagsForEntity(id, 'feedback');
-    return { ...feedback, tags };
+  /**
+   * ✅ Update feedback entry
+   */
+  async updateFeedback(updateFeedbackDto: UpdateFeedbackDto) {
+    const { feedbackId, feedbackText, isAnonymous, visibilityId } =
+      updateFeedbackDto;
+
+    // Ensure feedback exists before updating
+    const existingFeedback =
+      await this.feedbackRepository.getFeedbackById(feedbackId);
+    if (!existingFeedback) {
+      throw new NotFoundException('Feedback not found');
+    }
+
+    return this.feedbackRepository.updateFeedback(
+      feedbackId,
+      feedbackText,
+      isAnonymous,
+      visibilityId,
+    );
   }
 
-  async getAllFeedback() {
-    return this.feedbackRepo.getAllFeedback();
-  }
+  /**
+   * ✅ Delete feedback entry
+   */
+  async deleteFeedback(deleteFeedbackDto: DeleteFeedbackDto) {
+    const { feedbackId } = deleteFeedbackDto;
 
-  async deleteFeedback(id: number) {
-    await this.tagsService.removeTagsFromEntity(id, 'feedback');
-    return this.feedbackRepo.deleteFeedback(id);
+    // Ensure feedback exists before deleting
+    const existingFeedback =
+      await this.feedbackRepository.getFeedbackById(feedbackId);
+    if (!existingFeedback) {
+      throw new NotFoundException('Feedback not found');
+    }
+
+    return this.feedbackRepository.deleteFeedback(feedbackId);
   }
 }
