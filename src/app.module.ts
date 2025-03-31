@@ -17,10 +17,10 @@ import { EmployeeService } from './employee/employee.service';
 import { EmployeeModule } from './employee/employee.module';
 import { FeedbackController } from './feedback/feedback.controller';
 import { FeedbackModule } from './feedback/feedback.module';
-import { TagsModule } from './tags/tags.module';
+import { TagModule } from './tags/tag.module';
 import { NotificationController } from './notification/notification.controller';
 import { NotificationModule } from './notification/notification.module';
-import { NotifcationService } from './notifcation/notifcation.service';
+import { NotificationService } from './notification/notification.service';
 import { OkrsController } from './okrs/okrs.controller';
 import { OkrsService } from './okrs/okrs.service';
 import { OkrsModule } from './okrs/okrs.module';
@@ -39,7 +39,7 @@ import { MeetingsModule } from './meetings/meetings.module';
     DepartmentModule,
     EmployeeModule,
     FeedbackModule,
-    TagsModule,
+    TagModule,
     NotificationModule,
     OkrsModule,
     MeetingsModule,
@@ -55,6 +55,6 @@ import { MeetingsModule } from './meetings/meetings.module';
     NotificationController,
     OkrsController,
   ],
-  providers: [AppService, NotifcationService, OkrsService],
+  providers: [AppService, NotificationService, OkrsService],
 })
 export class AppModule {}

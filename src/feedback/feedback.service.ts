@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FeedbackRepository } from './feedback.repository';
-import { TagsService } from '../tags/tags.service';
+import { TagsService } from '../tags/tag.service';
 import { CreateFeedbackDto, UpdateFeedbackDto } from './dto/feedback.dto';
 
 @Injectable()

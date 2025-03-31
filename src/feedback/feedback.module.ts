@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { FeedbackService } from './feedback.service';
 import { FeedbackController } from './feedback.controller';
 import { FeedbackRepository } from './feedback.repository';
-import { TagsModule } from '../tags/tags.module';
+import { TagsModule } from '../tags/tag.module';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
