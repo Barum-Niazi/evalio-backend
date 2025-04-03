@@ -24,6 +24,7 @@ import { NotificationService } from './notification/notification.service';
 import { MeetingsModule } from './meetings/meetings.module';
 import { OkrController } from './okr/okr.controller';
 import { OkrModule } from './okr/okr.module';
+import { KeyResultsModule } from './key-results/key-results.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { OkrModule } from './okr/okr.module';
     NotificationModule,
     MeetingsModule,
     OkrModule,
+    KeyResultsModule,
   ],
   controllers: [
     AppController,
