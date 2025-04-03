@@ -176,18 +176,20 @@ model feedback_requests {
 }
 
 model meetings {
-  id            Int                @id @default(autoincrement())
-  title         String
-  description   String?
-  scheduled_by_id Int
-  scheduled_by   user_details              @relation("scheduled_meetings", fields: [scheduled_by_id], references: [user_id])
-  attendees     meeting_attendees[] // Relation for attendees
-  scheduled_at   DateTime           // Stores the date and time of the meeting
-  agenda        String?
-  notes         String?
-  note_to_self    String?
-  audit         Json               @default("{}") // Replaces createdAt and updatedAt
+  id               Int       @id @default(autoincrement())
+  title            String
+  description      String?
+  scheduled_by_id  Int
+  scheduled_by     user_details @relation("scheduled_meetings", fields: [scheduled_by_id], references: [user_id])
+  attendees        meeting_attendees[]
+  scheduled_at     DateTime
+  agenda           String?
+  notes            String?
+  note_to_self     String?
+  google_meet_link String?   // <--- add this field
+  audit            Json      @default("{}")
 }
+
 
 
 model company_settings {
