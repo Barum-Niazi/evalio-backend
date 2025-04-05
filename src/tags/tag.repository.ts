@@ -6,9 +6,6 @@ import { tags, tagged_entities } from '@prisma/client';
 export class TagRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * ✅ Create a new tag.
-   */
   async createTag(name: string, description?: string): Promise<tags> {
     return this.prisma.tags.create({
       data: {
@@ -19,9 +16,21 @@ export class TagRepository {
     });
   }
 
-  /**
-   * ✅ Find a tag by name.
-   */
+  async createTagforEntities(
+    name: string,
+    description?: string,
+    parentId?: number,
+  ): Promise<tags> {
+    return this.prisma.tags.create({
+      data: {
+        name,
+        description,
+        parent_entity_id: parentId || null,
+        audit: {}, // Default empty audit field as per schema
+      },
+    });
+  }
+
   async findTagByName(name: string): Promise<tags | null> {
     return this.prisma.tags.findUnique({
       where: { name },

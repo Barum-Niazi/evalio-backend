@@ -42,26 +42,19 @@ export class FeedbackService {
     );
 
     // Auto-create a tag for the feedback text
-    await this.tagService.autoCreateTagForEntity({
-      entityId: feedback.id,
-      entityType: 'feedback',
-      entityName: feedbackText,
-    });
+    await this.tagService.autoCreateTagForEntity({});
 
-    // // Send notification to the receiver
-    // await this.notificationService.create({
-    //   userId: receiverId,
-    //   type: 'NEW_FEEDBACK',
-    //   message: `You have received new feedback.`,
-    //   link: `/feedback/${feedback.id}`,
-    // });
+    // Send notification to the receiver
+    await this.notificationService.create(
+      receiverId,
+      1, // this is the notification type id
+      `You have received new feedback.`,
+      `/feedback/${feedback.id}`,
+    );
 
     return feedback;
   }
 
-  /**
-   * ✅ Retrieve a single feedback entry by ID
-   */
   async getFeedback(getFeedbackDto: GetFeedbackDto) {
     const feedback = await this.feedbackRepository.getFeedbackById(
       getFeedbackDto.feedbackId,

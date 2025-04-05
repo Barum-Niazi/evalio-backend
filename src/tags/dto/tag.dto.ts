@@ -16,25 +16,6 @@ export class CreateTagDto {
   description?: string;
 }
 
-export class AutoCreateTagDto {
-  @IsInt()
-  entityId: number;
-
-  @IsString()
-  entityType: string; // Example: "feedback", "meeting", "okr"
-
-  @IsString()
-  entityName: string; // The name of the entity that becomes a tag
-
-  @IsInt()
-  @IsOptional()
-  referenceId?: number; // Optional: Reference to another entity
-
-  @IsString()
-  @IsOptional()
-  referenceType?: string; // Optional: Reference entity type
-}
-
 export class TagEntityDto {
   @IsInt()
   entityId: number;

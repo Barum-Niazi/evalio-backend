@@ -19,41 +19,26 @@ import { ListFeedbackDto } from './dto/feedback.dto';
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
-  /**
-   * ✅ Create new feedback
-   */
   @Post()
   async createFeedback(@Body() createFeedbackDto: CreateFeedbackDto) {
     return this.feedbackService.createFeedback(createFeedbackDto);
   }
 
-  /**
-   * ✅ Fetch a single feedback entry by ID
-   */
   @Get('/:feedbackId')
   async getFeedback(@Param() getFeedbackDto: GetFeedbackDto) {
     return this.feedbackService.getFeedback(getFeedbackDto);
   }
 
-  /**
-   * ✅ Fetch all feedback with optional filters
-   */
   @Get()
   async listFeedback(@Query() listFeedbackDto: ListFeedbackDto) {
     return this.feedbackService.listFeedback(listFeedbackDto);
   }
 
-  /**
-   * ✅ Update an existing feedback entry
-   */
   @Patch()
   async updateFeedback(@Body() updateFeedbackDto: UpdateFeedbackDto) {
     return this.feedbackService.updateFeedback(updateFeedbackDto);
   }
 
-  /**
-   * ✅ Delete a feedback entry
-   */
   @Delete()
   async deleteFeedback(@Body() deleteFeedbackDto: DeleteFeedbackDto) {
     return this.feedbackService.deleteFeedback(deleteFeedbackDto);

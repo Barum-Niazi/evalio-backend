@@ -6,9 +6,6 @@ import {
   IsBoolean,
 } from 'class-validator';
 
-/**
- * ✅ DTO for creating new feedback
- */
 export class CreateFeedbackDto {
   @IsString()
   @MinLength(5, { message: 'Feedback must be at least 5 characters long' })
@@ -27,9 +24,6 @@ export class CreateFeedbackDto {
   receiverId: number; // User ID of the receiver
 }
 
-/**
- * ✅ DTO for updating existing feedback
- */
 export class UpdateFeedbackDto {
   @IsInt()
   feedbackId: number;

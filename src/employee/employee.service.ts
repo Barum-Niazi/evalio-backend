@@ -25,8 +25,8 @@ export class EmployeeService {
       addEmployeeDto.employees.map(async (employee) => {
         const { name, email, designation, managerId } = employee;
 
-        // Generate a random password
-        const password = Math.random().toString(36).slice(-8);
+        // Generate a set password for now
+        const password = '12345678';
         const hashedPassword = await argon2.hash(password);
 
         // Fetch the company name (optional, for sending welcome email)

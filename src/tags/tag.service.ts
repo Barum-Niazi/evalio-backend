@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { TagRepository } from './tag.repository';
 import { CreateTagDto } from './dto/tag.dto';
-import { AutoCreateTagDto } from './dto/tag.dto';
 import { TagEntityDto } from './dto/tag.dto';
 import { UntagEntityDto } from './dto/tag.dto';
 import { GetTagsDto } from './dto/tag.dto';
@@ -14,9 +13,6 @@ import { GetTagsDto } from './dto/tag.dto';
 export class TagService {
   constructor(private readonly tagRepository: TagRepository) {}
 
-  /**
-   * ✅ Manually create a tag.
-   */
   async createTag(createTagDto: CreateTagDto) {
     const existingTag = await this.tagRepository.findTagByName(
       createTagDto.name,
@@ -32,34 +28,38 @@ export class TagService {
     );
   }
 
-  /**
-   * ✅ Auto-create a tag when an entity is created.
-   * Ensures the entity's name is stored as a tag and links the entity in `tagged_entities`.
-   */
-  async autoCreateTagForEntity(autoCreateTagDto: AutoCreateTagDto) {
-    let tag = await this.tagRepository.findTagByName(
-      autoCreateTagDto.entityName,
-    );
+  async createTagforEntities(
+    name: string,
+    description?: string,
+    parentId?: number,
+  ) {
+    const existingTag = await this.tagRepository.findTagByName(name);
 
-    if (!tag) {
-      tag = await this.tagRepository.createTag(
-        autoCreateTagDto.entityName,
-        null,
-      );
+    if (existingTag) {
+      throw new BadRequestException('Tag already exists');
     }
-
-    return this.tagRepository.linkTagToEntity(
-      tag.id,
-      autoCreateTagDto.entityId,
-      autoCreateTagDto.entityType,
-      autoCreateTagDto.referenceId,
-      autoCreateTagDto.referenceType,
-    );
+    return this.tagRepository.createTagforEntities(name, description, parentId);
   }
 
-  /**
-   * ✅ Link existing tags to an entity.
-   */
+  // async autoCreateTagForEntity() {
+  //   let tag = await this.tagRepository.findTagByName();
+
+  //   if (!tag) {
+  //     tag = await this.tagRepository.createTag(
+  //       autoCreateTagDto.entityName,
+  //       null,
+  //     );
+  //   }
+
+  //   return this.tagRepository.linkTagToEntity(
+  //     tag.id,
+  //     autoCreateTagDto.entityId,
+  //     autoCreateTagDto.entityType,
+  //     autoCreateTagDto.referenceId,
+  //     autoCreateTagDto.referenceType,
+  //   );
+  // }
+
   async tagEntity(tagEntityDto: TagEntityDto) {
     if (!tagEntityDto.tagIds || tagEntityDto.tagIds.length === 0) {
       throw new BadRequestException('At least one tag must be provided');
@@ -74,9 +74,6 @@ export class TagService {
     );
   }
 
-  /**
-   * ✅ Remove tags from an entity.
-   */
   async untagEntity(untagEntityDto: UntagEntityDto) {
     if (!untagEntityDto.tagIds || untagEntityDto.tagIds.length === 0) {
       throw new BadRequestException(
@@ -91,9 +88,6 @@ export class TagService {
     );
   }
 
-  /**
-   * ✅ Retrieve all tags associated with a specific entity.
-   */
   async getTagsForEntity(getTagsDto: GetTagsDto) {
     return this.tagRepository.getTagsForEntity(
       getTagsDto.entityId,
@@ -101,9 +95,6 @@ export class TagService {
     );
   }
 
-  /**
-   * ✅ Retrieve all tags in the system.
-   */
   async getAllTags() {
     return this.tagRepository.getAllTags();
   }

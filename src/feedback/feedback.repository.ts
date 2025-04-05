@@ -6,9 +6,6 @@ import { feedback } from '@prisma/client';
 export class FeedbackRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * ✅ Create new feedback entry in the database.
-   */
   async createFeedback(
     feedbackText: string,
     senderId: number,
@@ -28,18 +25,12 @@ export class FeedbackRepository {
     });
   }
 
-  /**
-   * ✅ Fetch a specific feedback entry by ID.
-   */
   async getFeedbackById(feedbackId: number): Promise<feedback | null> {
     return this.prisma.feedback.findUnique({
       where: { id: feedbackId },
     });
   }
 
-  /**
-   * ✅ Fetch all feedback with optional sender/receiver filters.
-   */
   async getAllFeedback(
     senderId?: number,
     receiverId?: number,

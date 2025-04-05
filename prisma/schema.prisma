@@ -190,8 +190,6 @@ model meetings {
   audit            Json      @default("{}")
 }
 
-
-
 model company_settings {
   id                  Int     @id @default(autoincrement())
   company_id           Int     @unique
@@ -223,6 +221,7 @@ model tags {
   id         Int      @id @default(autoincrement()) // Unique ID for each tag
   name       String   @unique                      // Name of the tag (e.g., "Teamwork")
   description String?                              // Optional description of the tag
+  parent_entity_id Int? // Optional: ID of the parent entity (e.g., OKR, feedback)
   tagged_entities tagged_entities[]               // Relation to tagged entities
   audit      Json     @default("{}")               // Audit JSON for metadata
 }
