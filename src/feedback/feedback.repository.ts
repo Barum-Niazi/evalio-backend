@@ -13,7 +13,7 @@ export class FeedbackRepository {
     isAnonymous: boolean,
     visibilityId: number,
   ): Promise<feedback> {
-    return this.prisma.feedback.create({
+    const createdFeedback = this.prisma.feedback.create({
       data: {
         feedback_text: feedbackText,
         is_anonymous: isAnonymous,
@@ -23,6 +23,8 @@ export class FeedbackRepository {
         audit: {},
       },
     });
+
+    return createdFeedback;
   }
 
   async getFeedbackById(feedbackId: number): Promise<feedback | null> {

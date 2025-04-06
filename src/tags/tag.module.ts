@@ -8,6 +8,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
   imports: [],
   controllers: [TagController],
   providers: [TagService, TagRepository, PrismaService],
-  exports: [TagService],
+  exports: [TagService, TagRepository],
 })
 export class TagModule {}

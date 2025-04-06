@@ -3,10 +3,11 @@ import { FeedbackService } from './feedback.service';
 import { FeedbackController } from './feedback.controller';
 import { FeedbackRepository } from './feedback.repository';
 import { PrismaService } from '../prisma/prisma.service';
-import { TagService } from 'src/tags/tag.service';
+import { TagModule } from 'src/tags/tag.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [TagService],
+  imports: [TagModule, NotificationModule],
   controllers: [FeedbackController],
   providers: [FeedbackService, FeedbackRepository, PrismaService],
   exports: [FeedbackService],

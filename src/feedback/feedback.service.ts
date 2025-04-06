@@ -42,7 +42,11 @@ export class FeedbackService {
     );
 
     // Auto-create a tag for the feedback text
-    await this.tagService.autoCreateTagForEntity({});
+    await this.tagService.createTagforEntities(
+      feedback.feedback_text,
+      feedback.feedback_text,
+      feedback.id,
+    );
 
     // Send notification to the receiver
     await this.notificationService.create(

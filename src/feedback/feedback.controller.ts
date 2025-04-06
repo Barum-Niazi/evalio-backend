@@ -25,7 +25,10 @@ export class FeedbackController {
   }
 
   @Get('/:feedbackId')
-  async getFeedback(@Param() getFeedbackDto: GetFeedbackDto) {
+  async getFeedback(@Param('feedbackId') feedbackId: number) {
+    const getFeedbackDto = new GetFeedbackDto();
+    // cast feedbackid as an integer
+    getFeedbackDto.feedbackId = parseInt(feedbackId.toString(), 10);
     return this.feedbackService.getFeedback(getFeedbackDto);
   }
 

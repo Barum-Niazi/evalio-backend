@@ -25,6 +25,7 @@ export class NotificationRepository {
   }
 
   async getUserNotifications(userId: number): Promise<notifications[]> {
+    userId = Number(userId); // Ensure userId is a number
     return this.prisma.notifications.findMany({
       where: { user_id: userId },
       orderBy: { id: 'desc' },

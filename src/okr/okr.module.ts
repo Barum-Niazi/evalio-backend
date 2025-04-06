@@ -6,5 +6,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Module({
   controllers: [OkrController],
   providers: [OkrService, OkrRepository, PrismaService],
+  exports: [OkrService, OkrRepository],
 })
 export class OkrModule {}
