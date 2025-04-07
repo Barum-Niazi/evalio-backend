@@ -58,10 +58,9 @@ export class EmployeeController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
   @Get('list')
   async getCompanyUsers(@Request() req) {
-    const adminId = req.user.id;
-    return this.employeeService.getEmployees(adminId);
+    const companyId = req.user.company_id;
+    return this.employeeService.getEmployees(companyId);
   }
 }

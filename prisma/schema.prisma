@@ -157,6 +157,7 @@ model feedback {
   visibility      lookup?    @relation(fields: [visibility_id], references: [id])
   sender_id       Int
   receiver_id     Int
+  date            DateTime  @default(now())
   sender          user_details @relation("feedback_given", fields: [sender_id], references: [user_id])
   receiver        user_details @relation("feedback_received", fields: [receiver_id], references: [user_id])
   audit           Json      @default("{}") // Audit metadata
