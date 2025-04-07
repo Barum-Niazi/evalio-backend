@@ -1,18 +1,39 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { feedback } from '@prisma/client';
+import { get } from 'http';
 
 @Injectable()
 export class FeedbackRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getVisibilityId(visibilityType: string): Promise<number> {
+    const visibility = await this.prisma.lookup.findFirst({
+      where: {
+        code: visibilityType, // Match the code for visibility type (e.g., "PUBLIC")
+        category: {
+          code: 'FEEDBACK_VISIBILITY', // Ensure it belongs to the "Feedback Visibility" category
+        },
+      },
+    });
+
+    if (!visibility) {
+      throw new Error(
+        `Visibility type "${visibilityType}" not found in the "FEEDBACK_VISIBILITY" category.`,
+      );
+    }
+
+    return visibility.id;
+  }
 
   async createFeedback(
     feedbackText: string,
     senderId: number,
     receiverId: number,
     isAnonymous: boolean,
-    visibilityId: number,
+    visibilityType: string,
   ): Promise<feedback> {
+    const visibilityId = await this.getVisibilityId(visibilityType);
     const createdFeedback = this.prisma.feedback.create({
       data: {
         feedback_text: feedbackText,

@@ -14,8 +14,8 @@ export class CreateFeedbackDto {
   @IsBoolean()
   isAnonymous: boolean;
 
-  @IsInt()
-  visibilityId: number; // Foreign key to lookup visibility
+  @IsString()
+  visibilityType: string; // Foreign key to lookup visibility
 
   @IsInt()
   senderId: number; // User ID of the sender

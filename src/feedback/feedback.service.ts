@@ -29,7 +29,7 @@ export class FeedbackService {
    * - Sends a notification to the recipient
    */
   async createFeedback(createFeedbackDto: CreateFeedbackDto) {
-    const { feedbackText, senderId, receiverId, isAnonymous, visibilityId } =
+    const { feedbackText, senderId, receiverId, isAnonymous, visibilityType } =
       createFeedbackDto;
 
     // Save feedback
@@ -38,7 +38,7 @@ export class FeedbackService {
       senderId,
       receiverId,
       isAnonymous,
-      visibilityId,
+      visibilityType,
     );
 
     // Auto-create a tag for the feedback text
