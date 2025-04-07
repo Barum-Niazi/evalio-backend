@@ -168,7 +168,7 @@ export class EmployeeService {
       throw new BadRequestException('No worksheet found in the uploaded file.');
     }
 
-    worksheet.eachRow((row, rowIndex) => {
+    worksheet.eachRow(async (row, rowIndex) => {
       if (rowIndex === 1) return; // Skip the header row
 
       const name = row.getCell(1)?.value?.toString().trim();
@@ -178,7 +178,8 @@ export class EmployeeService {
 
       if (name && email && designation) {
         const password = '12345678'; // Default password for now
-        const hashedPassword = argon2.hash(password); // Hash the password
+        const hashedPassword = await argon2.hash(password); // Hash the password
+        console.log('hashedPassword', hashedPassword);
         employees.push({
           name,
           email,

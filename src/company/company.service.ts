@@ -3,7 +3,7 @@ import { CreateCompanyDto } from './dto/create-company.dto';
 import { CompanyRepository } from './company.repository';
 import { EmployeeRepository } from 'src/employee/employee.repository';
 import { EmailService } from 'src/services/email.service';
-import { PrismaService } from 'src/prisma/prisma.service';
+import * as argon2 from 'argon2';
 import * as ExcelJS from 'exceljs';
 import * as csvParser from 'csv-parser';
 import { Readable } from 'stream';
@@ -46,6 +46,19 @@ export class CompanyService {
       company.id,
     );
 
+    for (let employee of employees) {
+      const password = '12345678'; // Default password for now
+      try {
+        employee.password = await argon2.hash(password); // Hash the password and assign it
+      } catch (err) {
+        console.error(
+          'Error hashing password for employee:',
+          employee.email,
+          err,
+        );
+        throw new BadRequestException('Error hashing employee password.');
+      }
+    }
     // Step 3: Create employees in the database
     const createdEmployees =
       await this.employeeRepository.createManyEmployees(employees);
@@ -227,7 +240,7 @@ export class CompanyService {
     await workbook.xlsx.read(fileStream);
     const worksheet = workbook.worksheets[0];
 
-    worksheet.eachRow((row, rowIndex) => {
+    worksheet.eachRow(async (row, rowIndex) => {
       if (rowIndex === 1) return; // Skip header row
 
       const name = row.getCell(1)?.value?.toString().trim();
@@ -236,6 +249,7 @@ export class CompanyService {
       const managerEmail = row.getCell(4)?.value?.toString().trim();
       const departmentName = row.getCell(5)?.value?.toString().trim();
       const departmentHeadEmail = row.getCell(6)?.value?.toString().trim();
+      const password = '12345678'; // Default password
 
       if (name && email && designation) {
         employees.push({
@@ -245,6 +259,7 @@ export class CompanyService {
           companyId,
           managerEmail,
           departmentName,
+          password,
         });
 
         if (departmentName) {
