@@ -120,6 +120,16 @@ export class TagRepository {
     });
   }
 
+  async findTagsByTitles(titles: string[]): Promise<tags[]> {
+    return this.prisma.tags.findMany({
+      where: {
+        name: {
+          in: titles,
+        },
+      },
+    });
+  }
+
   /**
    * ✅ Fetch all tags in the system.
    */

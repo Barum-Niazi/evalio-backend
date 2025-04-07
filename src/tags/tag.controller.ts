@@ -1,4 +1,11 @@
-import { Controller, Post, Get, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/tag.dto';
 import { GetTagsDto } from './dto/tag.dto';
@@ -12,10 +19,16 @@ export class TagController {
     return this.tagService.createTag(createTagDto);
   }
   @Get('/:entityType/:entityId')
-  async getTagsForEntity(@Param() getTagsDto: GetTagsDto) {
+  async getTagsForEntity(
+    @Param('entityType') entityType: string,
+    @Param('entityId', ParseIntPipe) entityId: number, // Use ParseIntPipe here
+  ) {
+    const getTagsDto: GetTagsDto = {
+      entityId,
+      entityType: entityType.toUpperCase(),
+    };
     return this.tagService.getTagsForEntity(getTagsDto);
   }
-
   @Get()
   async getAllTags() {
     return this.tagService.getAllTags();

@@ -4,6 +4,7 @@ import {
   MinLength,
   IsOptional,
   IsBoolean,
+  IsArray,
 } from 'class-validator';
 
 export class CreateFeedbackDto {
@@ -24,6 +25,11 @@ export class CreateFeedbackDto {
 
   @IsInt()
   receiverId: number; // User ID of the receiver
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[]; // Array of tag titles
 }
 
 export class UpdateFeedbackDto {

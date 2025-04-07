@@ -60,17 +60,51 @@ export class TagService {
   //   );
   // }
 
-  async tagEntity(tagEntityDto: TagEntityDto) {
-    if (!tagEntityDto.tagIds || tagEntityDto.tagIds.length === 0) {
+  async tagEntity(
+    tagTitles: string[],
+    entityId: number,
+    entityType: string,
+    referenceId: number,
+    referenceType: string,
+  ) {
+    if (!tagTitles || tagTitles.length === 0) {
       throw new BadRequestException('At least one tag must be provided');
     }
 
+    // Step 1: Fetch existing tags based on their titles
+    let tagEntities = await this.tagRepository.findTagsByTitles(tagTitles);
+
+    // Step 2: Find tags that don't exist
+    const existingTagTitles = tagEntities.map((tag) => tag.name);
+    const missingTagTitles = tagTitles.filter(
+      (tag) => !existingTagTitles.includes(tag),
+    );
+
+    // Step 3: If some tags are missing, create them
+    if (missingTagTitles.length > 0) {
+      for (const tagTitle of missingTagTitles) {
+        // Create missing tag (you can add a description if needed)
+        const createTagDto: CreateTagDto = {
+          name: tagTitle,
+          description: 'Auto-generated tag', // or a custom description
+        };
+        await this.createTag(createTagDto); // This will create the tag and handle uniqueness checks
+      }
+
+      // Step 4: Re-fetch the tags, as new ones might have been created
+      tagEntities = await this.tagRepository.findTagsByTitles(tagTitles);
+    }
+
+    // Step 4: Map the tags to their IDs
+    const tagIds = tagEntities.map((tag) => tag.id);
+
+    // Step 5: Associate tags with the entity
     return this.tagRepository.tagEntityWithTags(
-      tagEntityDto.tagIds,
-      tagEntityDto.entityId,
-      tagEntityDto.entityType,
-      tagEntityDto.referenceId,
-      tagEntityDto.referenceType,
+      tagIds,
+      entityId,
+      entityType,
+      referenceId,
+      referenceType,
     );
   }
 

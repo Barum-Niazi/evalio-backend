@@ -32,9 +32,9 @@ export class FeedbackService {
       receiverId,
       isAnonymous,
       visibilityType,
+      tags,
     } = createFeedbackDto;
 
-    // Save feedback
     const feedback = await this.feedbackRepository.createFeedback(
       feedbackTitle,
       feedbackText,
@@ -44,6 +44,15 @@ export class FeedbackService {
       visibilityType,
     );
 
+    if (tags && tags.length > 0) {
+      await this.tagService.tagEntity(
+        tags, // Array of tag titles
+        feedback.id, // Entity ID (feedback.id)
+        'FEEDBACK', // Entity Type
+        feedback.id, // Reference ID (feedback.id)
+        'FEEDBACK', // Reference Type
+      );
+    }
     // Auto-create a tag for the feedback text
     await this.tagService.createTagforEntities(
       feedback.title,
