@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { FeedbackRepository } from './feedback.repository';
 import { TagService } from '../tags/tag.service';
 import { NotificationService } from '../notification/notification.service';
