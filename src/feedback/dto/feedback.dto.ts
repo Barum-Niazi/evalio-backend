@@ -8,6 +8,8 @@ import {
 
 export class CreateFeedbackDto {
   @IsString()
+  feedbackTitle: string; // Title of the feedback
+  @IsString()
   @MinLength(5, { message: 'Feedback must be at least 5 characters long' })
   feedbackText: string;
 

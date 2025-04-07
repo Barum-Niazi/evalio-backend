@@ -29,11 +29,18 @@ export class FeedbackService {
    * - Sends a notification to the recipient
    */
   async createFeedback(createFeedbackDto: CreateFeedbackDto) {
-    const { feedbackText, senderId, receiverId, isAnonymous, visibilityType } =
-      createFeedbackDto;
+    const {
+      feedbackTitle,
+      feedbackText,
+      senderId,
+      receiverId,
+      isAnonymous,
+      visibilityType,
+    } = createFeedbackDto;
 
     // Save feedback
     const feedback = await this.feedbackRepository.createFeedback(
+      feedbackTitle,
       feedbackText,
       senderId,
       receiverId,
@@ -43,7 +50,7 @@ export class FeedbackService {
 
     // Auto-create a tag for the feedback text
     await this.tagService.createTagforEntities(
-      feedback.feedback_text,
+      feedback.title,
       feedback.feedback_text,
       feedback.id,
     );

@@ -151,6 +151,7 @@ model key_results {
 
 model feedback {
   id              Int       @id @default(autoincrement())
+  title           String
   feedback_text   String
   is_anonymous    Boolean   @default(false)
   visibility_id   Int?       // Foreign key to `lookup` for visibility

@@ -27,6 +27,7 @@ export class FeedbackRepository {
   }
 
   async createFeedback(
+    feedbackTitle: string,
     feedbackText: string,
     senderId: number,
     receiverId: number,
@@ -36,6 +37,7 @@ export class FeedbackRepository {
     const visibilityId = await this.getVisibilityId(visibilityType);
     const createdFeedback = this.prisma.feedback.create({
       data: {
+        title: feedbackTitle,
         feedback_text: feedbackText,
         is_anonymous: isAnonymous,
         visibility_id: visibilityId,
