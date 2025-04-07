@@ -177,12 +177,13 @@ export class EmployeeService {
       const managerEmail = row.getCell(4)?.value?.toString().trim();
 
       if (name && email && designation) {
-        const password = Math.random().toString(36).slice(-8);
+        const password = '12345678'; // Default password for now
+        const hashedPassword = argon2.hash(password); // Hash the password
         employees.push({
           name,
           email,
           designation,
-          password,
+          hashedPassword,
           companyId,
           managerEmail,
         });
