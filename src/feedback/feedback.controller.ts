@@ -27,17 +27,12 @@ export class FeedbackController {
     return this.feedbackService.createFeedback(createFeedbackDto);
   }
 
-  @Get('/:feedbackId')
+  @Get('/id/:feedbackId')
   async getFeedback(@Param('feedbackId') feedbackId: number) {
     const getFeedbackDto = new GetFeedbackDto();
     // cast feedbackid as an integer
     getFeedbackDto.feedbackId = parseInt(feedbackId.toString(), 10);
     return this.feedbackService.getFeedback(getFeedbackDto);
-  }
-
-  @Get()
-  async listFeedback(@Query() listFeedbackDto: ListFeedbackDto) {
-    return this.feedbackService.listFeedback(listFeedbackDto);
   }
 
   @Patch()
@@ -51,7 +46,7 @@ export class FeedbackController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('user')
+  @Get('/user')
   async getFeedbackByEmployeeId(@Request() req) {
     const employeeId = req.user.id;
     return this.feedbackService.getFeedbackbyEmployee(employeeId);
