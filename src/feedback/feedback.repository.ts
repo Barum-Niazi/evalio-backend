@@ -65,6 +65,15 @@ export class FeedbackRepository {
     });
   }
 
+  async getFeedbackByEmployeeId(employeeId: number): Promise<feedback[]> {
+    return this.prisma.feedback.findMany({
+      where: {
+        OR: [{ sender_id: employeeId }, { receiver_id: employeeId }],
+      },
+      orderBy: { id: 'desc' }, // Latest feedback first
+    });
+  }
+
   /**
    * ✅ Delete feedback entry.
    */

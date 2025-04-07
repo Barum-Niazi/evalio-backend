@@ -118,4 +118,8 @@ export class FeedbackService {
 
     return this.feedbackRepository.deleteFeedback(feedbackId);
   }
+
+  getFeedbackbyEmployee(employeeId: number) {
+    return this.feedbackRepository.getFeedbackByEmployeeId(employeeId);
+  }
 }
