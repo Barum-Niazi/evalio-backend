@@ -15,7 +15,6 @@ import { CreateFeedbackDto } from './dto/feedback.dto';
 import { UpdateFeedbackDto } from './dto/feedback.dto';
 import { GetFeedbackDto } from './dto/feedback.dto';
 import { DeleteFeedbackDto } from './dto/feedback.dto';
-import { ListFeedbackDto } from './dto/feedback.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('feedback')
