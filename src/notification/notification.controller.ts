@@ -7,6 +7,7 @@ import {
   Param,
   Body,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/notifcation.dto';
@@ -18,8 +19,10 @@ import { Roles } from 'src/decorators/roles.decorators';
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
-  @Get(':userId')
-  async getUserNotifications(@Param('userId') userId: number) {
+  @Get()
+  async getUserNotifications(@Request() req) {
+    req.user.id = parseInt(req.user.id.toString(), 10);
+    const userId = req.user.id;
     return this.notificationService.getUserNotifications(userId);
   }
 
