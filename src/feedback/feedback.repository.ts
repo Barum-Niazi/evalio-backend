@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { feedback } from '@prisma/client';
-import { get } from 'http';
 
 @Injectable()
 export class FeedbackRepository {
@@ -90,12 +89,41 @@ export class FeedbackRepository {
     });
   }
 
-  async getFeedbackByEmployeeId(employeeId: number): Promise<feedback[]> {
-    return this.prisma.feedback.findMany({
+  async getFeedbackByEmployeeId(employeeId: number): Promise<any[]> {
+    // Step 1: Get feedback data
+    const feedback = await this.prisma.feedback.findMany({
       where: {
         OR: [{ sender_id: employeeId }, { receiver_id: employeeId }],
       },
       orderBy: { id: 'desc' }, // Latest feedback first
+    });
+
+    // Step 2: Get all the feedback IDs
+    const feedbackIds = feedback.map((fb) => fb.id);
+
+    // Step 3: Get associated tags for those feedback IDs
+    const feedbackTags = await this.prisma.tagged_entities.findMany({
+      where: {
+        entity_id: { in: feedbackIds }, // Fetch tags related to these feedback IDs
+        entity_type: 'FEEDBACK',
+      },
+      include: {
+        tag: true, // Include the tag details
+      },
+    });
+
+    // Step 4: Return feedback and tags as a combined object
+    return feedback.map((fb) => {
+      // Find all tags associated with the current feedback
+      const tags = feedbackTags
+        .filter((tagEntity) => tagEntity.entity_id === fb.id)
+        .map((tagEntity) => tagEntity.tag); // Extract the tag data
+
+      // Return an object with feedback and its associated tags
+      return {
+        ...fb, // Spread feedback data
+        tags: tags, // Attach the tags to the feedback data
+      };
     });
   }
 
