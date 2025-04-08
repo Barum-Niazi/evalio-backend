@@ -9,6 +9,7 @@ import {
   DeleteFeedbackDto,
   ListFeedbackDto,
 } from './dto/feedback.dto';
+import { SentimentAnalysisService } from 'src/services/sentiment-analysis.service';
 
 @Injectable()
 export class FeedbackService {
@@ -16,6 +17,7 @@ export class FeedbackService {
     private readonly feedbackRepository: FeedbackRepository,
     private readonly tagService: TagService,
     private readonly notificationService: NotificationService,
+    private readonly sentimentAnalysisService: SentimentAnalysisService,
   ) {}
 
   /**
@@ -35,6 +37,10 @@ export class FeedbackService {
       tags,
     } = createFeedbackDto;
 
+    const sentiment =
+      await this.sentimentAnalysisService.analyzeSentiment(feedbackText);
+    console.log('Sentiment Analysis Result:', sentiment); // Log the sentiment result
+
     const feedback = await this.feedbackRepository.createFeedback(
       feedbackTitle,
       feedbackText,
@@ -42,6 +48,7 @@ export class FeedbackService {
       receiverId,
       isAnonymous,
       visibilityType,
+      sentiment,
     );
 
     if (tags && tags.length > 0) {

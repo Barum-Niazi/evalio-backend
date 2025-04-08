@@ -159,6 +159,7 @@ model feedback {
   sender_id       Int
   receiver_id     Int
   date            DateTime  @default(now())
+  sentiment       String?   // Sentiment analysis result (e.g., "positive", "negative", "neutral")
   sender          user_details @relation("feedback_given", fields: [sender_id], references: [user_id])
   receiver        user_details @relation("feedback_received", fields: [receiver_id], references: [user_id])
   audit           Json      @default("{}") // Audit metadata

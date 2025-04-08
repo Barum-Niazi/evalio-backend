@@ -5,11 +5,17 @@ import { FeedbackRepository } from './feedback.repository';
 import { PrismaService } from '../prisma/prisma.service';
 import { TagModule } from 'src/tags/tag.module';
 import { NotificationModule } from 'src/notification/notification.module';
+import { SentimentAnalysisService } from 'src/services/sentiment-analysis.service';
 
 @Module({
   imports: [TagModule, NotificationModule],
   controllers: [FeedbackController],
-  providers: [FeedbackService, FeedbackRepository, PrismaService],
+  providers: [
+    FeedbackService,
+    FeedbackRepository,
+    PrismaService,
+    SentimentAnalysisService,
+  ],
   exports: [FeedbackService],
 })
 export class FeedbackModule {}

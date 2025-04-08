@@ -33,6 +33,7 @@ export class FeedbackRepository {
     receiverId: number,
     isAnonymous: boolean,
     visibilityType: string,
+    sentiment: string,
   ): Promise<feedback> {
     const visibilityId = await this.getVisibilityId(visibilityType);
     const createdFeedback = this.prisma.feedback.create({
@@ -44,6 +45,7 @@ export class FeedbackRepository {
         sender_id: senderId,
         receiver_id: receiverId,
         audit: {},
+        sentiment: sentiment, // Save the sentiment analysis result
       },
     });
 
