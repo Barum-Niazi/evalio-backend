@@ -141,9 +141,6 @@ export class FeedbackRepository {
     });
   }
 
-  /**
-   * ✅ Delete feedback entry.
-   */
   async deleteFeedback(feedbackId: number): Promise<void> {
     await this.prisma.feedback.delete({
       where: { id: feedbackId },
