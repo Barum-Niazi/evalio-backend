@@ -96,6 +96,20 @@ export class FeedbackRepository {
         OR: [{ sender_id: employeeId }, { receiver_id: employeeId }],
       },
       orderBy: { id: 'desc' }, // Latest feedback first
+      include: {
+        sender: {
+          // Include sender details
+          select: {
+            name: true, // Only select the sender's name
+          },
+        },
+        receiver: {
+          // Include receiver details
+          select: {
+            name: true, // Only select the receiver's name
+          },
+        },
+      },
     });
 
     // Step 2: Get all the feedback IDs
