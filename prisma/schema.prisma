@@ -42,6 +42,7 @@ model user_details {
   feedback_received feedback[]   @relation("feedback_received") // Feedback received by this user
   feedback_requests feedback_requests[] @relation("requested_feedback") // Feedback requests sent by this user
   feedback_received_requests feedback_requests[] @relation("feedback_requests") // Feedback requests received by this user
+  feedback_about_me feedback_requests[] @relation("feedback_about") // Requests about this user
   head_of_departments department[] @relation("department_head") // Departments where the user is the head
   meetings_scheduled meetings[]    @relation("scheduled_meetings") // Meetings created by this user
   meeting_attendees meeting_attendees[]
@@ -171,6 +172,8 @@ model feedback_requests {
   requester      user_details   @relation("requested_feedback", fields: [requester_id], references: [user_id])
   recipient_id   Int            // User receiving the feedback request
   recipient      user_details   @relation("feedback_requests", fields: [recipient_id], references: [user_id])
+  target_user_id   Int
+  target_user      user_details   @relation("feedback_about", fields: [target_user_id], references: [user_id])
   message        String?        // Optional message
   status_id      Int            // Foreign key to `lookup` for status
   status         lookup         @relation(fields: [status_id], references: [id])
