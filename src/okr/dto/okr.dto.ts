@@ -1,11 +1,17 @@
-import { IsInt, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 /**
  * ✅ Create OKR
  */
 export class CreateOkrDto {
   @IsString()
-  @MinLength(3)
+  @IsNotEmpty()
   title: string;
 
   @IsString()
@@ -13,31 +19,43 @@ export class CreateOkrDto {
   description?: string;
 
   @IsInt()
-  userId: number; // OKR creator
-
-  @IsInt()
   @IsOptional()
   companyId?: number;
 
   @IsInt()
   @IsOptional()
+  userId?: number;
+
+  @IsInt()
+  @IsOptional()
   parentOkrId?: number;
+
+  @IsArray()
+  @IsInt({ each: true })
+  @IsOptional()
+  assignedTo?: number[]; // userIds for userOkrs relation
 }
 
 /**
  * ✅ Update OKR
  */
 export class UpdateOkrDto {
-  @IsInt()
-  okrId: number;
-
-  @IsString()
   @IsOptional()
+  @IsString()
   title?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsInt()
+  parentOkrId?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  assignedTo?: number[]; // replaces all current assignments
 }
 
 /**

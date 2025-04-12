@@ -1,52 +1,52 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OkrRepository } from './okr.repository';
-import {
-  CreateOkrDto,
-  UpdateOkrDto,
-  GetOkrDto,
-  DeleteOkrDto,
-} from './dto/okr.dto';
-// import { TagService } from '../tag/tag.service';
+import { CreateOkrDto, UpdateOkrDto } from './dto/okr.dto';
+import { TagService } from 'src/tags/tag.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class OkrService {
   constructor(
     private readonly okrRepository: OkrRepository,
-    // private readonly tagService: TagService,
+    private readonly tagService: TagService,
+    private readonly notificationService: NotificationService,
   ) {}
 
-  async createOkr(dto: CreateOkrDto) {
-    const okr = await this.okrRepository.createOkr(dto);
-
-    // // Auto-create tag from OKR title
-    // await this.tagService.autoCreateTagForEntity({
-    //   entityId: okr.id,
-    //   entityType: 'okr',
-    //   entityName: okr.title,
-    // });
-
+  async create(dto: CreateOkrDto) {
+    const okr = await this.okrRepository.create(dto);
+    const assignedTo =
+      dto.assignedTo?.map((userId) => ({
+        userId: userId,
+      })) ?? [];
+    this.tagService.createTagforEntities(okr.title, okr.description, okr.id);
+    for (const user of assignedTo) {
+      this.notificationService.create(
+        user.userId,
+        1,
+        `You have been assigned a new OKR: ${okr.title}`,
+      );
+    }
+    this.notificationService.create(
+      dto.userId,
+      1,
+      `New OKR created: ${okr.title}`,
+    );
     return okr;
   }
 
-  async getOkr(dto: GetOkrDto) {
-    const okr = await this.okrRepository.getOkrById(dto.okrId);
-    if (!okr) throw new NotFoundException('OKR not found');
-    return okr;
+  findAll() {
+    return this.okrRepository.findAll();
   }
 
-  async getAllOkrs() {
-    return this.okrRepository.getAllOkrs();
+  findOne(id: number) {
+    return this.okrRepository.findOne(id);
   }
 
-  async updateOkr(dto: UpdateOkrDto) {
-    const okr = await this.okrRepository.getOkrById(dto.okrId);
-    if (!okr) throw new NotFoundException('OKR not found');
-    return this.okrRepository.updateOkr(dto);
+  async update(id: number, dto: UpdateOkrDto, userId: number) {
+    return this.okrRepository.update(id, dto, userId);
   }
 
-  async deleteOkr(dto: DeleteOkrDto) {
-    const okr = await this.okrRepository.getOkrById(dto.okrId);
-    if (!okr) throw new NotFoundException('OKR not found');
-    return this.okrRepository.deleteOkr(dto.okrId);
+  delete(id: number) {
+    return this.okrRepository.delete(id);
   }
 }

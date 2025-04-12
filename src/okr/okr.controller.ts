@@ -6,41 +6,50 @@ import {
   Delete,
   Body,
   Param,
+  Request,
+  ParseIntPipe,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { OkrService } from './okr.service';
-import {
-  CreateOkrDto,
-  GetOkrDto,
-  UpdateOkrDto,
-  DeleteOkrDto,
-} from './dto/okr.dto';
+import { CreateOkrDto, UpdateOkrDto } from './dto/okr.dto';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('okrs')
 export class OkrController {
   constructor(private readonly okrService: OkrService) {}
 
   @Post()
-  create(@Body() dto: CreateOkrDto) {
-    return this.okrService.createOkr(dto);
+  create(@Body() dto: CreateOkrDto, @Request() req) {
+    console.log(req.user);
+    dto.companyId = req.user.companyId;
+    dto.userId = req.user.id;
+    return this.okrService.create(dto);
   }
 
   @Get()
-  getAll() {
-    return this.okrService.getAllOkrs();
+  findAll() {
+    return this.okrService.findAll();
   }
 
-  @Get(':okrId')
-  getOne(@Param() dto: GetOkrDto) {
-    return this.okrService.getOkr(dto);
+  @Get(':id')
+  findOne(@Param('id') id: number) {
+    return this.okrService.findOne(+id);
   }
 
-  @Patch()
-  update(@Body() dto: UpdateOkrDto) {
-    return this.okrService.updateOkr(dto);
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateOkrDto,
+    @Request() req,
+  ) {
+    const userId = req.user_id;
+    return this.okrService.update(id, dto, userId);
   }
 
-  @Delete()
-  delete(@Body() dto: DeleteOkrDto) {
-    return this.okrService.deleteOkr(dto);
+  @Delete(':id')
+  delete(@Param('id') id: number) {
+    return this.okrService.delete(+id);
   }
 }
