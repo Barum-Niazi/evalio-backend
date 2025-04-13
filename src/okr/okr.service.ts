@@ -49,4 +49,12 @@ export class OkrService {
   delete(id: number) {
     return this.okrRepository.delete(id);
   }
+
+  getRootOkrs() {
+    return this.okrRepository.getOkrsByParent(null);
+  }
+
+  getSubTree(parentId: number) {
+    return this.okrRepository.getOkrsByParent(parentId);
+  }
 }

@@ -83,4 +83,13 @@ export class OkrRepository {
   delete(id: number) {
     return this.prisma.okrs.delete({ where: { id } });
   }
+
+  getOkrsByParent(parentId: number | null) {
+    return this.prisma.okrs.findMany({
+      where: { parent_okr_id: parentId },
+      include: {
+        key_results: true,
+      },
+    });
+  }
 }
