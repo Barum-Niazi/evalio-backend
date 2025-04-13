@@ -1,19 +1,16 @@
 import {
-  IsInt,
-  IsOptional,
   IsString,
-  MinLength,
+  IsNotEmpty,
+  IsOptional,
+  IsInt,
   IsNumber,
   Min,
   Max,
 } from 'class-validator';
 
-/**
- * ✅ Create Key Result
- */
 export class CreateKeyResultDto {
   @IsString()
-  @MinLength(3)
+  @IsNotEmpty()
   title: string;
 
   @IsInt()
@@ -22,18 +19,6 @@ export class CreateKeyResultDto {
   @IsInt()
   @IsOptional()
   parentKeyResultId?: number;
-}
-
-/**
- * ✅ Update Key Result
- */
-export class UpdateKeyResultDto {
-  @IsInt()
-  id: number;
-
-  @IsString()
-  @IsOptional()
-  title?: string;
 
   @IsNumber()
   @Min(0)
@@ -42,18 +27,18 @@ export class UpdateKeyResultDto {
   progress?: number;
 }
 
-/**
- * ✅ Get Key Result
- */
-export class GetKeyResultDto {
-  @IsInt()
-  id: number;
-}
+export class UpdateKeyResultDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
 
-/**
- * ✅ Delete Key Result
- */
-export class DeleteKeyResultDto {
+  @IsOptional()
   @IsInt()
-  id: number;
+  parentKeyResultId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  progress?: number;
 }

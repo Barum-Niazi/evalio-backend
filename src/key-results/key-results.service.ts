@@ -1,39 +1,41 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { KeyResultsRepository } from './key-results.repository';
 import {
-  CreateKeyResultDto,
-  UpdateKeyResultDto,
-  GetKeyResultDto,
-  DeleteKeyResultDto,
-} from './dto/key-results.dto';
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { KeyResultsRepository } from './key-results.repository';
+import { CreateKeyResultDto, UpdateKeyResultDto } from './dto/key-results.dto';
 
 @Injectable()
 export class KeyResultsService {
-  constructor(private readonly repo: KeyResultsRepository) {}
+  constructor(private readonly keyResultsRepository: KeyResultsRepository) {}
 
-  async create(dto: CreateKeyResultDto) {
-    return this.repo.create(dto);
-  }
+  async create(dto: CreateKeyResultDto, user) {
+    const userId = user.id;
+    const userRole = user.role.toUpperCase();
+    const okr = await this.keyResultsRepository.findOKR(dto.okrId, userId);
 
-  async getOne(dto: GetKeyResultDto) {
-    const kr = await this.repo.findById(dto.id);
-    if (!kr) throw new NotFoundException('Key Result not found');
-    return kr;
+    if (!okr) {
+      throw new NotFoundException('OKR not found');
+    }
+
+    console.log('okr user_id', okr.user_id);
+    const isOwner = okr.user_id === userId;
+    const isAdmin = userRole === 'ADMIN';
+
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException(
+        'You are not authorized to add a key result to this OKR',
+      );
+    }
+    return this.keyResultsRepository.create(dto, userId);
   }
 
   async getAllByOkr(okrId: number) {
-    return this.repo.findAllByOkr(okrId);
+    return this.keyResultsRepository.findAllByOkr(okrId);
   }
 
-  async update(dto: UpdateKeyResultDto) {
-    const kr = await this.repo.findById(dto.id);
-    if (!kr) throw new NotFoundException('Key Result not found');
-    return this.repo.update(dto);
-  }
-
-  async delete(dto: DeleteKeyResultDto) {
-    const kr = await this.repo.findById(dto.id);
-    if (!kr) throw new NotFoundException('Key Result not found');
-    return this.repo.delete(dto.id);
+  async update(id: number, dto: UpdateKeyResultDto, userId: number) {
+    return this.keyResultsRepository.update(id, dto, userId);
   }
 }
