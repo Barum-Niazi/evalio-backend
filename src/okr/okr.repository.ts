@@ -48,18 +48,22 @@ export class OkrRepository {
   }
 
   async update(id: number, dto: UpdateOkrDto, userId: number) {
-    // Start by removing existing user_okrs if assigned_to is passed
     const updateData: any = {
-      ...dto,
       audit: {
         updatedAt: new Date().toISOString(),
-        updatedBy: userId, // Optional: update modifiedAt etc
-      }, // Optional: update modifiedAt etc
+        updatedBy: userId,
+      },
     };
+
+    // Explicitly map only known fields
+    if (dto.title !== undefined) updateData.title = dto.title;
+    if (dto.description !== undefined) updateData.description = dto.description;
+    if (dto.parentOkrId !== undefined)
+      updateData.parent_okr_id = dto.parentOkrId;
 
     if (dto.assignedTo) {
       updateData.assigned_to = {
-        deleteMany: {}, // remove all current
+        deleteMany: {}, // remove all current assignments
         create: dto.assignedTo.map((user_id) => ({ user_id })),
       };
     }
@@ -67,6 +71,12 @@ export class OkrRepository {
     return this.prisma.okrs.update({
       where: { id },
       data: updateData,
+      include: {
+        // only the user id from assigned to
+        assigned_to: {
+          select: { user_id: true },
+        },
+      },
     });
   }
 
