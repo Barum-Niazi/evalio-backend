@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { OkrRepository } from './okr.repository';
 import { CreateOkrDto, UpdateOkrDto } from './dto/okr.dto';
 import { TagService } from 'src/tags/tag.service';
@@ -70,9 +74,25 @@ export class OkrService {
   findOne(id: number) {
     return this.okrRepository.findOne(id);
   }
+  async update(
+    id: number,
+    dto: UpdateOkrDto,
+    user: { id: number; role: string },
+  ) {
+    const okr = await this.okrRepository.findById(id);
 
-  async update(id: number, dto: UpdateOkrDto, userId: number) {
-    return this.okrRepository.update(id, dto, userId);
+    if (!okr) {
+      throw new NotFoundException('OKR not found');
+    }
+
+    const isOwner = okr.user_id === user.id;
+    const isAdmin = user.role.toUpperCase() === 'ADMIN';
+
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('You are not authorized to update this OKR');
+    }
+
+    return this.okrRepository.update(id, dto, user.id);
   }
 
   delete(id: number) {

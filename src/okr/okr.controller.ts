@@ -53,7 +53,7 @@ export class OkrController {
   @Get(':id')
   findOne(@Param('id') id: number) {
     console.log('in find one');
-    return this.okrService.findOne(+id);
+    return this.okrService.findOne(id);
   }
 
   @Patch(':id')
@@ -62,8 +62,10 @@ export class OkrController {
     @Body() dto: UpdateOkrDto,
     @Request() req,
   ) {
-    const userId = req.user_id;
-    return this.okrService.update(id, dto, userId);
+    return this.okrService.update(id, dto, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Delete(':id')

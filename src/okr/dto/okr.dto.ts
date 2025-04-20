@@ -60,19 +60,12 @@ export class UpdateOkrDto {
   @IsArray()
   @IsInt({ each: true })
   assignedTo?: number[]; // replaces all current assignments
-}
 
-/**
- * ✅ Get OKR by ID
- */
-export class GetOkrDto {
+  @IsOptional()
   @IsInt()
-  okrId: number;
+  departmentId?: number; // Optional, if provided, will update the department
 }
 
-/**
- * ✅ Delete OKR
- */
 export class DeleteOkrDto {
   @IsInt()
   okrId: number;

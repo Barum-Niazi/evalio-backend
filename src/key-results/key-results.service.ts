@@ -34,8 +34,26 @@ export class KeyResultsService {
   async getAllByOkr(okrId: number) {
     return this.keyResultsRepository.findAllByOkr(okrId);
   }
+  async update(
+    id: number,
+    dto: UpdateKeyResultDto,
+    user: { id: number; role: string },
+  ) {
+    const kr = await this.keyResultsRepository.findByIdWithOkr(id);
+    if (!kr) throw new NotFoundException('Key result not found');
 
-  async update(id: number, dto: UpdateKeyResultDto, userId: number) {
-    return this.keyResultsRepository.update(id, dto, userId);
+    const isAdmin = user.role === 'ADMIN';
+
+    const isAssigned = kr.okr.assigned_to.some(
+      (userOkr) => userOkr.user_id === user.id,
+    );
+
+    if (!isAssigned && !isAdmin) {
+      throw new ForbiddenException(
+        'You are not authorized to update this Key Result',
+      );
+    }
+
+    return this.keyResultsRepository.update(id, dto, user.id);
   }
 }

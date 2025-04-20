@@ -72,16 +72,34 @@ export class OkrRepository {
       },
     };
 
-    // Explicitly map only known fields
+    // Set updated fields
     if (dto.title !== undefined) updateData.title = dto.title;
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.parentOkrId !== undefined)
       updateData.parent_okr_id = dto.parentOkrId;
+    if (dto.departmentId !== undefined)
+      updateData.department_id = dto.departmentId;
+
+    // Combine department employees + manual assignments
+    let allAssignees: number[] = [];
+
+    if (dto.departmentId !== undefined) {
+      const employees = await this.prisma.user_details.findMany({
+        where: { department_id: dto.departmentId },
+        select: { user_id: true },
+      });
+      allAssignees.push(...employees.map((e) => e.user_id));
+    }
 
     if (dto.assignedTo) {
+      allAssignees.push(...dto.assignedTo);
+    }
+
+    if (allAssignees.length > 0) {
+      const uniqueUserIds = Array.from(new Set(allAssignees));
       updateData.assigned_to = {
-        deleteMany: {}, // remove all current assignments
-        create: dto.assignedTo.map((user_id) => ({ user_id })),
+        deleteMany: {}, // reset previous assignments
+        create: uniqueUserIds.map((user_id) => ({ user_id })),
       };
     }
 
@@ -89,16 +107,11 @@ export class OkrRepository {
       where: { id },
       data: updateData,
       include: {
-        // only the user id from assigned to
         assigned_to: {
           select: { user_id: true },
         },
       },
     });
-  }
-
-  delete(id: number) {
-    return this.prisma.okrs.delete({ where: { id } });
   }
 
   getOkrsByParent(parentId: number | null) {
@@ -122,5 +135,19 @@ export class OkrRepository {
         },
       },
     });
+  }
+
+  async findById(id: number) {
+    return this.prisma.okrs.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        user_id: true, // for permission check
+      },
+    });
+  }
+
+  delete(id: number) {
+    return this.prisma.okrs.delete({ where: { id } });
   }
 }

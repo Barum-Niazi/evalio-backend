@@ -39,7 +39,10 @@ export class KeyResultsController {
     @Body() dto: UpdateKeyResultDto,
     @Request() req,
   ) {
-    return this.keyResultsService.update(id, dto, req.user.user_id);
+    return this.keyResultsService.update(id, dto, {
+      id: req.user_id,
+      role: req.role,
+    });
   }
 
   // @Delete()

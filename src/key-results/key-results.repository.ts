@@ -62,6 +62,24 @@ export class KeyResultsRepository {
       });
     }
   }
+
+  async findByIdWithOkr(id: number) {
+    return this.prisma.key_results.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        okr: {
+          select: {
+            id: true,
+            assigned_to: {
+              select: { user_id: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async delete(id: number) {
     return this.prisma.key_results.delete({ where: { id } });
   }
