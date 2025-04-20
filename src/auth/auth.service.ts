@@ -82,4 +82,11 @@ export class AuthService {
       companyId: user.companyId,
     };
   }
+
+  async storeGoogleTokens(
+    userId: number,
+    tokens: { access_token: string; refresh_token: string },
+  ): Promise<void> {
+    await this.userService.storeGoogleTokens(userId, tokens);
+  }
 }

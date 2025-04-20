@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { MeetingsController } from './meetings.controller';
-import { MeetingsService } from './meetings.service';
+import { MeetingService } from './meetings.service';
+import { MeetingController } from './meetings.controller';
+import { MeetingRepository } from './meetings.repository';
+import { GoogleService } from 'src/services/google.service'; // shared Google service
+import { PrismaService } from 'src/prisma/prisma.service'; // your Prisma provider
 
 @Module({
-  controllers: [MeetingsController],
-  providers: [MeetingsService]
+  controllers: [MeetingController],
+  providers: [MeetingService, MeetingRepository, GoogleService, PrismaService],
 })
-export class MeetingsModule {}
+export class MeetingModule {}

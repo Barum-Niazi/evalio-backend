@@ -21,10 +21,11 @@ import { TagModule } from './tags/tag.module';
 import { NotificationController } from './notification/notification.controller';
 import { NotificationModule } from './notification/notification.module';
 import { NotificationService } from './notification/notification.service';
-import { MeetingsModule } from './meetings/meetings.module';
+import { MeetingModule } from './meetings/meetings.module';
 import { OkrController } from './okr/okr.controller';
 import { OkrModule } from './okr/okr.module';
 import { KeyResultsModule } from './key-results/key-results.module';
+import { GoogleService } from './services/google.service';
 
 @Module({
   imports: [
@@ -41,7 +42,7 @@ import { KeyResultsModule } from './key-results/key-results.module';
     FeedbackModule,
     TagModule,
     NotificationModule,
-    MeetingsModule,
+    MeetingModule,
     OkrModule,
     KeyResultsModule,
   ],
@@ -56,6 +57,6 @@ import { KeyResultsModule } from './key-results/key-results.module';
     NotificationController,
     OkrController,
   ],
-  providers: [AppService, NotificationService],
+  providers: [AppService, NotificationService, GoogleService],
 })
 export class AppModule {}

@@ -33,4 +33,11 @@ export class UserService {
   async findCompanyUsers(companyId: number) {
     return this.userRepository.findCompanyUsers(companyId);
   }
+
+  async storeGoogleTokens(
+    userId: number,
+    tokens: { access_token: string; refresh_token: string },
+  ) {
+    return this.userRepository.updateGoogleTokens(userId, tokens);
+  }
 }

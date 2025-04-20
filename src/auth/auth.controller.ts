@@ -5,14 +5,23 @@ import {
   UseGuards,
   Req,
   Request,
+  Get,
+  Res,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
 import { LocalAuthGuard } from 'src/guards/local-auth.guard';
+import { GoogleService } from '../services/google.service';
+import { Response } from 'express';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly googleService: GoogleService,
+  ) {}
 
   @Post('signup')
   async signUp(@Body() signUpDto: SignUpDto) {
@@ -25,5 +34,26 @@ export class AuthController {
   @Post('login')
   async login(@Request() req) {
     return this.authService.login(req.user);
+  }
+
+  @Get('google')
+  redirectToGoogle(@Res() res: Response) {
+    const url = this.googleService.getAuthUrl();
+    return res.redirect(url);
+  }
+
+  @Get('google/callback')
+  async googleAuthCallback(
+    @Query('code') code: string,
+    @Req() req,
+    @Res() res: Response,
+  ) {
+    const tokens = await this.googleService.setCredentials(code);
+    console.log(tokens);
+    const userId = 9; // test user id
+
+    await this.authService.storeGoogleTokens(userId, tokens);
+
+    return res.json({ message: 'Google OAuth successful' });
   }
 }

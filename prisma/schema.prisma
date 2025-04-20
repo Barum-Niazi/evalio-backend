@@ -11,6 +11,8 @@ model user_auth {
   user_id      Int       @id // Same ID as users table for strict 1:1 mapping
   email       String    @unique
   password    String?   // Nullable for OAuth users
+  google_access_token String? // Nullable for OAuth users
+  google_refresh_token String? // Nullable for OAuth users
   user        users     @relation(fields: [user_id], references: [id]) // One-to-one relation
   audit       Json      @default("{}") // Audit JSON for metadata
 }
