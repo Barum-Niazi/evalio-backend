@@ -65,6 +65,7 @@ export class FeedbackService {
       feedback.title,
       feedback.feedback_text,
       feedback.id,
+      'FEEDBACK',
     );
 
     // Send notification to the receiver

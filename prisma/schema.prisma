@@ -237,6 +237,7 @@ model tags {
   name       String   @unique                      // Name of the tag (e.g., "Teamwork")
   description String?                              // Optional description of the tag
   parent_entity_id Int? // Optional: ID of the parent entity (e.g., OKR, feedback)
+  parent_entity_type String? // Optional: Type of the parent entity (e.g., "okr", "feedback")
   tagged_entities tagged_entities[]               // Relation to tagged entities
   audit      Json     @default("{}")               // Audit JSON for metadata
 }

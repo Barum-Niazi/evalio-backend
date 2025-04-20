@@ -32,13 +32,19 @@ export class TagService {
     name: string,
     description?: string,
     parentId?: number,
+    parentType?: string,
   ) {
     const existingTag = await this.tagRepository.findTagByName(name);
 
     if (existingTag) {
       throw new BadRequestException('Tag already exists');
     }
-    return this.tagRepository.createTagforEntities(name, description, parentId);
+    return this.tagRepository.createTagforEntities(
+      name,
+      description,
+      parentId,
+      parentType,
+    );
   }
 
   // async autoCreateTagForEntity() {

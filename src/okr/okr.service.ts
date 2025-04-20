@@ -48,6 +48,7 @@ export class OkrService {
       okr.title,
       okr.description,
       okr.id,
+      'OKR',
     );
 
     for (const userId of allAssignees) {

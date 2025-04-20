@@ -20,13 +20,17 @@ export class TagRepository {
     name: string,
     description?: string,
     parentId?: number,
+    parentType?: string,
   ): Promise<tags> {
     return this.prisma.tags.create({
       data: {
         name,
         description,
         parent_entity_id: parentId || null,
-        audit: {}, // Default empty audit field as per schema
+        parent_entity_type: parentType || null,
+        audit: {
+          created_at: new Date().toISOString(),
+        }, // Default empty audit field as per schema
       },
     });
   }
