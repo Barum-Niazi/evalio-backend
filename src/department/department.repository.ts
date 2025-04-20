@@ -146,4 +146,13 @@ export class DepartmentRepository {
       });
     });
   }
+
+  async getEmployeesByDepartment(departmentId: number) {
+    return this.prisma.user_details.findMany({
+      where: { department_id: departmentId },
+      include: {
+        user: true, // Include user details if needed
+      },
+    });
+  }
 }

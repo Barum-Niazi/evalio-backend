@@ -1,12 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOkrDto, UpdateOkrDto } from './dto/okr.dto';
+import { okrs } from '@prisma/client';
 
 @Injectable()
 export class OkrRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateOkrDto) {
+  async create(dto: CreateOkrDto): Promise<okrs> {
+    let departmentUserIds: number[] = [];
+
+    if (dto.departmentId) {
+      const employees = await this.prisma.user_details.findMany({
+        where: { department_id: dto.departmentId },
+        select: { user_id: true },
+      });
+      departmentUserIds = employees.map((e) => e.user_id);
+    }
+
+    // Merge both: unique user IDs only
+    const allAssignees = Array.from(
+      new Set([...(dto.assignedTo ?? []), ...departmentUserIds]),
+    );
+
     return this.prisma.okrs.create({
       data: {
         title: dto.title,
@@ -14,12 +30,13 @@ export class OkrRepository {
         company_id: dto.companyId,
         user_id: dto.userId,
         parent_okr_id: dto.parentOkrId,
+        department_id: dto.departmentId,
         assigned_to: {
-          create: dto.assignedTo?.map((user_id) => ({ user_id })) ?? [],
+          create: allAssignees.map((user_id) => ({ user_id })),
         },
         audit: {
           createdAt: new Date().toISOString(),
-          createdBy: dto.userId, // assuming user_id is available
+          createdBy: dto.userId,
         },
       },
     });
@@ -89,6 +106,20 @@ export class OkrRepository {
       where: { parent_okr_id: parentId },
       include: {
         key_results: true,
+      },
+    });
+  }
+
+  async getByDepartment(departmentId: number) {
+    return this.prisma.okrs.findMany({
+      where: { department_id: departmentId },
+      include: {
+        key_results: true,
+        assigned_to: {
+          include: {
+            user: true, // include user info if needed
+          },
+        },
       },
     });
   }

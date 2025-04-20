@@ -90,6 +90,7 @@ model department {
   audit       Json      @default("{}") // Replaces createdAt and updatedAt
 
   @@unique([name, company_id])
+  okrs okrs[]
 }
 
 model designation {
@@ -115,18 +116,24 @@ model companies {
   audit              Json             @default("{}") // Audit JSON
 }
 model okrs {
-  id          Int       @id @default(autoincrement())
-  parent_okr_id Int?     // Relation to parent OKR
-  title       String
-  description String?
-  company_id   Int?
-  company     companies? @relation("company_okrs", fields: [company_id], references: [id])
-  user_id      Int?
-  child_okrs  okrs[] @relation("parent_okr") // Relation for child OKRs
-  parent_okr  okrs? @relation("parent_okr", fields: [parent_okr_id], references: [id]) // Relation for parent OKR
-  assigned_to  user_okrs[]
-  key_results  key_results[]
-  audit       Json       @default("{}") // Replaces createdAt and updatedAt
+  id             Int       @id @default(autoincrement())
+  parent_okr_id  Int?
+  title          String
+  description    String?
+  
+  company_id     Int?
+  company        companies? @relation("company_okrs", fields: [company_id], references: [id])
+
+  user_id        Int?     // Relation to User (Owner)
+  department_id  Int?       
+  department     department? @relation(fields: [department_id], references: [id])
+
+  child_okrs     okrs[]     @relation("parent_okr")
+  parent_okr     okrs?      @relation("parent_okr", fields: [parent_okr_id], references: [id])
+
+  assigned_to    user_okrs[]
+  key_results    key_results[]
+  audit          Json       @default("{}")
 }
 
 model user_okrs {

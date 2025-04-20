@@ -43,6 +43,13 @@ export class OkrController {
     return this.okrService.getSubTree(id);
   }
 
+  @Get('department/:departmentId')
+  getOkrsByDepartment(
+    @Param('departmentId', ParseIntPipe) departmentId: number,
+  ) {
+    return this.okrService.getByDepartment(departmentId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number) {
     console.log('in find one');

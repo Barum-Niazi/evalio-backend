@@ -34,6 +34,10 @@ export class CreateOkrDto {
   @IsInt({ each: true })
   @IsOptional()
   assignedTo?: number[]; // userIds for userOkrs relation
+
+  @IsOptional()
+  @IsInt()
+  departmentId?: number;
 }
 
 /**
