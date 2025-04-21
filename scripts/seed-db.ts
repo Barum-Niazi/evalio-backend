@@ -151,6 +151,8 @@ async function seedRoles() {
       },
     });
   }
+
+  console.log('Roles seeded successfully.');
 }
 
 seedLookupData();

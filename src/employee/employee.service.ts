@@ -132,21 +132,29 @@ export class EmployeeService {
 
       fileStream
         .pipe(csvParser())
-        .on('data', (row) => {
+        .on('data', async (row) => {
           const name = row['Name']?.trim();
           const email = row['Email']?.trim();
           const designation = row['Designation']?.trim();
           const managerEmail = row['ManagerEmail']?.trim();
+          const rolesRaw = row['Roles']?.trim(); // e.g., "Employee,Manager"
 
           if (name && email && designation) {
-            const password = Math.random().toString(36).slice(-8);
+            const password = '12345678'; // Default for now
+            const hashedPassword = await argon2.hash(password);
+
+            const roles = rolesRaw
+              ? rolesRaw.split(',').map((r) => r.trim())
+              : ['Employee'];
+
             employees.push({
               name,
               email,
               designation,
-              password,
+              hashedPassword,
               companyId,
               managerEmail,
+              roles,
             });
           }
         })
@@ -168,18 +176,23 @@ export class EmployeeService {
       throw new BadRequestException('No worksheet found in the uploaded file.');
     }
 
-    worksheet.eachRow(async (row, rowIndex) => {
-      if (rowIndex === 1) return; // Skip the header row
+    for (let rowIndex = 2; rowIndex <= worksheet.rowCount; rowIndex++) {
+      const row = worksheet.getRow(rowIndex);
 
       const name = row.getCell(1)?.value?.toString().trim();
       const email = row.getCell(2)?.value?.toString().trim();
       const designation = row.getCell(3)?.value?.toString().trim();
       const managerEmail = row.getCell(4)?.value?.toString().trim();
+      const rolesRaw = row.getCell(5)?.value?.toString().trim(); // e.g., "Employee,Manager"
 
       if (name && email && designation) {
-        const password = '12345678'; // Default password for now
-        const hashedPassword = await argon2.hash(password); // Hash the password
-        console.log('hashedPassword', hashedPassword);
+        const password = '12345678';
+        const hashedPassword = await argon2.hash(password);
+
+        const roles = rolesRaw
+          ? rolesRaw.split(',').map((r) => r.trim())
+          : ['Employee'];
+
         employees.push({
           name,
           email,
@@ -187,9 +200,10 @@ export class EmployeeService {
           hashedPassword,
           companyId,
           managerEmail,
+          roles,
         });
       }
-    });
+    }
 
     return employees;
   }

@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   ValidateNested,
+  IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -25,4 +26,9 @@ class SingleEmployeeDto {
 
   @IsOptional()
   managerId?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  roles?: string[]; // Optional: defaults to ['Employee'] in logic
 }

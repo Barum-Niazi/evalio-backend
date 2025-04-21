@@ -15,21 +15,6 @@ export class UserService {
     return this.userRepository.createAdmin(name, email, hashedPassword);
   }
 
-  async createEmployee(
-    name: string,
-    email: string,
-    password: string,
-    companyId: number,
-  ) {
-    const hashedPassword = await argon2.hash(password);
-    return this.userRepository.createEmployee(
-      name,
-      email,
-      hashedPassword,
-      companyId,
-    );
-  }
-
   async findCompanyUsers(companyId: number) {
     return this.userRepository.findCompanyUsers(companyId);
   }

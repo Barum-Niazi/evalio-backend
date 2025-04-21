@@ -15,14 +15,19 @@ export class RolesGuard implements CanActivate {
       'roles',
       context.getHandler(),
     );
-    if (!requiredRoles) {
-      return true; // If no roles are defined, allow access
+
+    if (!requiredRoles || requiredRoles.length === 0) {
+      return true; // No roles required → allow access
     }
 
     const request = context.switchToHttp().getRequest();
-    const user = request.user; // Retrieved from the JWT token
+    const user = request.user;
 
-    if (!requiredRoles.includes(user.role)) {
+    const userRoles = user.roles || [];
+
+    const hasRole = requiredRoles.some((role) => userRoles.includes(role));
+
+    if (!hasRole) {
       throw new ForbiddenException('You do not have access to this resource');
     }
 

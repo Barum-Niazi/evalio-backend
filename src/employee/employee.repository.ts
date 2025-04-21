@@ -6,9 +6,24 @@ import { Prisma } from '@prisma/client';
 export class EmployeeRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  createEmployee(employee: any): Prisma.PrismaPromise<any> {
-    const { name, email, password, designation, companyId, managerId } =
-      employee;
+  createEmployee(employee: {
+    name: string;
+    email: string;
+    password: string;
+    designation: string;
+    companyId: number;
+    managerId?: number;
+    roles?: string[]; // new
+  }): Prisma.PrismaPromise<any> {
+    const {
+      name,
+      email,
+      password,
+      designation,
+      companyId,
+      managerId,
+      roles = ['Employee'], // default fallback
+    } = employee;
 
     return this.prisma.users.create({
       data: {
@@ -19,14 +34,14 @@ export class EmployeeRepository {
           },
         },
         roles: {
-          create: {
+          create: roles.map((roleName) => ({
             role: {
               connectOrCreate: {
-                where: { name: 'Employee' }, // Assuming 'Employee' is a general role for all users
-                create: { name: 'Employee' },
+                where: { name: roleName },
+                create: { name: roleName },
               },
             },
-          },
+          })),
         },
         details: {
           create: {
@@ -69,7 +84,7 @@ export class EmployeeRepository {
             auth: {
               create: {
                 email: employee.email,
-                password: employee.password,
+                password: employee.hashedPassword,
               },
             },
             details: {
@@ -115,7 +130,7 @@ export class EmployeeRepository {
         }
       }
 
-      // Step 3: Fetch or create the "Employee" role
+      // Step 3: Fetch or create the "Employee" role (legacy support)
       let employeeRole = await prisma.roles.findUnique({
         where: { name: 'Employee' },
       });
@@ -126,16 +141,44 @@ export class EmployeeRepository {
         });
       }
 
-      // Step 4: Prepare `user_roles` data with resolved `role_id`
-      const rolesData = Array.from(userIds.values()).map((userId) => ({
-        user_id: userId,
-        role_id: employeeRole.id,
-      }));
+      // Step 4: Gather all roles from input
+      const rolesSet = new Set<string>();
+      employees.forEach((emp) => {
+        (emp.roles ?? ['Employee']).forEach((role) => rolesSet.add(role));
+      });
 
-      // Step 5: Insert `user_roles` in bulk
+      // Step 5: Ensure all roles exist
+      const rolesInDb = await prisma.roles.findMany({
+        where: { name: { in: Array.from(rolesSet) } },
+      });
+
+      const roleNameToId = new Map(rolesInDb.map((r) => [r.name, r.id]));
+
+      for (const role of rolesSet) {
+        if (!roleNameToId.has(role)) {
+          const newRole = await prisma.roles.create({ data: { name: role } });
+          roleNameToId.set(role, newRole.id);
+        }
+      }
+
+      // Step 6: Prepare user-role assignments
+      const rolesData: { user_id: number; role_id: number }[] = [];
+
+      for (const emp of employees) {
+        const userId = userIds.get(emp.email);
+        const empRoles = emp.roles ?? ['Employee'];
+        for (const role of empRoles) {
+          rolesData.push({
+            user_id: userId,
+            role_id: roleNameToId.get(role),
+          });
+        }
+      }
+
+      // Step 7: Insert `user_roles` in bulk
       await prisma.user_roles.createMany({
         data: rolesData,
-        skipDuplicates: true, // Avoid duplicate entries
+        skipDuplicates: true,
       });
 
       return {

@@ -6,11 +6,17 @@ import { users } from '@prisma/client'; // Import types from your Prisma schema
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Find a user by their email in the `user_auth` table
-   * @param email - The email of the user to find
-   * @returns The user_auth record or null
-   */
+  private buildRoleConnections(roleNames: string[]) {
+    return roleNames.map((roleName) => ({
+      role: {
+        connectOrCreate: {
+          where: { name: roleName },
+          create: { name: roleName },
+        },
+      },
+    }));
+  }
+
   async findByEmail(email: string): Promise<any> {
     const userAuth = await this.prisma.user_auth.findUnique({
       where: { email },
@@ -43,13 +49,6 @@ export class UserRepository {
     return userAuth;
   }
 
-  /**
-   * @param name - The name of the admin user
-   * @param email - The email for the admin's authentication
-   * @param password - The hashed password for the admin
-   * @param companyName - The name of the company to create
-   * @returns The created admin user with all relationships
-   */
   async createAdmin(
     name: string,
     email: string,
@@ -64,14 +63,7 @@ export class UserRepository {
           },
         },
         roles: {
-          create: {
-            role: {
-              connectOrCreate: {
-                where: { name: 'Admin' },
-                create: { name: 'Admin' },
-              },
-            },
-          },
+          create: this.buildRoleConnections(['Admin']),
         },
         details: {
           create: {
@@ -81,48 +73,16 @@ export class UserRepository {
       },
       include: {
         auth: { select: { email: true } },
+        roles: {
+          include: {
+            role: true,
+          },
+        },
       },
     });
 
     return newUser;
   }
-  async createEmployee(
-    name: string,
-    email: string,
-    password: string,
-    companyId: number,
-  ): Promise<users> {
-    return this.prisma.users.create({
-      data: {
-        auth: {
-          create: {
-            email,
-            password,
-          },
-        },
-        roles: {
-          create: {
-            role: {
-              connectOrCreate: {
-                where: { name: 'Employee' },
-                create: { name: 'Employee' },
-              },
-            },
-          },
-        },
-        details: {
-          create: {
-            name,
-            company: {
-              connect: { id: companyId },
-            },
-          },
-        },
-      },
-    });
-  }
-
-  // gimme function to find company users with their names and with their roles title as well
 
   async findCompanyUsers(companyId: number): Promise<any[]> {
     return this.prisma.users.findMany({

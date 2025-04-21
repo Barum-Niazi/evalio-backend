@@ -55,14 +55,12 @@ export class AuthService {
       throw new UnauthorizedException('User has no assigned role');
     }
 
-    const role = user.roles[0]?.role?.name || 'Unknown';
-
-    console.log(user.details.company_id);
+    const roles = user.roles.map((ur) => ur.role.name); // Extract role names
 
     return {
       id: user.id,
       email: userAuth.email,
-      role,
+      roles,
       companyId: user.details?.company_id,
     };
   }
@@ -71,13 +69,13 @@ export class AuthService {
     const payload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      roles: user.roles, // ✅ This is now an array
       companyId: user.companyId,
     };
-    console.log(payload);
+
     return {
       id: user.id,
-      role: user.role,
+      roles: user.roles,
       access_token: this.jwtService.sign(payload),
       companyId: user.companyId,
     };
