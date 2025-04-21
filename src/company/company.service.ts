@@ -240,8 +240,8 @@ export class CompanyService {
     await workbook.xlsx.read(fileStream);
     const worksheet = workbook.worksheets[0];
 
-    worksheet.eachRow(async (row, rowIndex) => {
-      if (rowIndex === 1) return; // Skip header row
+    for (let rowIndex = 2; rowIndex <= worksheet.rowCount; rowIndex++) {
+      const row = worksheet.getRow(rowIndex);
 
       const name = row.getCell(1)?.value?.toString().trim();
       const email = row.getCell(2)?.value?.toString().trim();
@@ -249,9 +249,15 @@ export class CompanyService {
       const managerEmail = row.getCell(4)?.value?.toString().trim();
       const departmentName = row.getCell(5)?.value?.toString().trim();
       const departmentHeadEmail = row.getCell(6)?.value?.toString().trim();
-      const password = '12345678'; // Default password
+      const rolesRaw = row.getCell(7)?.value?.toString().trim(); // Add this if you want roles
+      const roles = rolesRaw
+        ? rolesRaw.split(',').map((r) => r.trim())
+        : ['Employee'];
 
       if (name && email && designation) {
+        const password = '12345678'; // Default password
+        const hashedPassword = await argon2.hash(password);
+
         employees.push({
           name,
           email,
@@ -259,7 +265,8 @@ export class CompanyService {
           companyId,
           managerEmail,
           departmentName,
-          password,
+          hashedPassword,
+          roles,
         });
 
         if (departmentName) {
@@ -274,6 +281,6 @@ export class CompanyService {
           }
         }
       }
-    });
+    }
   }
 }
