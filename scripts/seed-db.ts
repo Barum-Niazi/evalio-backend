@@ -10,6 +10,7 @@ async function seedLookupData() {
     await seedNotificationStatuses();
     await seedFeedbackVisibility();
     await seedFeedbackRequestStatuses();
+    await seedRoles();
 
     console.log('All lookup data seeded successfully.');
   } catch (error) {
@@ -126,6 +127,27 @@ async function seedFeedbackRequestStatuses() {
             },
           },
         },
+      },
+    });
+  }
+}
+
+async function seedRoles() {
+  const roles = [
+    { name: 'Admin' },
+    { name: 'Employee' },
+    { name: 'Manager' },
+    { name: 'HR' },
+    { name: 'DepartmentHead' },
+    { name: 'Executive' },
+  ];
+
+  for (const role of roles) {
+    await prisma.roles.upsert({
+      where: { name: role.name },
+      update: {},
+      create: {
+        name: role.name,
       },
     });
   }
