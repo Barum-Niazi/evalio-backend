@@ -65,6 +65,8 @@ export class FeedbackRequestService {
   ) {
     const request = await this.feedbackRequestRepository.getById(dto.requestId);
 
+    console.log(employeeId);
+
     if (!request || request.recipient_id !== employeeId) {
       throw new ForbiddenException(
         'You cannot respond to this feedback request.',
@@ -130,6 +132,13 @@ export class FeedbackRequestService {
         'You are not authorized to decline this request.',
       );
     }
+
+    await this.notificationService.create(
+      request.requester_id,
+      2,
+      `Your feedback request has been declined.`,
+      `/feedback-requests/${request.id}`,
+    );
 
     return this.feedbackRequestRepository.updateRequest({
       requestId: dto.requestId,

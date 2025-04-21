@@ -20,6 +20,6 @@ import { FeedbackRequestService } from './feedback-request.service';
     FeedbackRequestRepository,
     FeedbackRequestService,
   ],
-  exports: [FeedbackService],
+  exports: [FeedbackService, FeedbackRequestService],
 })
 export class FeedbackModule {}

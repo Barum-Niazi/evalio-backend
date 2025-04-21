@@ -22,6 +22,7 @@ import {
   CreateFeedbackRequestDto,
   DeclineFeedbackRequestDto,
   GetFeedbackRequestsDto,
+  RespondToFeedbackRequestDto,
   UpdateFeedbackRequestDto,
 } from './dto/feedback-request.dto';
 import { FeedbackRequestService } from './feedback-request.service';
@@ -75,6 +76,13 @@ export class FeedbackController {
     });
   }
 
+  @Post('/request/respond')
+  respond(@Body() dto: RespondToFeedbackRequestDto, @Request() req) {
+    return this.feedbackRequestService.respondToFeedbackRequest(
+      req.user.id,
+      dto,
+    );
+  }
   @Get('/requests')
   async getRequests(@Request() req, @Query() dto: GetFeedbackRequestsDto) {
     const userId = req.user.id;
