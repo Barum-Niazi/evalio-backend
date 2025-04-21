@@ -7,10 +7,11 @@ import {
   UpdateFeedbackDto,
   GetFeedbackDto,
   DeleteFeedbackDto,
-  ListFeedbackDto,
+  ListAccessibleFeedbackDto,
 } from './dto/feedback.dto';
 import { SentimentAnalysisService } from 'src/services/sentiment-analysis.service';
 import { filterAndFormatFeedbacks, transformFeedback } from './feedback.utils';
+import { TagRepository } from 'src/tags/tag.repository';
 
 @Injectable()
 export class FeedbackService {
@@ -19,6 +20,7 @@ export class FeedbackService {
     private readonly tagService: TagService,
     private readonly notificationService: NotificationService,
     private readonly sentimentAnalysisService: SentimentAnalysisService,
+    private readonly tagRepository: TagRepository,
   ) {}
 
   /**
@@ -93,16 +95,6 @@ export class FeedbackService {
   }
 
   /**
-   * ✅ Retrieve all feedback with optional filters (sender, receiver)
-   */
-  async listFeedback(listFeedbackDto: ListFeedbackDto) {
-    return this.feedbackRepository.getAllFeedback(
-      listFeedbackDto.senderId,
-      listFeedbackDto.receiverId,
-    );
-  }
-
-  /**
    * ✅ Update feedback entry
    */
   async updateFeedback(updateFeedbackDto: UpdateFeedbackDto) {
@@ -140,12 +132,53 @@ export class FeedbackService {
     return this.feedbackRepository.deleteFeedback(feedbackId);
   }
 
-  async getFeedbackbyEmployee(currentUser: { id: number; company_id: number }) {
+  async getFeedbackbyEmployee(
+    currentUser: { id: number; companyId: number },
+    query?: ListAccessibleFeedbackDto,
+  ) {
     const feedbacks =
       await this.feedbackRepository.getAllFeedbackWithVisibility();
+    let visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
 
-    const visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
+    // Filter by sentiment
+    if (query?.sentiment) {
+      visibleFeedbacks = visibleFeedbacks.filter(
+        (fb) => fb.sentiment === query.sentiment,
+      );
+    }
 
-    return visibleFeedbacks.map((fb) => transformFeedback(fb, currentUser.id));
+    // Filter by team member (if the current user is their manager)
+    if (query?.teamMemberId) {
+      visibleFeedbacks = visibleFeedbacks.filter(
+        (fb) => fb.receiver_id === query.teamMemberId,
+      );
+    }
+
+    const feedbackIds = visibleFeedbacks.map((fb) => fb.id);
+
+    const taggedEntities = await this.tagRepository.getTagsForEntities(
+      feedbackIds,
+      'FEEDBACK',
+    );
+
+    let feedbacksWithTags = visibleFeedbacks.map((fb) => {
+      const tags = taggedEntities
+        .filter((te) => te.entity_id === fb.id)
+        .map((te) => te.tag);
+
+      return {
+        ...fb,
+        tags,
+      };
+    });
+
+    // Filter by tags (after tags are attached)
+    if (query?.tags?.length) {
+      feedbacksWithTags = feedbacksWithTags.filter((fb) =>
+        fb.tags.some((tag) => query.tags.includes(tag.name)),
+      );
+    }
+
+    return feedbacksWithTags.map((fb) => transformFeedback(fb, currentUser.id));
   }
 }

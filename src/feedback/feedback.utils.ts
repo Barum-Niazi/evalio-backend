@@ -1,6 +1,6 @@
 export function filterAndFormatFeedbacks(
   feedbacks: any[],
-  currentUser: { id: number; company_id: number },
+  currentUser: { id: number; companyId: number },
 ) {
   return feedbacks
     .filter((fb) => {
@@ -8,7 +8,7 @@ export function filterAndFormatFeedbacks(
       const isRecipient = fb.receiver_id === currentUser.id;
       const isSender = fb.sender_id === currentUser.id;
       const isManager = fb.receiver?.manager_id === currentUser.id;
-      const sameCompany = fb.receiver?.company_id === currentUser.company_id;
+      const sameCompany = fb.receiver?.company_id === currentUser.companyId;
 
       // Always show feedback sent by the user, regardless of visibility
       if (isSender) return true;

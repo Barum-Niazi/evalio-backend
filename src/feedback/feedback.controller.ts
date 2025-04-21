@@ -13,7 +13,10 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { FeedbackService } from './feedback.service';
-import { CreateFeedbackDto } from './dto/feedback.dto';
+import {
+  CreateFeedbackDto,
+  ListAccessibleFeedbackDto,
+} from './dto/feedback.dto';
 import { UpdateFeedbackDto } from './dto/feedback.dto';
 import { GetFeedbackDto } from './dto/feedback.dto';
 import { DeleteFeedbackDto } from './dto/feedback.dto';
@@ -64,11 +67,17 @@ export class FeedbackController {
   }
 
   @Get('/accessible')
-  async getAccessibleFeedback(@Request() req) {
-    return this.feedbackService.getFeedbackbyEmployee({
-      id: req.user.id,
-      company_id: req.user.company_id,
-    });
+  async getAccessibleFeedback(
+    @Request() req,
+    @Query() query: ListAccessibleFeedbackDto,
+  ) {
+    return this.feedbackService.getFeedbackbyEmployee(
+      {
+        id: req.user.id,
+        companyId: req.user.companyId,
+      },
+      query,
+    );
   }
 
   @Post('/request')

@@ -120,7 +120,7 @@ export class TagService {
     );
   }
 
-  async getAllTagsForUser(currentUser: { id: number; company_id: number }) {
+  async getAllTagsForUser(currentUser: { id: number; companyId: number }) {
     // 1. Fetch all visible feedbacks
     const feedbacks =
       await this.feedbackRepository.getAllFeedbackWithVisibility();

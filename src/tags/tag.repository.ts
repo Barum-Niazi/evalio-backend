@@ -124,6 +124,18 @@ export class TagRepository {
     });
   }
 
+  async getTagsForEntities(entityIds: number[], entityType: string) {
+    return this.prisma.tagged_entities.findMany({
+      where: {
+        entity_id: { in: entityIds },
+        entity_type: entityType,
+      },
+      include: {
+        tag: true,
+      },
+    });
+  }
+
   async findTagsByTitles(titles: string[]): Promise<tags[]> {
     return this.prisma.tags.findMany({
       where: {

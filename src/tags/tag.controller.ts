@@ -37,7 +37,7 @@ export class TagController {
   async getAllTags(@Request() req) {
     return this.tagService.getAllTagsForUser({
       id: req.user.id,
-      company_id: req.user.company_id,
+      companyId: req.user.companyId,
     });
   }
 }

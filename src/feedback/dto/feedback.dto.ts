@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsInt,
   IsString,
@@ -5,6 +6,7 @@ import {
   IsOptional,
   IsBoolean,
   IsArray,
+  IsEnum,
 } from 'class-validator';
 
 export class CreateFeedbackDto {
@@ -67,15 +69,24 @@ export class DeleteFeedbackDto {
   feedbackId: number;
 }
 
-/**
- * ✅ DTO for listing multiple feedback entries with optional filters
- */
-export class ListFeedbackDto {
-  @IsInt()
-  @IsOptional()
-  senderId?: number; // Filter by sender
+export enum Sentiment {
+  POSITIVE = 'POSITIVE',
+  NEGATIVE = 'NEGATIVE',
+  NEUTRAL = 'NEUTRAL',
+}
 
-  @IsInt()
+export class ListAccessibleFeedbackDto {
   @IsOptional()
-  receiverId?: number; // Filter by receiver
+  @IsEnum(Sentiment)
+  sentiment?: Sentiment;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  teamMemberId?: number;
 }
