@@ -140,14 +140,12 @@ export class FeedbackService {
       await this.feedbackRepository.getAllFeedbackWithVisibility();
     let visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
 
-    // Filter by sentiment
     if (query?.sentiment) {
       visibleFeedbacks = visibleFeedbacks.filter(
         (fb) => fb.sentiment === query.sentiment,
       );
     }
 
-    // Filter by team member (if the current user is their manager)
     if (query?.teamMemberId) {
       visibleFeedbacks = visibleFeedbacks.filter(
         (fb) => fb.receiver_id === query.teamMemberId,
@@ -172,10 +170,12 @@ export class FeedbackService {
       };
     });
 
-    // Filter by tags (after tags are attached)
+    // AND logic for tags
     if (query?.tags?.length) {
       feedbacksWithTags = feedbacksWithTags.filter((fb) =>
-        fb.tags.some((tag) => query.tags.includes(tag.name)),
+        query.tags.every((requestedTag) =>
+          fb.tags.some((tag) => tag.name === requestedTag),
+        ),
       );
     }
 
