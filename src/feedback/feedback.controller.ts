@@ -9,6 +9,8 @@ import {
   Query,
   UseGuards,
   Request,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { FeedbackService } from './feedback.service';
 import { CreateFeedbackDto } from './dto/feedback.dto';
@@ -16,10 +18,21 @@ import { UpdateFeedbackDto } from './dto/feedback.dto';
 import { GetFeedbackDto } from './dto/feedback.dto';
 import { DeleteFeedbackDto } from './dto/feedback.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import {
+  CreateFeedbackRequestDto,
+  DeclineFeedbackRequestDto,
+  GetFeedbackRequestsDto,
+  UpdateFeedbackRequestDto,
+} from './dto/feedback-request.dto';
+import { FeedbackRequestService } from './feedback-request.service';
 
+@UseGuards(JwtAuthGuard)
 @Controller('feedback')
 export class FeedbackController {
-  constructor(private readonly feedbackService: FeedbackService) {}
+  constructor(
+    private readonly feedbackService: FeedbackService,
+    private readonly feedbackRequestService: FeedbackRequestService,
+  ) {}
 
   @Post()
   async createFeedback(@Body() createFeedbackDto: CreateFeedbackDto) {
@@ -44,10 +57,28 @@ export class FeedbackController {
     return this.feedbackService.deleteFeedback(deleteFeedbackDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('/user')
   async getFeedbackByEmployeeId(@Request() req) {
     const employeeId = req.user.id;
     return this.feedbackService.getFeedbackbyEmployee(employeeId);
+  }
+
+  @Post('/request')
+  async createRequest(@Body() dto: CreateFeedbackRequestDto) {
+    return this.feedbackRequestService.createFeedbackRequest(dto);
+  }
+
+  @Get('/requests')
+  async getRequests(@Request() req, @Query() dto: GetFeedbackRequestsDto) {
+    const userId = req.user.id;
+    return this.feedbackRequestService.getFeedbackRequestsByUser(
+      userId,
+      dto.asRequester ?? false,
+    );
+  }
+
+  @Patch('/request/decline')
+  async declineRequest(@Request() req, @Body() dto: DeclineFeedbackRequestDto) {
+    return this.feedbackRequestService.declineFeedbackRequest(req.user.id, dto);
   }
 }

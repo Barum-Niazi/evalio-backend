@@ -2,18 +2,14 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-async function seedNotificationLookup() {
+async function seedLookupData() {
   try {
     console.log('Seeding Lookup Data...');
 
-    // Seed Notification Types
     await seedNotificationTypes();
-
-    // Seed Notification Statuses
     await seedNotificationStatuses();
-
-    // Seed Feedback Visibility Types
     await seedFeedbackVisibility();
+    await seedFeedbackRequestStatuses();
 
     console.log('All lookup data seeded successfully.');
   } catch (error) {
@@ -23,13 +19,13 @@ async function seedNotificationLookup() {
   }
 }
 
-// Seed Notification Types
 async function seedNotificationTypes() {
   const notificationTypes = [
     { code: 'NEW_FEEDBACK', name: 'New Feedback' },
     { code: 'MEETING_INVITE', name: 'Meeting Invite' },
     { code: 'OKR_UPDATE', name: 'OKR Update' },
     { code: 'GENERAL_ALERT', name: 'General Alert' },
+    { code: 'FEEDBACK_REQUEST', name: 'Feedback Request' },
   ];
 
   for (const type of notificationTypes) {
@@ -50,7 +46,6 @@ async function seedNotificationTypes() {
   }
 }
 
-// Seed Notification Statuses
 async function seedNotificationStatuses() {
   const notificationStatuses = [
     { code: 'UNREAD', name: 'Unread' },
@@ -78,7 +73,6 @@ async function seedNotificationStatuses() {
   }
 }
 
-// Seed Feedback Visibility Types
 async function seedFeedbackVisibility() {
   const feedbackVisibility = [
     { code: 'PUBLIC', name: 'Public' },
@@ -108,4 +102,32 @@ async function seedFeedbackVisibility() {
   }
 }
 
-seedNotificationLookup();
+async function seedFeedbackRequestStatuses() {
+  const feedbackRequestStatuses = [
+    { code: 'PENDING', name: 'Pending' },
+    { code: 'COMPLETED', name: 'Completed' },
+    { code: 'DECLINED', name: 'Declined' },
+  ];
+
+  for (const status of feedbackRequestStatuses) {
+    await prisma.lookup.upsert({
+      where: { code: status.code },
+      update: {},
+      create: {
+        code: status.code,
+        name: status.name,
+        category: {
+          connectOrCreate: {
+            where: { code: 'FEEDBACK_REQUEST_STATUS' },
+            create: {
+              code: 'FEEDBACK_REQUEST_STATUS',
+              name: 'Feedback Request Status',
+            },
+          },
+        },
+      },
+    });
+  }
+}
+
+seedLookupData();

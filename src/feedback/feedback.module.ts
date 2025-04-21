@@ -6,6 +6,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TagModule } from 'src/tags/tag.module';
 import { NotificationModule } from 'src/notification/notification.module';
 import { SentimentAnalysisService } from 'src/services/sentiment-analysis.service';
+import { FeedbackRequestRepository } from './feedback-request.repository';
+import { FeedbackRequestService } from './feedback-request.service';
 
 @Module({
   imports: [TagModule, NotificationModule],
@@ -15,6 +17,8 @@ import { SentimentAnalysisService } from 'src/services/sentiment-analysis.servic
     FeedbackRepository,
     PrismaService,
     SentimentAnalysisService,
+    FeedbackRequestRepository,
+    FeedbackRequestService,
   ],
   exports: [FeedbackService],
 })
