@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsInt,
   IsString,
@@ -83,6 +83,7 @@ export class ListAccessibleFeedbackDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   tags?: string[];
 
   @IsOptional()
