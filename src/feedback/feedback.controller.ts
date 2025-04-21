@@ -64,8 +64,15 @@ export class FeedbackController {
   }
 
   @Post('/request')
-  async createRequest(@Body() dto: CreateFeedbackRequestDto) {
-    return this.feedbackRequestService.createFeedbackRequest(dto);
+  async createRequest(
+    @Request() req,
+    @Body() dto: Omit<CreateFeedbackRequestDto, 'requesterId'>,
+  ) {
+    const requesterId = req.user.id;
+    return this.feedbackRequestService.createFeedbackRequest({
+      ...dto,
+      requesterId,
+    });
   }
 
   @Get('/requests')

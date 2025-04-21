@@ -11,7 +11,6 @@ import {
 } from './dto/feedback-request.dto';
 import { SentimentAnalysisService } from 'src/services/sentiment-analysis.service';
 import { FeedbackRequestRepository } from './feedback-request.repository';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { FeedbackRepository } from './feedback.repository';
 import { TagService } from 'src/tags/tag.service';
