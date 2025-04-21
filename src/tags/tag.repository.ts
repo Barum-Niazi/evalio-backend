@@ -137,7 +137,21 @@ export class TagRepository {
   /**
    * ✅ Fetch all tags in the system.
    */
-  async getAllTags(): Promise<tags[]> {
-    return this.prisma.tags.findMany();
+
+  async getGeneralTags(): Promise<tags[]> {
+    return this.prisma.tags.findMany({
+      where: {
+        parent_entity_id: null,
+        parent_entity_type: null,
+      },
+    });
+  }
+  async getTagsByEntityIds(entityIds: number[], entityType: string) {
+    return this.prisma.tags.findMany({
+      where: {
+        parent_entity_id: { in: entityIds },
+        parent_entity_type: entityType,
+      },
+    });
   }
 }

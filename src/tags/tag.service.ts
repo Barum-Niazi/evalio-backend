@@ -5,13 +5,17 @@ import {
 } from '@nestjs/common';
 import { TagRepository } from './tag.repository';
 import { CreateTagDto } from './dto/tag.dto';
-import { TagEntityDto } from './dto/tag.dto';
 import { UntagEntityDto } from './dto/tag.dto';
 import { GetTagsDto } from './dto/tag.dto';
+import { FeedbackRepository } from 'src/feedback/feedback.repository';
+import { filterAndFormatFeedbacks } from 'src/feedback/feedback.utils';
 
 @Injectable()
 export class TagService {
-  constructor(private readonly tagRepository: TagRepository) {}
+  constructor(
+    private readonly tagRepository: TagRepository,
+    private readonly feedbackRepository: FeedbackRepository,
+  ) {}
 
   async createTag(createTagDto: CreateTagDto) {
     const existingTag = await this.tagRepository.findTagByName(
@@ -46,25 +50,6 @@ export class TagService {
       parentType,
     );
   }
-
-  // async autoCreateTagForEntity() {
-  //   let tag = await this.tagRepository.findTagByName();
-
-  //   if (!tag) {
-  //     tag = await this.tagRepository.createTag(
-  //       autoCreateTagDto.entityName,
-  //       null,
-  //     );
-  //   }
-
-  //   return this.tagRepository.linkTagToEntity(
-  //     tag.id,
-  //     autoCreateTagDto.entityId,
-  //     autoCreateTagDto.entityType,
-  //     autoCreateTagDto.referenceId,
-  //     autoCreateTagDto.referenceType,
-  //   );
-  // }
 
   async tagEntity(
     tagTitles: string[],
@@ -135,7 +120,22 @@ export class TagService {
     );
   }
 
-  async getAllTags() {
-    return this.tagRepository.getAllTags();
+  async getAllTagsForUser(currentUser: { id: number; company_id: number }) {
+    // 1. Fetch all visible feedbacks
+    const feedbacks =
+      await this.feedbackRepository.getAllFeedbackWithVisibility();
+    const visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
+    const visibleFeedbackIds = visibleFeedbacks.map((fb) => fb.id);
+
+    // 2. Get tags from visible feedbacks
+    const entityTags = await this.tagRepository.getTagsByEntityIds(
+      visibleFeedbackIds,
+      'FEEDBACK',
+    );
+
+    // 3. Get global (unlinked) tags
+    const generalTags = await this.tagRepository.getGeneralTags();
+
+    return [...generalTags, ...entityTags];
   }
 }

@@ -5,11 +5,15 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/tag.dto';
 import { GetTagsDto } from './dto/tag.dto';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('tags')
 export class TagController {
   constructor(private readonly tagService: TagService) {}
@@ -30,7 +34,10 @@ export class TagController {
     return this.tagService.getTagsForEntity(getTagsDto);
   }
   @Get()
-  async getAllTags() {
-    return this.tagService.getAllTags();
+  async getAllTags(@Request() req) {
+    return this.tagService.getAllTagsForUser({
+      id: req.user.id,
+      company_id: req.user.company_id,
+    });
   }
 }
