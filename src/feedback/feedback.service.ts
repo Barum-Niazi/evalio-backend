@@ -141,14 +141,10 @@ export class FeedbackService {
   }
 
   async getFeedbackbyEmployee(currentUser: { id: number; company_id: number }) {
-    const rawFeedbacks = await this.feedbackRepository.getFeedbackByEmployeeId(
-      currentUser.id,
-    );
+    const feedbacks =
+      await this.feedbackRepository.getAllFeedbackWithVisibility();
 
-    const visibleFeedbacks = filterAndFormatFeedbacks(
-      rawFeedbacks,
-      currentUser,
-    ); // enforces visibility
+    const visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
 
     return visibleFeedbacks.map((fb) => transformFeedback(fb, currentUser.id));
   }

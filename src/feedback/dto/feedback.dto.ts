@@ -20,6 +20,7 @@ export class CreateFeedbackDto {
   @IsString()
   visibilityType: string; // Foreign key to lookup visibility
 
+  @IsOptional()
   @IsInt()
   senderId: number; // User ID of the sender
 

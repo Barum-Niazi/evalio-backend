@@ -77,7 +77,8 @@ async function seedFeedbackVisibility() {
   const feedbackVisibility = [
     { code: 'PUBLIC', name: 'Public' },
     { code: 'PRIVATE', name: 'Private' },
-    { code: 'COMPANY_ONLY', name: 'Company Only' },
+    { code: 'MANAGER_PRIVATE', name: 'Manager + Private' },
+    { code: 'MANAGER_ONLY', name: 'Manager Only' },
     { code: 'ANONYMOUS', name: 'Anonymous' },
   ];
 

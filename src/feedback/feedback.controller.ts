@@ -36,7 +36,12 @@ export class FeedbackController {
   ) {}
 
   @Post()
-  async createFeedback(@Body() createFeedbackDto: CreateFeedbackDto) {
+  async createFeedback(
+    @Body() createFeedbackDto: CreateFeedbackDto,
+    @Request() req,
+  ) {
+    // Set the senderId to the authenticated user's ID
+    createFeedbackDto.senderId = req.user.id;
     return this.feedbackService.createFeedback(createFeedbackDto);
   }
 
@@ -58,8 +63,8 @@ export class FeedbackController {
     return this.feedbackService.deleteFeedback(deleteFeedbackDto);
   }
 
-  @Get('/user')
-  async getFeedbackByEmployeeId(@Request() req) {
+  @Get('/accessible')
+  async getAccessibleFeedback(@Request() req) {
     return this.feedbackService.getFeedbackbyEmployee({
       id: req.user.id,
       company_id: req.user.company_id,

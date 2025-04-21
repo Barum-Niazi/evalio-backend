@@ -1,25 +1,30 @@
-export function filterAndFormatFeedbacks(feedbacks: any[], currentUser: any) {
+export function filterAndFormatFeedbacks(
+  feedbacks: any[],
+  currentUser: { id: number; company_id: number },
+) {
   return feedbacks
     .filter((fb) => {
       const visibility = fb.visibility?.code;
+      const isRecipient = fb.receiver_id === currentUser.id;
+      const isSender = fb.sender_id === currentUser.id;
+      const isManager = fb.receiver?.manager_id === currentUser.id;
+      const sameCompany = fb.receiver?.company_id === currentUser.company_id;
 
-      if (!visibility) return false;
+      // Always show feedback sent by the user, regardless of visibility
+      if (isSender) return true;
 
       switch (visibility) {
         case 'PUBLIC':
-          return true;
+          return sameCompany;
 
-        case 'PRIVATE':
+        case 'MANAGER_ONLY':
+          return isManager;
+
+        case 'MANAGER_PRIVATE':
+          return isManager || isRecipient;
+
         case 'ANONYMOUS':
-          return (
-            fb.sender_id === currentUser.id || fb.receiver_id === currentUser.id
-          );
-
-        case 'COMPANY_ONLY':
-          return (
-            fb.receiver?.company_id &&
-            fb.receiver.company_id === currentUser.company_id
-          );
+          return isRecipient;
 
         default:
           return false;
@@ -27,11 +32,12 @@ export function filterAndFormatFeedbacks(feedbacks: any[], currentUser: any) {
     })
     .map((fb) => {
       const isAnonymous = fb.visibility?.code === 'ANONYMOUS';
+      const isSender = fb.sender_id === currentUser.id;
 
       return {
         ...fb,
         visibilityType: fb.visibility?.code,
-        sender: isAnonymous ? null : fb.sender,
+        sender: isAnonymous && !isSender ? null : fb.sender, // hide sender only if anonymous and not the sender
       };
     });
 }

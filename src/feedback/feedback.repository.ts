@@ -137,6 +137,26 @@ export class FeedbackRepository {
     });
   }
 
+  async getAllFeedbackWithVisibility(): Promise<any[]> {
+    return this.prisma.feedback.findMany({
+      orderBy: { id: 'desc' },
+      include: {
+        visibility: true,
+        sender: {
+          select: { user_id: true, name: true },
+        },
+        receiver: {
+          select: {
+            user_id: true,
+            name: true,
+            manager_id: true,
+            company_id: true,
+          },
+        },
+      },
+    });
+  }
+
   async deleteFeedback(feedbackId: number): Promise<void> {
     await this.prisma.feedback.delete({
       where: { id: feedbackId },
