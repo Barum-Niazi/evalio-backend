@@ -60,8 +60,10 @@ export class FeedbackController {
 
   @Get('/user')
   async getFeedbackByEmployeeId(@Request() req) {
-    const employeeId = req.user.id;
-    return this.feedbackService.getFeedbackbyEmployee(employeeId);
+    return this.feedbackService.getFeedbackbyEmployee({
+      id: req.user.id,
+      company_id: req.user.company_id,
+    });
   }
 
   @Post('/request')

@@ -10,6 +10,7 @@ import {
   ListFeedbackDto,
 } from './dto/feedback.dto';
 import { SentimentAnalysisService } from 'src/services/sentiment-analysis.service';
+import { filterAndFormatFeedbacks, transformFeedback } from './feedback.utils';
 
 @Injectable()
 export class FeedbackService {
@@ -139,7 +140,16 @@ export class FeedbackService {
     return this.feedbackRepository.deleteFeedback(feedbackId);
   }
 
-  getFeedbackbyEmployee(employeeId: number) {
-    return this.feedbackRepository.getFeedbackByEmployeeId(employeeId);
+  async getFeedbackbyEmployee(currentUser: { id: number; company_id: number }) {
+    const rawFeedbacks = await this.feedbackRepository.getFeedbackByEmployeeId(
+      currentUser.id,
+    );
+
+    const visibleFeedbacks = filterAndFormatFeedbacks(
+      rawFeedbacks,
+      currentUser,
+    ); // enforces visibility
+
+    return visibleFeedbacks.map((fb) => transformFeedback(fb, currentUser.id));
   }
 }

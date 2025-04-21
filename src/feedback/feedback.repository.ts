@@ -90,53 +90,49 @@ export class FeedbackRepository {
   }
 
   async getFeedbackByEmployeeId(employeeId: number): Promise<any[]> {
-    // Step 1: Get feedback data
     const feedback = await this.prisma.feedback.findMany({
       where: {
         OR: [{ sender_id: employeeId }, { receiver_id: employeeId }],
       },
-      orderBy: { id: 'desc' }, // Latest feedback first
+      orderBy: { id: 'desc' },
       include: {
+        visibility: true, // for visibilityType string
         sender: {
-          // Include sender details
           select: {
-            name: true, // Only select the sender's name
+            user_id: true,
+            name: true,
           },
         },
         receiver: {
-          // Include receiver details
           select: {
-            name: true, // Only select the receiver's name
+            user_id: true,
+            name: true,
+            company_id: true,
           },
         },
       },
     });
 
-    // Step 2: Get all the feedback IDs
     const feedbackIds = feedback.map((fb) => fb.id);
 
-    // Step 3: Get associated tags for those feedback IDs
     const feedbackTags = await this.prisma.tagged_entities.findMany({
       where: {
-        entity_id: { in: feedbackIds }, // Fetch tags related to these feedback IDs
+        entity_id: { in: feedbackIds },
         entity_type: 'FEEDBACK',
       },
       include: {
-        tag: true, // Include the tag details
+        tag: true,
       },
     });
 
-    // Step 4: Return feedback and tags as a combined object
     return feedback.map((fb) => {
-      // Find all tags associated with the current feedback
       const tags = feedbackTags
         .filter((tagEntity) => tagEntity.entity_id === fb.id)
-        .map((tagEntity) => tagEntity.tag); // Extract the tag data
+        .map((tagEntity) => tagEntity.tag);
 
-      // Return an object with feedback and its associated tags
       return {
-        ...fb, // Spread feedback data
-        tags: tags, // Attach the tags to the feedback data
+        ...fb,
+        tags,
       };
     });
   }
