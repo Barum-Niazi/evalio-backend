@@ -112,10 +112,11 @@ export class UserService {
       await this.userRepository.updatePassword(userId, hashed);
     }
 
-    if (dto.name || dto.profileBlobId) {
+    if (dto.name || dto.profileBlobId || dto.metadata) {
       await this.userRepository.updateUserDetails(userId, {
         name: dto.name,
         profile_blob_id: dto.profileBlobId,
+        ...(dto.metadata && { metadata: dto.metadata }),
       });
     }
 

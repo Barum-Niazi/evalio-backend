@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsJSON } from 'class-validator';
 
 export class UpdateUserProfileDto {
   @IsOptional()
@@ -12,4 +12,7 @@ export class UpdateUserProfileDto {
   @IsOptional()
   @IsString()
   newPassword?: string;
+
+  @IsOptional()
+  metadata?: any;
 }

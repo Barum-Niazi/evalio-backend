@@ -206,10 +206,13 @@ export class UserRepository {
       data: { password: hashedPassword },
     });
   }
-
   async updateUserDetails(
     userId: number,
-    data: { name?: string; profile_blob_id?: number },
+    data: {
+      name?: string;
+      profile_blob_id?: number;
+      metadata?: any;
+    },
   ) {
     return this.prisma.user_details.update({
       where: { user_id: userId },
