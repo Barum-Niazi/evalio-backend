@@ -26,6 +26,7 @@ import { OkrController } from './okr/okr.controller';
 import { OkrModule } from './okr/okr.module';
 import { KeyResultsModule } from './key-results/key-results.module';
 import { GoogleService } from './services/google.service';
+import { BlobModule } from './blob/blob.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { GoogleService } from './services/google.service';
     MeetingModule,
     OkrModule,
     KeyResultsModule,
+    BlobModule,
   ],
   controllers: [
     AppController,

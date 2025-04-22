@@ -123,4 +123,58 @@ export class UserRepository {
       },
     });
   }
+
+  async getUserProfileById(userId: number) {
+    return this.prisma.users.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        auth: {
+          select: { email: true },
+        },
+        roles: {
+          select: {
+            role: {
+              select: { name: true },
+            },
+          },
+        },
+        details: {
+          select: {
+            name: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            department: {
+              select: {
+                name: true,
+              },
+            },
+            designation: {
+              select: {
+                title: true,
+              },
+            },
+            manager: {
+              select: {
+                user_id: true,
+                name: true,
+              },
+            },
+            profile_blob: {
+              select: {
+                id: true,
+                name: true,
+                mime_type: true,
+                size: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }
