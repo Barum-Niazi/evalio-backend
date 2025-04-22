@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOkrDto, UpdateOkrDto } from './dto/okr.dto';
 import { okrs } from '@prisma/client';
+import { calculateOkrProgress } from './okr,utils';
 
 @Injectable()
 export class OkrRepository {
@@ -42,18 +43,26 @@ export class OkrRepository {
     });
   }
 
-  findAll() {
-    return this.prisma.okrs.findMany({
+  async getAllByCompany(companyId: number) {
+    const okrs = await this.prisma.okrs.findMany({
+      where: {
+        company_id: companyId,
+      },
       include: {
         key_results: true,
         assigned_to: true,
         child_okrs: true,
       },
     });
+
+    return okrs.map((okr) => ({
+      ...okr,
+      progress: calculateOkrProgress(okr.key_results),
+    }));
   }
 
-  findOne(id: number) {
-    return this.prisma.okrs.findUnique({
+  async findOne(id: number) {
+    const okr = await this.prisma.okrs.findUnique({
       where: { id },
       include: {
         key_results: true,
@@ -62,6 +71,13 @@ export class OkrRepository {
         child_okrs: true,
       },
     });
+
+    if (!okr) return null;
+
+    return {
+      ...okr,
+      progress: calculateOkrProgress(okr.key_results),
+    };
   }
 
   async update(id: number, dto: UpdateOkrDto, userId: number) {
@@ -114,27 +130,37 @@ export class OkrRepository {
     });
   }
 
-  getOkrsByParent(parentId: number | null) {
-    return this.prisma.okrs.findMany({
+  async getOkrsByParent(parentId: number | null) {
+    const okrs = await this.prisma.okrs.findMany({
       where: { parent_okr_id: parentId },
       include: {
         key_results: true,
       },
     });
+
+    return okrs.map((okr) => ({
+      ...okr,
+      progress: calculateOkrProgress(okr.key_results),
+    }));
   }
 
   async getByDepartment(departmentId: number) {
-    return this.prisma.okrs.findMany({
+    const okrs = await this.prisma.okrs.findMany({
       where: { department_id: departmentId },
       include: {
         key_results: true,
         assigned_to: {
           include: {
-            user: true, // include user info if needed
+            user: true,
           },
         },
       },
     });
+
+    return okrs.map((okr) => ({
+      ...okr,
+      progress: calculateOkrProgress(okr.key_results),
+    }));
   }
 
   async findById(id: number) {

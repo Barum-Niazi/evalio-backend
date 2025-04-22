@@ -29,8 +29,8 @@ export class OkrController {
   }
 
   @Get()
-  findAll() {
-    return this.okrService.findAll();
+  findAll(@Request() req) {
+    return this.okrService.findAllForCompany(req.user.companyId);
   }
 
   @Get('root')

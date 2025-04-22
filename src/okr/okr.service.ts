@@ -67,9 +67,8 @@ export class OkrService {
 
     return okr;
   }
-
-  findAll() {
-    return this.okrRepository.findAll();
+  async findAllForCompany(companyId: number) {
+    return this.okrRepository.getAllByCompany(companyId);
   }
 
   findOne(id: number) {
