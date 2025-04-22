@@ -177,4 +177,21 @@ export class UserRepository {
       },
     });
   }
+
+  async updatePassword(userId: number, hashedPassword: string) {
+    return this.prisma.user_auth.update({
+      where: { user_id: userId },
+      data: { password: hashedPassword },
+    });
+  }
+
+  async updateUserDetails(
+    userId: number,
+    data: { name?: string; profile_blob_id?: number },
+  ) {
+    return this.prisma.user_details.update({
+      where: { user_id: userId },
+      data,
+    });
+  }
 }

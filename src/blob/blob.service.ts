@@ -30,4 +30,22 @@ export class BlobService {
       size: blob.size,
     };
   }
+
+  async uploadBlob(file: Express.Multer.File) {
+    const { originalname, mimetype, buffer, size } = file;
+
+    const blob = await this.blobRepository.createBlob({
+      name: originalname,
+      mime_type: mimetype,
+      size,
+      buffer,
+    });
+
+    return {
+      id: blob.id,
+      name: blob.name,
+      mimeType: blob.mime_type,
+      size: blob.size,
+    };
+  }
 }

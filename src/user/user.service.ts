@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import * as argon2 from 'argon2'; // Import Argon2
+import { UpdateUserProfileDto } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -47,9 +48,26 @@ export class UserService {
             name: user.details.profile_blob.name,
             mimeType: user.details.profile_blob.mime_type,
             size: user.details.profile_blob.size,
+            url: `/blob/${user.details.profile_blob.id}/view`,
           }
         : null,
       roles: user.roles.map((r) => r.role.name),
     };
+  }
+
+  async updateUserProfile(userId: number, dto: UpdateUserProfileDto) {
+    if (dto.newPassword) {
+      const hashed = await argon2.hash(dto.newPassword);
+      await this.userRepository.updatePassword(userId, hashed);
+    }
+
+    if (dto.name || dto.profileBlobId) {
+      await this.userRepository.updateUserDetails(userId, {
+        name: dto.name,
+        profile_blob_id: dto.profileBlobId,
+      });
+    }
+
+    return this.getUserProfile(userId);
   }
 }
