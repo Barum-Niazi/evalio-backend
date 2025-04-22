@@ -162,6 +162,28 @@ export class UserRepository {
               select: {
                 user_id: true,
                 name: true,
+                profile_blob: {
+                  select: {
+                    id: true,
+                    name: true,
+                    mime_type: true,
+                    size: true,
+                  },
+                },
+              },
+            },
+            subordinates: {
+              select: {
+                user_id: true,
+                name: true,
+                profile_blob: {
+                  select: {
+                    id: true,
+                    name: true,
+                    mime_type: true,
+                    size: true,
+                  },
+                },
               },
             },
             profile_blob: {
@@ -192,6 +214,27 @@ export class UserRepository {
     return this.prisma.user_details.update({
       where: { user_id: userId },
       data,
+    });
+  }
+
+  async findPeersByManager(managerId: number, excludeUserId: number) {
+    return this.prisma.user_details.findMany({
+      where: {
+        manager_id: managerId,
+        NOT: { user_id: excludeUserId },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        profile_blob: {
+          select: {
+            id: true,
+            name: true,
+            mime_type: true,
+            size: true,
+          },
+        },
+      },
     });
   }
 }
