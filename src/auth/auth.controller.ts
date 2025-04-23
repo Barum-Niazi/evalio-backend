@@ -43,6 +43,7 @@ export class AuthController {
   }
 
   @Get('google/callback')
+  @UseGuards(JwtAuthGuard)
   async googleAuthCallback(
     @Query('code') code: string,
     @Req() req,
@@ -50,10 +51,17 @@ export class AuthController {
   ) {
     const tokens = await this.googleService.setCredentials(code);
     console.log(tokens);
-    const userId = 9; // test user id
+    const userId = req.user.id; // test user id
 
     await this.authService.storeGoogleTokens(userId, tokens);
 
     return res.json({ message: 'Google OAuth successful' });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('google/link')
+  googleLink(@Req() req, @Res() res: Response) {
+    const url = this.googleService.getAuthUrl();
+    return res.redirect(url);
   }
 }

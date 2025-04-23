@@ -12,8 +12,8 @@ export class MeetingService {
     private readonly notificationService: NotificationService, // Assuming you have a notification service
   ) {}
 
-  async createMeeting(dto: CreateMeetingDto, user_id: number) {
-    const auth = await this.repo.getUserGoogleTokens(user_id);
+  async createMeeting(dto: CreateMeetingDto, userId: number) {
+    const auth = await this.repo.getUserGoogleTokens(userId);
     console.log(auth);
 
     if (!auth?.google_access_token || !auth?.google_refresh_token) {
@@ -35,7 +35,7 @@ export class MeetingService {
       end,
     );
 
-    const meeting = this.repo.createMeeting(dto, user_id, link);
+    const meeting = await this.repo.createMeeting(dto, userId, link);
 
     const message = `You've been invited to a meeting: ${dto.title}`;
     for (const attendeeId of dto.attendee_ids) {
@@ -46,6 +46,8 @@ export class MeetingService {
         link,
       );
     }
+
+    return meeting;
   }
 
   async getMeetingsForUser(user_id: number) {
