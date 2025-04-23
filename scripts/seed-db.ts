@@ -11,6 +11,7 @@ async function seedLookupData() {
     await seedFeedbackVisibility();
     await seedFeedbackRequestStatuses();
     await seedRoles();
+    await seedTags();
 
     console.log('All lookup data seeded successfully.');
   } catch (error) {
@@ -153,6 +154,41 @@ async function seedRoles() {
   }
 
   console.log('Roles seeded successfully.');
+}
+
+async function seedTags() {
+  const genericTags = [
+    { name: 'Leadership', description: 'Demonstrates strong leadership' },
+    { name: 'Teamwork', description: 'Works well in teams' },
+    { name: 'Communication', description: 'Clear and effective communication' },
+    { name: 'Initiative', description: 'Takes initiative' },
+    { name: 'Problem Solving', description: 'Good at solving problems' },
+    { name: 'Creativity', description: 'Shows creativity in work' },
+    { name: 'Adaptability', description: 'Adapts to changes easily' },
+    { name: 'Collaboration', description: 'Collaborates effectively' },
+    {
+      name: 'Accountability',
+      description: 'Takes responsibility for outcomes',
+    },
+    {
+      name: 'Growth Mindset',
+      description: 'Focuses on learning and improvement',
+    },
+  ];
+
+  for (const tag of genericTags) {
+    await prisma.tags.upsert({
+      where: { name: tag.name },
+      update: {},
+      create: {
+        name: tag.name,
+        description: tag.description,
+        audit: {}, // optional if you use it
+      },
+    });
+  }
+
+  console.log('Generic tags seeded successfully.');
 }
 
 seedLookupData();
