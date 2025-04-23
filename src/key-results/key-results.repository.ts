@@ -6,8 +6,27 @@ import { CreateKeyResultDto, UpdateKeyResultDto } from './dto/key-results.dto';
 export class KeyResultsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async updateParentProgress(parentId: number) {
+    const children = await this.prisma.key_results.findMany({
+      where: { parent_key_result_id: parentId },
+      select: { progress: true },
+    });
+
+    if (!children.length) return;
+
+    const total = children.reduce((acc, c) => acc + (c.progress ?? 0), 0);
+    const average = Math.round(total / children.length);
+
+    await this.prisma.key_results.update({
+      where: { id: parentId },
+      data: {
+        progress: average,
+      },
+    });
+  }
+
   async create(dto: CreateKeyResultDto, userId: number) {
-    return this.prisma.key_results.create({
+    const kr = await this.prisma.key_results.create({
       data: {
         title: dto.title,
         okr_id: dto.okrId,
@@ -19,6 +38,12 @@ export class KeyResultsRepository {
         },
       },
     });
+
+    if (dto.parentKeyResultId) {
+      await this.updateParentProgress(dto.parentKeyResultId);
+    }
+
+    return kr;
   }
 
   async findById(id: number) {
@@ -33,6 +58,13 @@ export class KeyResultsRepository {
   }
 
   async update(id: number, dto: UpdateKeyResultDto, userId: number) {
+    // Step 1: Fetch current KR to compare its original parent
+    const krBefore = await this.prisma.key_results.findUnique({
+      where: { id },
+      select: { parent_key_result_id: true },
+    });
+
+    // Step 2: Build update payload
     const updateData: any = {
       audit: {
         updatedAt: new Date().toISOString(),
@@ -46,10 +78,34 @@ export class KeyResultsRepository {
       updateData.parent_key_result_id = dto.parentKeyResultId;
     }
 
-    return this.prisma.key_results.update({
+    // Step 3: Perform the update
+    const updated = await this.prisma.key_results.update({
       where: { id },
       data: updateData,
     });
+
+    // Step 4: Determine which parent(s) need to be re-evaluated
+    const parentsToUpdate = new Set<number>();
+
+    // If progress changed, update the old parent
+    if (dto.progress !== undefined && krBefore?.parent_key_result_id) {
+      parentsToUpdate.add(krBefore.parent_key_result_id);
+    }
+
+    // If parent was reassigned, update the new parent too
+    if (
+      dto.parentKeyResultId &&
+      dto.parentKeyResultId !== krBefore?.parent_key_result_id
+    ) {
+      parentsToUpdate.add(dto.parentKeyResultId);
+    }
+
+    // Step 5: Update parent progress in DB
+    for (const parentId of parentsToUpdate) {
+      await this.updateParentProgress(parentId);
+    }
+
+    return updated;
   }
 
   async findOKR(okrId: number, userId: number) {

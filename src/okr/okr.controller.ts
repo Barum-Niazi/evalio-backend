@@ -43,6 +43,11 @@ export class OkrController {
     return this.okrService.getSubTree(id);
   }
 
+  @Get('user/:userId')
+  getOkrsByUser(@Param('userId', ParseIntPipe) userId: number) {
+    return this.okrService.getByUser(userId);
+  }
+
   @Get('department/:departmentId')
   getOkrsByDepartment(
     @Param('departmentId', ParseIntPipe) departmentId: number,

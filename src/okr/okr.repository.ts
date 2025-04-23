@@ -176,4 +176,30 @@ export class OkrRepository {
   delete(id: number) {
     return this.prisma.okrs.delete({ where: { id } });
   }
+
+  async getByUser(userId: number) {
+    const okrs = await this.prisma.okrs.findMany({
+      where: {
+        assigned_to: {
+          some: {
+            user_id: userId,
+          },
+        },
+      },
+      include: {
+        department: true,
+        key_results: true,
+        assigned_to: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    return okrs.map((okr) => ({
+      ...okr,
+      progress: calculateOkrProgress(okr.key_results),
+    }));
+  }
 }

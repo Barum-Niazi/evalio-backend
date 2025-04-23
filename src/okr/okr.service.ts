@@ -110,4 +110,8 @@ export class OkrService {
   async getByDepartment(departmentId: number) {
     return this.okrRepository.getByDepartment(departmentId);
   }
+
+  async getByUser(userId: number) {
+    return this.okrRepository.getByUser(userId);
+  }
 }

@@ -20,8 +20,15 @@ export class KeyResultsController {
   constructor(private readonly keyResultsService: KeyResultsService) {}
 
   @Post()
-  create(@Body() dto: CreateKeyResultDto, @Request() req) {
-    return this.keyResultsService.create(dto, req.user); // pass current user
+  async create(
+    @Body() body: CreateKeyResultDto | CreateKeyResultDto[],
+    @Request() req,
+  ) {
+    if (Array.isArray(body)) {
+      return this.keyResultsService.createMany(body, req.user);
+    }
+
+    return this.keyResultsService.create(body, req.user);
   }
 
   // @Get(':id')
@@ -40,8 +47,8 @@ export class KeyResultsController {
     @Request() req,
   ) {
     return this.keyResultsService.update(id, dto, {
-      id: req.user_id,
-      role: req.role,
+      id: req.user.id,
+      roles: req.roles,
     });
   }
 
