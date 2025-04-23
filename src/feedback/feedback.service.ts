@@ -185,15 +185,11 @@ export class FeedbackService {
   async getFeedbackSummary(companyId: number) {
     const feedbacks =
       await this.feedbackRepository.getFeedbackByCompany(companyId);
+    const feedbackIds = feedbacks.map((fb) => fb.id);
 
-    const total = feedbacks.length;
-    const bySentiment = {
-      POSITIVE: 0,
-      NEGATIVE: 0,
-      NEUTRAL: 0,
-    };
-
+    const bySentiment = { POSITIVE: 0, NEGATIVE: 0, NEUTRAL: 0 };
     let anonymousCount = 0;
+    let dates: Date[] = [];
 
     feedbacks.forEach((fb) => {
       if (fb.is_anonymous) anonymousCount++;
@@ -201,12 +197,114 @@ export class FeedbackService {
       if (bySentiment[sentiment] !== undefined) {
         bySentiment[sentiment]++;
       }
+      dates.push(new Date(fb.date));
     });
 
+    const tagLinks = await this.tagRepository.getTopFeedbackTags(
+      feedbackIds,
+      'FEEDBACK',
+    );
+    const tagCountMap: Record<string, number> = {};
+    tagLinks.forEach((te) => {
+      if (!te.tag) return;
+      const name = te.tag.name;
+      tagCountMap[name] = (tagCountMap[name] || 0) + 1;
+    });
+
+    const mostUsedTags = Object.entries(tagCountMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+
     return {
-      totalFeedback: total,
-      ...bySentiment,
-      anonymousCount,
+      totalFeedback: feedbacks.length,
+      sentiment: bySentiment,
+      anonymous: {
+        count: anonymousCount,
+        percentage: +((anonymousCount / (feedbacks.length || 1)) * 100).toFixed(
+          2,
+        ),
+      },
+      tagged: {
+        withTags: new Set(tagLinks.map((te) => te.entity_id)).size,
+        withoutTags:
+          feedbacks.length - new Set(tagLinks.map((te) => te.entity_id)).size,
+      },
+      mostUsedTags,
+      recentFeedbackDates: {
+        first: dates.length
+          ? new Date(Math.min(...dates.map((d) => d.getTime())))
+          : null,
+        last: dates.length
+          ? new Date(Math.max(...dates.map((d) => d.getTime())))
+          : null,
+      },
+    };
+  }
+
+  async getVisibleFeedbackSummary(currentUser: {
+    id: number;
+    companyId: number;
+  }) {
+    const feedbacks =
+      await this.feedbackRepository.getAllFeedbackWithVisibility();
+    const visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
+    const visibleIds = visibleFeedbacks.map((fb) => fb.id);
+
+    const bySentiment = { POSITIVE: 0, NEGATIVE: 0, NEUTRAL: 0 };
+    let anonymousCount = 0;
+    let dates: Date[] = [];
+
+    visibleFeedbacks.forEach((fb) => {
+      if (fb.is_anonymous) anonymousCount++;
+      const sentiment = (fb.sentiment || 'NEUTRAL').toUpperCase();
+      if (bySentiment[sentiment] !== undefined) {
+        bySentiment[sentiment]++;
+      }
+      dates.push(new Date(fb.date));
+    });
+
+    const tagLinks = await this.tagRepository.getTopFeedbackTags(
+      visibleIds,
+      'FEEDBACK',
+    );
+
+    const tagCountMap: Record<string, number> = {};
+    tagLinks.forEach((te) => {
+      if (!te.tag) return;
+      const name = te.tag.name;
+      tagCountMap[name] = (tagCountMap[name] || 0) + 1;
+    });
+
+    const mostUsedTags = Object.entries(tagCountMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+
+    return {
+      totalFeedback: visibleFeedbacks.length,
+      sentiment: bySentiment,
+      anonymous: {
+        count: anonymousCount,
+        percentage: +((anonymousCount / visibleFeedbacks.length) * 100).toFixed(
+          2,
+        ),
+      },
+      tagged: {
+        withTags: new Set(tagLinks.map((te) => te.entity_id)).size,
+        withoutTags:
+          visibleFeedbacks.length -
+          new Set(tagLinks.map((te) => te.entity_id)).size,
+      },
+      mostUsedTags,
+      recentFeedbackDates: {
+        first: dates.length
+          ? new Date(Math.min(...dates.map((d) => d.getTime())))
+          : null,
+        last: dates.length
+          ? new Date(Math.max(...dates.map((d) => d.getTime())))
+          : null,
+      },
     };
   }
 

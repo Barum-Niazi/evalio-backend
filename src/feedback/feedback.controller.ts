@@ -79,10 +79,17 @@ export class FeedbackController {
       query,
     );
   }
-
   @Get('/summary')
-  getFeedbackSummary(@Request() req) {
-    return this.feedbackService.getFeedbackSummary(req.user.companyId);
+  getFeedbackSummary(
+    @Request() req,
+    @Query('scope') scope: 'visible' | 'company' = 'visible',
+  ) {
+    return scope === 'company'
+      ? this.feedbackService.getFeedbackSummary(req.user.companyId)
+      : this.feedbackService.getVisibleFeedbackSummary({
+          id: req.user.id,
+          companyId: req.user.companyId,
+        });
   }
 
   @Get('/tags/top')

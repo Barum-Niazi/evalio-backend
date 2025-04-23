@@ -58,12 +58,15 @@ async function seedFeedbacks() {
     const receiverId = receivers[Math.floor(Math.random() * receivers.length)];
     const feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
 
+    const isAnonymous = Math.random() > 0.7;
+    const visibilityType = isAnonymous
+      ? 'ANONYMOUS'
+      : visibilities[Math.floor(Math.random() * (visibilities.length - 1))];
     const payload = {
       feedbackTitle: titles[Math.floor(Math.random() * titles.length)],
       feedbackText: feedback.text,
       isAnonymous: Math.random() > 0.7,
-      visibilityType:
-        visibilities[Math.floor(Math.random() * visibilities.length)],
+      visibilityType: visibilityType,
       receiverId,
       tags: [
         tags[Math.floor(Math.random() * tags.length)],

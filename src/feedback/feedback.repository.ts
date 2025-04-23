@@ -174,6 +174,7 @@ export class FeedbackRepository {
         id: true,
         sentiment: true,
         is_anonymous: true,
+        date: true,
       },
     });
   }
