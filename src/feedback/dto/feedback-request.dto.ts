@@ -10,7 +10,7 @@ import {
 
 export class CreateFeedbackRequestDto {
   @IsInt()
-  requesterId: number;
+  requesterId: number; // this will be from the jwt in the req body in the controller
 
   @IsInt()
   recipientId: number;

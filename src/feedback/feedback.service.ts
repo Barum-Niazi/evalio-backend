@@ -177,7 +177,7 @@ export class FeedbackService {
     if (query?.tags?.length) {
       feedbacksWithTags = feedbacksWithTags.filter((fb) =>
         query.tags.every((requestedTag) =>
-          fb.tags.some((tag) => tag.name === requestedTag),
+          (fb.tags ?? []).some((tag) => tag.name === requestedTag),
         ),
       );
     }
