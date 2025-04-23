@@ -26,6 +26,9 @@ export function filterAndFormatFeedbacks(
         case 'ANONYMOUS':
           return isRecipient;
 
+        case 'PRIVATE':
+          return isRecipient;
+
         default:
           return false;
       }
