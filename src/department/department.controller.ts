@@ -37,7 +37,7 @@ export class DepartmentController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
+  // @Roles('Admin')
   @Get('all')
   async getAllDepartments(@Request() req) {
     const companyId = req.user.companyId;
