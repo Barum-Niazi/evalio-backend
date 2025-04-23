@@ -12,6 +12,7 @@ import {
 import { SentimentAnalysisService } from 'src/services/sentiment-analysis.service';
 import { filterAndFormatFeedbacks, transformFeedback } from './feedback.utils';
 import { TagRepository } from 'src/tags/tag.repository';
+import { UserRepository } from 'src/user/user.repository';
 
 @Injectable()
 export class FeedbackService {
@@ -21,6 +22,7 @@ export class FeedbackService {
     private readonly notificationService: NotificationService,
     private readonly sentimentAnalysisService: SentimentAnalysisService,
     private readonly tagRepository: TagRepository,
+    private readonly userRepository: UserRepository,
   ) {}
 
   /**
@@ -138,6 +140,7 @@ export class FeedbackService {
   ) {
     const feedbacks =
       await this.feedbackRepository.getAllFeedbackWithVisibility();
+
     let visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
 
     if (query?.sentiment) {
@@ -170,7 +173,7 @@ export class FeedbackService {
       };
     });
 
-    // AND logic for tags
+    // Filter by tags
     if (query?.tags?.length) {
       feedbacksWithTags = feedbacksWithTags.filter((fb) =>
         query.tags.every((requestedTag) =>
@@ -179,7 +182,35 @@ export class FeedbackService {
       );
     }
 
-    return feedbacksWithTags.map((fb) => transformFeedback(fb, currentUser.id));
+    const userIds = Array.from(
+      new Set([
+        ...feedbacksWithTags.map((fb) => fb.sender_id),
+        ...feedbacksWithTags.map((fb) => fb.receiver_id),
+      ]),
+    );
+
+    const userBlobs =
+      await this.userRepository.getProfileBlobsForUserIds(userIds);
+
+    const profileBlobMap = new Map<number, any>();
+    userBlobs.forEach((ub) => {
+      if (ub.profile_blob) {
+        profileBlobMap.set(ub.user_id, {
+          id: ub.profile_blob.id,
+          name: ub.profile_blob.name,
+          mimeType: ub.profile_blob.mime_type,
+          size: ub.profile_blob.size,
+          url: `/blob/${ub.profile_blob.id}/view`,
+        });
+      }
+    });
+
+    return feedbacksWithTags.map((fb) =>
+      transformFeedback(fb, currentUser.id, {
+        senderProfileImage: profileBlobMap.get(fb.sender_id) || null,
+        receiverProfileImage: profileBlobMap.get(fb.receiver_id) || null,
+      }),
+    );
   }
 
   async getFeedbackSummary(companyId: number) {

@@ -8,9 +8,10 @@ import { NotificationModule } from 'src/notification/notification.module';
 import { SentimentAnalysisService } from 'src/services/sentiment-analysis.service';
 import { FeedbackRequestRepository } from './feedback-request.repository';
 import { FeedbackRequestService } from './feedback-request.service';
+import { UserModule } from 'src/user/users.module';
 
 @Module({
-  imports: [TagModule, NotificationModule],
+  imports: [TagModule, NotificationModule, UserModule],
   controllers: [FeedbackController],
   providers: [
     FeedbackService,

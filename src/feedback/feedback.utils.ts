@@ -43,11 +43,16 @@ export function filterAndFormatFeedbacks(
     });
 }
 
-export function transformFeedback(feedback: any, currentUserId: number): any {
+export function transformFeedback(
+  feedback: any,
+  currentUserId: number,
+  images?: {
+    senderProfileImage?: any;
+    receiverProfileImage?: any;
+  },
+): any {
   const isAnonymous = feedback.visibility?.code === 'ANONYMOUS';
   const isSender = feedback.sender_id === currentUserId;
-  const senderName = isAnonymous ? null : (feedback.sender?.name ?? null);
-  const receiverName = feedback.receiver?.name ?? null;
 
   return {
     id: feedback.id,
@@ -56,11 +61,18 @@ export function transformFeedback(feedback: any, currentUserId: number): any {
     sentiment: feedback.sentiment,
     isAnonymous: feedback.is_anonymous,
     visibilityType: feedback.visibility?.code,
+
     sender: isAnonymous && !isSender ? null : (feedback.sender?.name ?? null),
     senderId: isAnonymous && !isSender ? null : feedback.sender_id,
-    receiver: receiverName,
+    senderProfileImage:
+      isAnonymous && !isSender ? null : (images?.senderProfileImage ?? null),
+
+    receiver: feedback.receiver?.name ?? null,
     receiverId: feedback.receiver_id,
+    receiverProfileImage: images?.receiverProfileImage ?? null,
+
     date: feedback.date,
+
     tags:
       feedback.tags?.map((tag) => {
         const baseTag = {

@@ -240,4 +240,21 @@ export class UserRepository {
       },
     });
   }
+
+  async getProfileBlobsForUserIds(userIds: number[]) {
+    return this.prisma.user_details.findMany({
+      where: { user_id: { in: userIds } },
+      select: {
+        user_id: true,
+        profile_blob: {
+          select: {
+            id: true,
+            name: true,
+            mime_type: true,
+            size: true,
+          },
+        },
+      },
+    });
+  }
 }
