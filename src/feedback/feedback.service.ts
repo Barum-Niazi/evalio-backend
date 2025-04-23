@@ -181,4 +181,74 @@ export class FeedbackService {
 
     return feedbacksWithTags.map((fb) => transformFeedback(fb, currentUser.id));
   }
+
+  async getFeedbackSummary(companyId: number) {
+    const feedbacks =
+      await this.feedbackRepository.getFeedbackByCompany(companyId);
+
+    const total = feedbacks.length;
+    const bySentiment = {
+      POSITIVE: 0,
+      NEGATIVE: 0,
+      NEUTRAL: 0,
+    };
+
+    let anonymousCount = 0;
+
+    feedbacks.forEach((fb) => {
+      if (fb.is_anonymous) anonymousCount++;
+      const sentiment = (fb.sentiment || 'NEUTRAL').toUpperCase();
+      if (bySentiment[sentiment] !== undefined) {
+        bySentiment[sentiment]++;
+      }
+    });
+
+    return {
+      totalFeedback: total,
+      ...bySentiment,
+      anonymousCount,
+    };
+  }
+
+  async getTopTagsVisibleToUser(currentUser: {
+    id: number;
+    companyId: number;
+  }) {
+    const feedbacks =
+      await this.feedbackRepository.getAllFeedbackWithVisibility();
+    const visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
+    const feedbackIds = visibleFeedbacks.map((fb) => fb.id);
+
+    const tagEntities = await this.tagRepository.getTagsByEntityIds(
+      feedbackIds,
+      'FEEDBACK',
+    );
+
+    return this.countTags(tagEntities);
+  }
+  async getTopTagsForCompany(companyId: number) {
+    const feedbacks =
+      await this.feedbackRepository.getFeedbackByCompany(companyId);
+    const feedbackIds = feedbacks.map((fb) => fb.id);
+
+    const tagEntities = await this.tagRepository.getTopFeedbackTags(
+      feedbackIds,
+      'FEEDBACK',
+    );
+
+    return this.countTags(tagEntities);
+  }
+
+  private countTags(tagEntities: any[]) {
+    const tagCountMap: Record<string, number> = {};
+
+    tagEntities.forEach((te) => {
+      const tagName = te.tag.name;
+      tagCountMap[tagName] = (tagCountMap[tagName] || 0) + 1;
+    });
+
+    return Object.entries(tagCountMap)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+  }
 }

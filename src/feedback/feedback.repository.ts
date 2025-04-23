@@ -162,4 +162,19 @@ export class FeedbackRepository {
       where: { id: feedbackId },
     });
   }
+
+  async getFeedbackByCompany(companyId: number) {
+    return this.prisma.feedback.findMany({
+      where: {
+        receiver: {
+          company_id: companyId,
+        },
+      },
+      select: {
+        id: true,
+        sentiment: true,
+        is_anonymous: true,
+      },
+    });
+  }
 }

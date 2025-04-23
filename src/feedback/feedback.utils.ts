@@ -37,13 +37,15 @@ export function filterAndFormatFeedbacks(
       return {
         ...fb,
         visibilityType: fb.visibility?.code,
-        sender: isAnonymous && !isSender ? null : fb.sender, // hide sender only if anonymous and not the sender
+        sender: isAnonymous && !isSender ? null : fb.sender,
+        senderId: isAnonymous && !isSender ? null : fb.sender_id,
       };
     });
 }
 
 export function transformFeedback(feedback: any, currentUserId: number): any {
   const isAnonymous = feedback.visibility?.code === 'ANONYMOUS';
+  const isSender = feedback.sender_id === currentUserId;
   const senderName = isAnonymous ? null : (feedback.sender?.name ?? null);
   const receiverName = feedback.receiver?.name ?? null;
 
@@ -54,8 +56,8 @@ export function transformFeedback(feedback: any, currentUserId: number): any {
     sentiment: feedback.sentiment,
     isAnonymous: feedback.is_anonymous,
     visibilityType: feedback.visibility?.code,
-    sender: senderName,
-    senderId: feedback.sender_id,
+    sender: isAnonymous && !isSender ? null : (feedback.sender?.name ?? null),
+    senderId: isAnonymous && !isSender ? null : feedback.sender_id,
     receiver: receiverName,
     receiverId: feedback.receiver_id,
     date: feedback.date,

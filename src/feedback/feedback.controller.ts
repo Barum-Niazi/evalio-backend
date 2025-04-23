@@ -80,6 +80,23 @@ export class FeedbackController {
     );
   }
 
+  @Get('/summary')
+  getFeedbackSummary(@Request() req) {
+    return this.feedbackService.getFeedbackSummary(req.user.companyId);
+  }
+
+  @Get('/tags/top')
+  getTopTags(
+    @Request() req,
+    @Query('scope') scope: 'visible' | 'company' = 'visible',
+  ) {
+    if (scope === 'company') {
+      return this.feedbackService.getTopTagsForCompany(req.user.companyId);
+    } else {
+      return this.feedbackService.getTopTagsVisibleToUser(req.user);
+    }
+  }
+
   @Post('/request')
   async createRequest(
     @Request() req,

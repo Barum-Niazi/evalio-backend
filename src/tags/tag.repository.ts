@@ -166,4 +166,15 @@ export class TagRepository {
       },
     });
   }
+  async getTopFeedbackTags(entityIds: number[], entityType: string) {
+    return this.prisma.tagged_entities.findMany({
+      where: {
+        entity_id: { in: entityIds },
+        entity_type: entityType,
+      },
+      include: {
+        tag: true, // This lets you access `te.tag.name`
+      },
+    });
+  }
 }
