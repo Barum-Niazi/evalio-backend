@@ -219,7 +219,7 @@ export class FeedbackService {
     const visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
     const feedbackIds = visibleFeedbacks.map((fb) => fb.id);
 
-    const tagEntities = await this.tagRepository.getTagsByEntityIds(
+    const tagEntities = await this.tagRepository.getTopFeedbackTags(
       feedbackIds,
       'FEEDBACK',
     );
