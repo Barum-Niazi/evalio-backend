@@ -26,6 +26,10 @@ export class CreateOkrDto {
   @IsOptional()
   userId?: number;
 
+  @IsOptional()
+  @IsString()
+  dueDate?: Date;
+
   @IsInt()
   @IsOptional()
   parentOkrId?: number;

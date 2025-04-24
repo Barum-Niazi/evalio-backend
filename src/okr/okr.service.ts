@@ -39,6 +39,7 @@ export class OkrService {
       description: dto.description,
       companyId: dto.companyId,
       userId: dto.userId,
+      dueDate: dto.dueDate,
       parentOkrId: dto.parentOkrId,
       departmentId: dto.departmentId,
       assignedTo: allAssignees,

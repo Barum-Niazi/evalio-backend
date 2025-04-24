@@ -32,6 +32,7 @@ export class OkrRepository {
         user_id: dto.userId,
         parent_okr_id: dto.parentOkrId,
         department_id: dto.departmentId,
+        due_date: dto.dueDate,
         assigned_to: {
           create: allAssignees.map((user_id) => ({ user_id })),
         },
