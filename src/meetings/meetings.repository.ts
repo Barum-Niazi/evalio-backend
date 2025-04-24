@@ -47,7 +47,22 @@ export class MeetingRepository {
       select: {
         google_access_token: true,
         google_refresh_token: true,
+        google_email: true,
       },
     });
+  }
+
+  async getGoogleEmailsByUserIds(userIds: number[]): Promise<string[]> {
+    const users = await this.prisma.user_auth.findMany({
+      where: {
+        user_id: { in: userIds },
+        google_email: { not: null },
+      },
+      select: {
+        google_email: true,
+      },
+    });
+
+    return users.map((u) => u.google_email);
   }
 }

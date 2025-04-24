@@ -17,15 +17,27 @@ export class GoogleService {
   getAuthUrl() {
     return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
-      scope: ['https://www.googleapis.com/auth/calendar'],
-      prompt: 'consent', // ← THIS is what forces refresh_token
+      scope: [
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/userinfo.email',
+      ],
+      prompt: 'consent',
     });
   }
 
   async setCredentials(code: string) {
     const { tokens } = await this.oauth2Client.getToken(code);
     this.oauth2Client.setCredentials(tokens);
-    return tokens;
+
+    const oauth2 = google.oauth2({
+      auth: this.oauth2Client,
+      version: 'v2',
+    });
+
+    const userInfo = await oauth2.userinfo.get();
+    const email = userInfo.data.email;
+
+    return { tokens, email };
   }
 
   setToken(token) {
@@ -37,11 +49,13 @@ export class GoogleService {
     description: string,
     startTime: Date,
     endTime: Date,
+    attendeeEmails: string[], // <-- Add this param
   ) {
     const calendar = google.calendar({
       version: 'v3',
       auth: this.oauth2Client,
     });
+
     const event = {
       summary,
       description,
@@ -53,6 +67,7 @@ export class GoogleService {
         dateTime: endTime.toISOString(),
         timeZone: 'UTC',
       },
+      attendees: attendeeEmails.map((email) => ({ email })),
       conferenceData: {
         createRequest: {
           requestId: `${Date.now()}-${Math.random()}`,
@@ -65,6 +80,7 @@ export class GoogleService {
       calendarId: 'primary',
       requestBody: event,
       conferenceDataVersion: 1,
+      sendUpdates: 'all', // <-- Sends emails/invites to all attendees
     });
 
     return response.data?.conferenceData?.entryPoints?.[0]?.uri ?? null;

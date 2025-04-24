@@ -27,12 +27,16 @@ export class MeetingService {
 
     const start = new Date(dto.scheduled_at);
     const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const attendeeEmails = await this.repo.getGoogleEmailsByUserIds(
+      dto.attendee_ids,
+    );
 
     const link = await this.googleService.createGoogleMeetEvent(
       dto.title,
       dto.description ?? '',
       start,
       end,
+      attendeeEmails,
     );
 
     const meeting = await this.repo.createMeeting(dto, userId, link);

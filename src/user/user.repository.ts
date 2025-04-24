@@ -114,12 +114,14 @@ export class UserRepository {
   async updateGoogleTokens(
     userId: number,
     tokens: { access_token: string; refresh_token: string },
+    email: string,
   ) {
     return this.prisma.user_auth.update({
       where: { user_id: userId },
       data: {
         google_access_token: tokens.access_token,
         google_refresh_token: tokens.refresh_token,
+        google_email: email,
       },
     });
   }

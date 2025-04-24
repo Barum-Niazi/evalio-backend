@@ -23,8 +23,9 @@ export class UserService {
   async storeGoogleTokens(
     userId: number,
     tokens: { access_token: string; refresh_token: string },
+    email: string,
   ) {
-    return this.userRepository.updateGoogleTokens(userId, tokens);
+    return this.userRepository.updateGoogleTokens(userId, tokens, email);
   }
 
   async getUserProfile(userId: number) {
