@@ -49,8 +49,8 @@ export class GoogleService {
     description: string,
     startTime: Date,
     endTime: Date,
-    attendeeEmails: string[], // <-- Add this param
-  ) {
+    attendeeEmails: string[],
+  ): Promise<{ meetLink: string | null; newTokens?: any }> {
     const calendar = google.calendar({
       version: 'v3',
       auth: this.oauth2Client,
@@ -76,13 +76,42 @@ export class GoogleService {
       },
     };
 
-    const response = await calendar.events.insert({
-      calendarId: 'primary',
-      requestBody: event,
-      conferenceDataVersion: 1,
-      sendUpdates: 'all', // <-- Sends emails/invites to all attendees
-    });
+    try {
+      const response = await calendar.events.insert({
+        calendarId: 'primary',
+        requestBody: event,
+        conferenceDataVersion: 1,
+        sendUpdates: 'all',
+      });
 
-    return response.data?.conferenceData?.entryPoints?.[0]?.uri ?? null;
+      return {
+        meetLink: response.data?.conferenceData?.entryPoints?.[0]?.uri ?? null,
+      };
+    } catch (err) {
+      if (err.code === 401 && this.oauth2Client.credentials.refresh_token) {
+        console.warn('Access token expired, refreshing...');
+        try {
+          const { credentials } = await this.oauth2Client.refreshAccessToken(); // deprecated but fine here
+          this.oauth2Client.setCredentials(credentials);
+
+          const retryResponse = await calendar.events.insert({
+            calendarId: 'primary',
+            requestBody: event,
+            conferenceDataVersion: 1,
+            sendUpdates: 'all',
+          });
+
+          return {
+            meetLink:
+              retryResponse.data?.conferenceData?.entryPoints?.[0]?.uri ?? null,
+            newTokens: credentials,
+          };
+        } catch (refreshErr) {
+          throw new Error('Token refresh failed: ' + refreshErr.message);
+        }
+      }
+
+      throw err;
+    }
   }
 }

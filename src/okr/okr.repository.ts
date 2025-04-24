@@ -188,8 +188,6 @@ export class OkrRepository {
         return {
           ...okr,
           progress: calculateOkrProgress(okr.key_results),
-          owner,
-          assignees: okr.assigned_to.map((a) => a.user),
         };
       }),
     );

@@ -14,8 +14,6 @@ export class MeetingService {
 
   async createMeeting(dto: CreateMeetingDto, userId: number) {
     const auth = await this.repo.getUserGoogleTokens(userId);
-    console.log(auth);
-
     if (!auth?.google_access_token || !auth?.google_refresh_token) {
       throw new ForbiddenException('Google tokens not found for user');
     }
@@ -26,29 +24,38 @@ export class MeetingService {
     });
 
     const start = new Date(dto.scheduled_at);
-    const durationMinutes = dto.duration_minutes ?? 30; // fallback to 30 mins
+    const durationMinutes = dto.duration_minutes ?? 30;
     const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+
     const attendeeEmails = await this.repo.getGoogleEmailsByUserIds(
       dto.attendee_ids,
     );
 
-    const link = await this.googleService.createGoogleMeetEvent(
-      dto.title,
-      dto.description ?? '',
-      start,
-      end,
-      attendeeEmails,
-    );
+    const { meetLink, newTokens } =
+      await this.googleService.createGoogleMeetEvent(
+        dto.title,
+        dto.description ?? '',
+        start,
+        end,
+        attendeeEmails,
+      );
 
-    const meeting = await this.repo.createMeeting(dto, userId, link);
+    // If token was refreshed during the process, update it in DB
+    if (newTokens?.access_token) {
+      await this.repo.updateUserGoogleTokens(userId, {
+        access_token: newTokens.access_token,
+      });
+    }
+
+    const meeting = await this.repo.createMeeting(dto, userId, meetLink);
 
     const message = `You've been invited to a meeting: ${dto.title}`;
     for (const attendeeId of dto.attendee_ids) {
       await this.notificationService.create(
         attendeeId,
-        1, // use your actual notification type ID here
+        1, // Replace with correct notification type ID if needed
         message,
-        link,
+        meetLink,
       );
     }
 

@@ -65,4 +65,16 @@ export class MeetingRepository {
 
     return users.map((u) => u.google_email);
   }
+
+  async updateUserGoogleTokens(
+    userId: number,
+    tokens: { access_token?: string },
+  ) {
+    return this.prisma.user_auth.update({
+      where: { user_id: userId },
+      data: {
+        google_access_token: tokens.access_token,
+      },
+    });
+  }
 }
