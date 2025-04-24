@@ -5,6 +5,8 @@ import {
   UseGuards,
   Request,
   Get,
+  Param,
+  Patch,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
@@ -20,7 +22,7 @@ export class MeetingController {
   @Post()
   async create(@Body() dto: CreateMeetingDto, @Request() req) {
     console.log(req);
-    const userId = req.user.id; // assuming `req.user` has userId
+    const userId = req.user.id;
     console.log('Creating meeting for user:', userId);
     return this.meetingService.createMeeting(dto, userId);
   }
@@ -31,13 +33,13 @@ export class MeetingController {
     return this.meetingService.getMeetingsForUser(userId);
   }
 
-  @Put(':id')
-  async updateMeeting(
-    @Param('id') id: number,
-    @Body() dto: UpdateMeetingDto,
-    @Request() req,
-  ) {
-    const userId = req.user.id;
-    return this.meetingService.updateMeeting(id, dto, userId);
-  }
+  // @Patch(':id')
+  // async updateMeeting(
+  //   @Param('id') id: number,
+  //   @Body() dto: UpdateMeetingDto,
+  //   @Request() req,
+  // ) {
+  //   const userId = req.user.id;
+  //   return this.meetingService.updateMeeting(id, dto, userId);
+  // }
 }

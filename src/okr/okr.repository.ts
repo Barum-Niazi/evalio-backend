@@ -135,13 +135,65 @@ export class OkrRepository {
       where: { parent_okr_id: parentId },
       include: {
         key_results: true,
+        // Owner: get user_details by user_id
+        department: {
+          select: {
+            name: true,
+          },
+        },
+        assigned_to: {
+          include: {
+            user: {
+              select: {
+                user_id: true,
+                name: true,
+                designation: {
+                  select: {
+                    title: true,
+                  },
+                },
+                department: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
-    return okrs.map((okr) => ({
-      ...okr,
-      progress: calculateOkrProgress(okr.key_results),
-    }));
+    // Now we need to fetch owner separately via user_id → user_details
+    const enrichedOkrs = await Promise.all(
+      okrs.map(async (okr) => {
+        const owner =
+          okr.user_id != null
+            ? await this.prisma.user_details.findUnique({
+                where: { user_id: okr.user_id },
+                select: {
+                  user_id: true,
+                  name: true,
+                  designation: {
+                    select: { title: true },
+                  },
+                  department: {
+                    select: { name: true },
+                  },
+                },
+              })
+            : null;
+
+        return {
+          ...okr,
+          progress: calculateOkrProgress(okr.key_results),
+          owner,
+          assignees: okr.assigned_to.map((a) => a.user),
+        };
+      }),
+    );
+
+    return enrichedOkrs;
   }
 
   async getByDepartment(departmentId: number) {
