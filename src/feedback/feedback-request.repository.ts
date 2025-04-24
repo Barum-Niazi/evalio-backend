@@ -69,7 +69,14 @@ export class FeedbackRequestRepository {
 
   getRequestsByUser(userId: number, asRequester: boolean) {
     return this.prisma.feedback_requests.findMany({
-      where: asRequester ? { requester_id: userId } : { recipient_id: userId },
+      where: {
+        ...(asRequester ? { requester_id: userId } : { recipient_id: userId }),
+        status: {
+          code: {
+            notIn: ['COMPLETED', 'DECLINED'],
+          },
+        },
+      },
       include: {
         requester: true,
         recipient: true,
