@@ -22,6 +22,10 @@ export class CreateMeetingDto {
   agenda?: string;
 
   @IsOptional()
+  @IsInt()
+  duration_minutes?: number;
+
+  @IsOptional()
   @IsString()
   notes?: string;
 

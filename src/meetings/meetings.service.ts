@@ -26,7 +26,8 @@ export class MeetingService {
     });
 
     const start = new Date(dto.scheduled_at);
-    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const durationMinutes = dto.duration_minutes ?? 30; // fallback to 30 mins
+    const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
     const attendeeEmails = await this.repo.getGoogleEmailsByUserIds(
       dto.attendee_ids,
     );

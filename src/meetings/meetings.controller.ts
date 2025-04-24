@@ -30,4 +30,14 @@ export class MeetingController {
     const userId = req.user.id;
     return this.meetingService.getMeetingsForUser(userId);
   }
+
+  @Put(':id')
+  async updateMeeting(
+    @Param('id') id: number,
+    @Body() dto: UpdateMeetingDto,
+    @Request() req,
+  ) {
+    const userId = req.user.id;
+    return this.meetingService.updateMeeting(id, dto, userId);
+  }
 }
