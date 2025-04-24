@@ -134,6 +134,7 @@ model okrs {
   child_okrs     okrs[]     @relation("parent_okr")
   parent_okr     okrs?      @relation("parent_okr", fields: [parent_okr_id], references: [id])
   due_date      DateTime? // Due date for the OKR
+  start_date    DateTime? // Start date for the OKR
 
   assigned_to    user_okrs[]
   key_results    key_results[]

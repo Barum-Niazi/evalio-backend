@@ -8,6 +8,8 @@ import { CreateOkrDto, UpdateOkrDto } from './dto/okr.dto';
 import { TagService } from 'src/tags/tag.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { DepartmentRepository } from 'src/department/department.repository';
+import { calculateOkrProgress } from './okr,utils';
+import { format } from 'date-fns';
 
 @Injectable()
 export class OkrService {
@@ -114,5 +116,73 @@ export class OkrService {
 
   async getByUser(userId: number) {
     return this.okrRepository.getByUser(userId);
+  }
+
+  async getProgressBreakdown(companyId: number) {
+    const okrs = await this.okrRepository.getAllOkrsWithKeyResults(companyId);
+
+    const stats = {
+      completed: 0,
+      inProgress: 0,
+      notStarted: 0,
+    };
+
+    for (const okr of okrs) {
+      const progress = calculateOkrProgress(okr.key_results);
+      if (progress === 0) stats.notStarted++;
+      else if (progress < 100) stats.inProgress++;
+      else stats.completed++;
+    }
+
+    return stats;
+  }
+
+  async getOkrAchievementTrends(
+    companyId: number,
+    groupBy: 'day' | 'week' | 'month' | 'year',
+  ) {
+    const okrs =
+      await this.okrRepository.getOkrsWithDueDatesAndDepartments(companyId);
+
+    const trends: Record<
+      string,
+      Record<
+        string,
+        { completed: number; inProgress: number; notStarted: number }
+      >
+    > = {};
+
+    for (const okr of okrs) {
+      if (!okr.start_date || !okr.department) continue;
+
+      const formatMap = {
+        day: 'yyyy-MM-dd',
+        week: "yyyy-'W'II",
+        month: 'yyyy-MM',
+        year: 'yyyy',
+      };
+
+      const key = format(okr.start_date, formatMap[groupBy]); // changed to start_date
+      const deptName = okr.department.name;
+      const progress = calculateOkrProgress(okr.key_results);
+
+      if (!trends[key]) trends[key] = {};
+      if (!trends[key][deptName]) {
+        trends[key][deptName] = {
+          completed: 0,
+          inProgress: 0,
+          notStarted: 0,
+        };
+      }
+
+      if (progress === 0) trends[key][deptName].notStarted++;
+      else if (progress < 100) trends[key][deptName].inProgress++;
+      else trends[key][deptName].completed++;
+    }
+
+    return Object.entries(trends).map(([period, departments]) => ({
+      period,
+      departments,
+    }));
   }
 }

@@ -10,6 +10,7 @@ import {
   ParseIntPipe,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { OkrService } from './okr.service';
 import { CreateOkrDto, UpdateOkrDto } from './dto/okr.dto';
@@ -36,6 +37,19 @@ export class OkrController {
   @Get('root')
   getRootOkrs() {
     return this.okrService.getRootOkrs();
+  }
+
+  @Get('progress-breakdown')
+  getProgressBreakdown(@Request() req) {
+    return this.okrService.getProgressBreakdown(req.user.companyId);
+  }
+
+  @Get('achievement-trends')
+  getOkrAchievementTrends(
+    @Request() req,
+    @Query('groupBy') groupBy: 'day' | 'week' | 'month' | 'year' = 'week',
+  ) {
+    return this.okrService.getOkrAchievementTrends(req.user.companyId, groupBy);
   }
 
   @Get('tree/:id')

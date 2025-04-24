@@ -33,6 +33,7 @@ export class OkrRepository {
         parent_okr_id: dto.parentOkrId,
         department_id: dto.departmentId,
         due_date: dto.dueDate,
+        start_date: new Date().toISOString(),
         assigned_to: {
           create: allAssignees.map((user_id) => ({ user_id })),
         },
@@ -252,5 +253,50 @@ export class OkrRepository {
       ...okr,
       progress: calculateOkrProgress(okr.key_results),
     }));
+  }
+
+  async getOkrsWithProgressByCompany(companyId: number) {
+    return this.prisma.okrs.findMany({
+      where: {
+        company_id: companyId,
+        // department_id: { not: null }, // optional: skip unassigned
+      },
+      include: {
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        key_results: true,
+      },
+    });
+  }
+
+  async getAllOkrsWithKeyResults(companyId: number) {
+    return this.prisma.okrs.findMany({
+      where: { company_id: companyId },
+      include: {
+        key_results: true,
+      },
+    });
+  }
+
+  async getOkrsWithDueDatesAndDepartments(companyId: number) {
+    return this.prisma.okrs.findMany({
+      where: {
+        company_id: companyId,
+        due_date: { not: null },
+      },
+      include: {
+        key_results: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
   }
 }
