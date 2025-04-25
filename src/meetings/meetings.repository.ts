@@ -11,6 +11,9 @@ export class MeetingRepository {
     scheduled_by_id: number,
     google_meet_link: string,
   ) {
+    const allAttendeeIds = new Set(dto.attendee_ids);
+    allAttendeeIds.add(scheduled_by_id); // Ensure creator is also added
+
     return this.prisma.meetings.create({
       data: {
         title: dto.title,
@@ -23,7 +26,7 @@ export class MeetingRepository {
         google_meet_link,
         attendees: {
           createMany: {
-            data: dto.attendee_ids.map((user_id) => ({ user_id })),
+            data: Array.from(allAttendeeIds).map((user_id) => ({ user_id })),
           },
         },
       },
@@ -37,10 +40,24 @@ export class MeetingRepository {
     return this.prisma.meeting_attendees.findMany({
       where: { user_id },
       include: {
-        meeting: true,
+        meeting: {
+          include: {
+            attendees: {
+              include: {
+                user: {
+                  select: {
+                    user_id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
   }
+
   async getUserGoogleTokens(user_id: number) {
     return this.prisma.user_auth.findFirst({
       where: { user_id },
