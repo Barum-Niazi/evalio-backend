@@ -88,4 +88,14 @@ export class AuthService {
   ): Promise<void> {
     await this.userService.storeGoogleTokens(userId, tokens, email);
   }
+
+  async verifyJwtToken(token: string): Promise<any> {
+    try {
+      return this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
 }

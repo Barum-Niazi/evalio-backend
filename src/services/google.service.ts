@@ -14,7 +14,7 @@ export class GoogleService {
     );
   }
 
-  getAuthUrl() {
+  getAuthUrl(state) {
     return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: [
@@ -22,6 +22,7 @@ export class GoogleService {
         'https://www.googleapis.com/auth/userinfo.email',
       ],
       prompt: 'consent',
+      state,
     });
   }
 

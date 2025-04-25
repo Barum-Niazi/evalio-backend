@@ -37,24 +37,25 @@ export class AuthController {
   }
 
   @Get('google')
-  redirectToGoogle(@Res() res: Response) {
-    const url = this.googleService.getAuthUrl();
+  redirectToGoogle(@Res() res: Response, @Query('jwt') jwt: string) {
+    const state = encodeURIComponent(jwt);
+    const url = this.googleService.getAuthUrl(state);
     return res.redirect(url);
   }
 
   @Get('google/callback')
-  @UseGuards(JwtAuthGuard)
   async googleAuthCallback(
     @Query('code') code: string,
-    @Req() req,
+    @Query('state') state: string,
     @Res() res: Response,
   ) {
-    const { tokens, email } = await this.googleService.setCredentials(code);
-    console.log({ tokens, email });
-    const userId = req.user.id; // test user id
+    const jwt = decodeURIComponent(state);
+    const decoded = await this.authService.verifyJwtToken(jwt);
+    const userId = decoded.sub;
 
+    const { tokens, email } = await this.googleService.setCredentials(code);
     await this.authService.storeGoogleTokens(userId, tokens, email);
 
-    return res.json({ message: 'Google OAuth successful' });
+    return res.send(`<script>window.close();</script>`);
   }
 }
