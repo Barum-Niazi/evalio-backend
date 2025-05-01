@@ -63,4 +63,11 @@ export class EmployeeController {
     const companyId = req.user.company_id;
     return this.employeeService.getEmployees(companyId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('no-department')
+  async getEmployeesWithoutDepartment(@Request() req) {
+    const companyId = req.user.company_id;
+    return this.employeeService.getEmployeesWithoutDepartment(companyId);
+  }
 }

@@ -9,20 +9,7 @@ export class OkrRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateOkrDto): Promise<okrs> {
-    let departmentUserIds: number[] = [];
-
-    if (dto.departmentId) {
-      const employees = await this.prisma.user_details.findMany({
-        where: { department_id: dto.departmentId },
-        select: { user_id: true },
-      });
-      departmentUserIds = employees.map((e) => e.user_id);
-    }
-
-    // Merge both: unique user IDs only
-    const allAssignees = Array.from(
-      new Set([...(dto.assignedTo ?? []), ...departmentUserIds]),
-    );
+    const allAssignees = Array.from(new Set(dto.assignedTo ?? []));
 
     return this.prisma.okrs.create({
       data: {
@@ -31,7 +18,7 @@ export class OkrRepository {
         company_id: dto.companyId,
         user_id: dto.userId,
         parent_okr_id: dto.parentOkrId,
-        department_id: dto.departmentId,
+        department_id: dto.departmentId, // purely for classification
         due_date: dto.dueDate,
         start_date: new Date().toISOString(),
         assigned_to: {

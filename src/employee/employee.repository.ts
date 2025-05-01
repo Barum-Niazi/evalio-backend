@@ -271,4 +271,28 @@ export class EmployeeRepository {
     }
     return admin.company_id;
   }
+
+  async getEmployeesWithoutDepartment(companyId: number): Promise<
+    {
+      user_id: number;
+      name: string;
+      designation: { title: string } | null;
+    }[]
+  > {
+    return this.prisma.user_details.findMany({
+      where: {
+        company_id: companyId,
+        department: null, // Filter for employees without a department
+      },
+      select: {
+        user_id: true,
+        name: true,
+        designation: {
+          select: {
+            title: true,
+          },
+        },
+      },
+    });
+  }
 }

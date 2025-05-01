@@ -207,4 +207,8 @@ export class EmployeeService {
 
     return employees;
   }
+
+  async getEmployeesWithoutDepartment(companyId: number) {
+    return this.employeeRepository.getEmployeesWithoutDepartment(companyId);
+  }
 }
