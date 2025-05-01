@@ -24,18 +24,6 @@ export class OkrService {
     let departmentUserIds: number[] = [];
 
     // Get department employees
-    if (dto.departmentId) {
-      const employees =
-        await this.departmentRepository.getEmployeesByDepartment(
-          dto.departmentId,
-        );
-      departmentUserIds = employees.map((emp) => emp.user_id);
-    }
-
-    const allAssignees = Array.from(
-      new Set([...(dto.assignedTo ?? []), ...departmentUserIds]),
-    );
-
     const okr = await this.okrRepository.create({
       title: dto.title,
       description: dto.description,
@@ -44,7 +32,7 @@ export class OkrService {
       dueDate: dto.dueDate,
       parentOkrId: dto.parentOkrId,
       departmentId: dto.departmentId,
-      assignedTo: allAssignees,
+      assignedTo: dto.assignedTo,
     });
 
     await this.tagService.createTagforEntities(
@@ -54,7 +42,7 @@ export class OkrService {
       'OKR',
     );
 
-    for (const userId of allAssignees) {
+    for (const userId of dto.assignedTo) {
       await this.notificationService.create(
         userId,
         1,
