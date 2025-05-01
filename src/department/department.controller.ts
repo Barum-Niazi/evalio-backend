@@ -10,6 +10,7 @@ import {
   Request,
   ForbiddenException,
   BadRequestException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { DepartmentService } from './department.service';
 import { CreateDepartmentDto } from './dto/create-department.dto';
@@ -17,6 +18,7 @@ import { UpdateDepartmentDto } from './dto/update-department.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Roles } from '../decorators/roles.decorators';
 import { AddEmployeesToDepartmentsDto } from './dto/add-employees.dto';
+import { use } from 'passport';
 
 @Controller('departments')
 export class DepartmentController {
@@ -47,6 +49,17 @@ export class DepartmentController {
     }
 
     return this.departmentService.getDepartmentsByCompany(companyId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles('Admin')
+  @Get('details/:id')
+  async getDetails(@Param('id', ParseIntPipe) id: number) {
+    const department = await this.departmentService.getByIdWithDetails(id);
+    if (!department) {
+      throw new BadRequestException('Department not found.');
+    }
+    return department;
   }
 
   @UseGuards(JwtAuthGuard)

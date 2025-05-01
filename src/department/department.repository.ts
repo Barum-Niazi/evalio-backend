@@ -155,4 +155,28 @@ export class DepartmentRepository {
       },
     });
   }
+
+  async findByIdWithRelations(id: number) {
+    return this.prisma.department.findUnique({
+      where: { id },
+      include: {
+        employees: {
+          include: {
+            user: true,
+            designation: true,
+          },
+        },
+        okrs: {
+          include: {
+            key_results: true,
+          },
+        },
+        head: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+  }
 }

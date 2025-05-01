@@ -2,6 +2,8 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { DepartmentRepository } from './department.repository';
 import { UserRepository } from 'src/user/user.repository';
 import { AddEmployeesToDepartmentsDto } from './dto/add-employees.dto';
+import { calculateOkrProgress } from 'src/okr/okr,utils';
+import { transformDepartmentResponse } from './department.utils';
 
 @Injectable()
 export class DepartmentService {
@@ -53,5 +55,28 @@ export class DepartmentService {
     }
 
     return results;
+  }
+
+  async getByIdWithDetails(id: number) {
+    const department =
+      await this.departmentRepository.findByIdWithRelations(id);
+    if (!department) return null;
+
+    const stats = {
+      completed: 0,
+      inProgress: 0,
+      notStarted: 0,
+    };
+
+    for (const okr of department.okrs) {
+      const progress = calculateOkrProgress(okr.key_results);
+      if (progress === 0) stats.notStarted++;
+      else if (progress < 100) stats.inProgress++;
+      else stats.completed++;
+    }
+    return transformDepartmentResponse({
+      ...department,
+      progressBreakdown: stats,
+    });
   }
 }
