@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { DepartmentRepository } from './department.repository';
 import { UserRepository } from 'src/user/user.repository';
+import { AddEmployeesToDepartmentsDto } from './dto/add-employees.dto';
 
 @Injectable()
 export class DepartmentService {
@@ -29,10 +30,28 @@ export class DepartmentService {
     return this.userRepository.getUserIdsByEmails(emails);
   }
 
-  async addEmployeesToDepartment(departmentId: number, employeeIds: number[]) {
-    return this.departmentRepository.addEmployeesToDepartment(
-      departmentId,
-      employeeIds,
-    );
+  async addEmployeesToDepartments(
+    dto: AddEmployeesToDepartmentsDto,
+    companyId: number,
+  ) {
+    const departments = await this.getDepartmentsByCompany(companyId);
+    const results = [];
+
+    for (const { departmentId, employeeIds } of dto.departments) {
+      const department = departments.find((d) => d.id === departmentId);
+      if (!department) {
+        throw new ForbiddenException(
+          `You do not have access to department ID ${departmentId}.`,
+        );
+      }
+      const result = await this.departmentRepository.addEmployeesToDepartment(
+        departmentId,
+        employeeIds,
+      );
+
+      results.push({ departmentId, addedEmployees: result });
+    }
+
+    return results;
   }
 }

@@ -73,45 +73,13 @@ export class DepartmentController {
   @Roles('Admin')
   @Post('add-employees')
   async addEmployeesToDepartments(
-    @Body() addEmployeesToDepartmentsDto: AddEmployeesToDepartmentsDto,
+    @Body() dto: AddEmployeesToDepartmentsDto,
     @Request() req,
   ) {
     const adminCompanyId = req.user.companyId;
-
-    const results = [];
-    for (const department of addEmployeesToDepartmentsDto.departments) {
-      const { departmentId, employeeEmails } = department;
-
-      const departmentExists =
-        await this.departmentService.getDepartmentsByCompany(adminCompanyId);
-      const validDepartment = departmentExists.find(
-        (d) => d.id === departmentId,
-      );
-
-      if (!validDepartment) {
-        throw new ForbiddenException(
-          `You do not have access to department ID ${departmentId}.`,
-        );
-      }
-
-      // Fetch user IDs based on provided emails
-      const employeeIds =
-        await this.departmentService.getUserIdsByEmails(employeeEmails);
-
-      if (employeeIds.length !== employeeEmails.length) {
-        throw new BadRequestException(
-          `Some provided emails do not exist or are invalid.`,
-        );
-      }
-
-      // Add employees to the department
-      const result = await this.departmentService.addEmployeesToDepartment(
-        departmentId,
-        employeeIds,
-      );
-      results.push({ departmentId, addedEmployees: result });
-    }
-
-    return results;
+    return this.departmentService.addEmployeesToDepartments(
+      dto,
+      adminCompanyId,
+    );
   }
 }

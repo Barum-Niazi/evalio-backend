@@ -1,13 +1,13 @@
-import { IsInt, IsArray, IsEmail, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsInt, ValidateNested } from 'class-validator';
 
 class EmployeeDepartmentDto {
   @IsInt()
   departmentId: number;
 
   @IsArray()
-  @IsEmail({}, { each: true }) // Validate that each entry is an email
-  employeeEmails: string[];
+  @IsInt({ each: true }) // corrected decorator for user IDs
+  employeeIds: number[];
 }
 
 export class AddEmployeesToDepartmentsDto {
