@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { users } from '@prisma/client'; // Import types from your Prisma schema
+import { Prisma, users } from '@prisma/client'; // Import types from your Prisma schema
 
 @Injectable()
 export class UserRepository {
@@ -258,5 +258,9 @@ export class UserRepository {
         },
       },
     });
+  }
+
+  async deleteUser(userId: number) {
+    return this.prisma.users.delete({ where: { id: userId } });
   }
 }

@@ -5,10 +5,13 @@ import {
   UseGuards,
   Request,
   Patch,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { UpdateUserProfileDto } from './dto/user.dto';
+import { Roles } from 'src/decorators/roles.decorators';
 
 @Controller('user')
 export class UserController {
@@ -24,5 +27,13 @@ export class UserController {
   @Patch('me')
   async updateCurrentUser(@Request() req, @Body() dto: UpdateUserProfileDto) {
     return this.userService.updateUserProfile(req.user.id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles('Admin')
+  @Delete(':id')
+  async deleteUser(@Param('id') id: string) {
+    const userId = parseInt(id, 10);
+    return this.userService.deleteUser(userId);
   }
 }

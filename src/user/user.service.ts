@@ -19,6 +19,10 @@ export class UserService {
   async findCompanyUsers(companyId: number) {
     return this.userRepository.findCompanyUsers(companyId);
   }
+  async deleteUser(userId: number) {
+    // Validate user exists, permissions, etc.
+    return this.userRepository.deleteUser(userId);
+  }
 
   async storeGoogleTokens(
     userId: number,

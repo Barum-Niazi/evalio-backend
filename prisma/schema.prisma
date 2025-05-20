@@ -14,7 +14,7 @@ model user_auth {
   google_access_token String? 
   google_refresh_token String?
   google_email String? 
-  user        users     @relation(fields: [user_id], references: [id]) // One-to-one relation
+  user        users     @relation(fields: [user_id], references: [id], onDelete: Cascade) // One-to-one relation
   audit       Json      @default("{}") // Audit JSON for metadata
 }
 
@@ -28,7 +28,7 @@ model users {
 
 model user_details {
   user_id       Int             @id // Same ID as users table for strict 1:1 mapping
-  user          users           @relation("user_to_details", fields: [user_id], references: [id]) // Strict 1:1 mapping
+  user          users           @relation("user_to_details", fields: [user_id], references: [id], onDelete: Cascade) // Strict 1:1 mapping
   name          String
   profile_blob  blob?        @relation(fields: [profile_blob_id], references: [id]) // Relation to the blob table
   profile_blob_id Int?       // Foreign key to the blob table
@@ -64,7 +64,7 @@ model roles {
 model user_roles {
   user_id Int
   role_id Int
-  user   users @relation(fields: [user_id], references: [id])
+  user   users @relation(fields: [user_id], references: [id], onDelete: Cascade)
   role   roles @relation(fields: [role_id], references: [id])
   @@id([user_id, role_id]) // Composite primary key
   audit  Json   @default("{}") // Audit JSON
@@ -72,7 +72,7 @@ model user_roles {
 model notifications {
   id          Int                 @id @default(autoincrement())
   user_id     Int                 // User receiving the notification
-  user        user_details        @relation(fields: [user_id], references: [user_id])
+  user        user_details        @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   type_id     Int                 // Foreign key to `lookup` for notification type
   type        lookup              @relation("notification_type", fields: [type_id], references: [id])
   status_id   Int                 // Foreign key to `lookup` for notification status
@@ -88,7 +88,7 @@ model department {
   company_id   Int?      // Relation to Company
   company     companies? @relation(fields: [company_id], references: [id])
   headId      Int?      // Relation to Head
-  head        user_details?    @relation("department_head", fields: [headId], references: [user_id])
+  head        user_details?    @relation("department_head", fields: [headId], references: [user_id], onDelete: SetNull) // Head of the department
   employees   user_details[]
   audit       Json      @default("{}") // Replaces createdAt and updatedAt
 
@@ -144,7 +144,7 @@ model okrs {
 model user_okrs {
   user_id Int
   okr_id  Int
-  user   user_details @relation(fields: [user_id], references: [user_id])
+  user   user_details @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   okr    okrs         @relation(fields: [okr_id], references: [id])
   @@id([user_id, okr_id]) // Composite primary key
 }
@@ -169,12 +169,12 @@ model feedback {
   is_anonymous    Boolean   @default(false)
   visibility_id   Int?       // Foreign key to `lookup` for visibility
   visibility      lookup?    @relation(fields: [visibility_id], references: [id])
-  sender_id       Int
-  receiver_id     Int
+  sender_id       Int?
+  receiver_id     Int?
   date            DateTime  @default(now())
   sentiment       String?   // Sentiment analysis result (e.g., "positive", "negative", "neutral")
-  sender          user_details @relation("feedback_given", fields: [sender_id], references: [user_id])
-  receiver        user_details @relation("feedback_received", fields: [receiver_id], references: [user_id])
+  sender          user_details? @relation("feedback_given", fields: [sender_id], references: [user_id], onDelete: SetNull)
+  receiver        user_details? @relation("feedback_received", fields: [receiver_id], references: [user_id], onDelete: SetNull)
   audit           Json      @default("{}") // Audit metadata
   feedback_requests feedback_requests[]
 }
@@ -183,12 +183,12 @@ model feedback_requests {
   id             Int            @id @default(autoincrement())
   feedback_id    Int?           // Foreign key to `feedback` (optional)
   feedback       feedback?      @relation(fields: [feedback_id], references: [id])
-  requester_id   Int            // User sending the feedback request
-  requester      user_details   @relation("requested_feedback", fields: [requester_id], references: [user_id])
-  recipient_id   Int            // User receiving the feedback request
-  recipient      user_details   @relation("feedback_requests", fields: [recipient_id], references: [user_id])
-  target_user_id   Int
-  target_user      user_details   @relation("feedback_about", fields: [target_user_id], references: [user_id])
+  requester_id   Int?            // User sending the feedback request
+  requester      user_details?   @relation("requested_feedback", fields: [requester_id], references: [user_id], onDelete: SetNull)
+  recipient_id   Int?            // User receiving the feedback request
+  recipient      user_details?   @relation("feedback_requests", fields: [recipient_id], references: [user_id], onDelete: SetNull)
+  target_user_id   Int?
+  target_user      user_details?   @relation("feedback_about", fields: [target_user_id], references: [user_id], onDelete: SetNull)
   message        String?        // Optional message
   status_id      Int            // Foreign key to `lookup` for status
   status         lookup         @relation(fields: [status_id], references: [id])
@@ -200,8 +200,8 @@ model meetings {
   id               Int       @id @default(autoincrement())
   title            String
   description      String?
-  scheduled_by_id  Int
-  scheduled_by     user_details @relation("scheduled_meetings", fields: [scheduled_by_id], references: [user_id])
+  scheduled_by_id  Int?
+  scheduled_by     user_details? @relation("scheduled_meetings", fields: [scheduled_by_id], references: [user_id], onDelete: SetNull)
   attendees        meeting_attendees[]
   scheduled_at     DateTime
   agenda           String?
@@ -223,7 +223,7 @@ model meeting_attendees {
   meeting_id Int
   user_id    Int
   meeting   meetings @relation(fields: [meeting_id], references: [id])
-  user      user_details    @relation(fields: [user_id], references: [user_id])
+  user      user_details    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   @@id([meeting_id, user_id]) // Composite primary key
 }
 
