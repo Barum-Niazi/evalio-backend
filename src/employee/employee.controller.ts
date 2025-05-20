@@ -8,12 +8,15 @@ import {
   Request,
   BadRequestException,
   Get,
+  Param,
+  Put,
 } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Roles } from 'src/decorators/roles.decorators';
 import { AddEmployeeDto } from './dto/add-employee.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 @Controller('employee')
 export class EmployeeController {
@@ -58,12 +61,24 @@ export class EmployeeController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Roles('Admin')
+  @Put('update/:id')
+  async updateEmployee(
+    @Param('id') id: string,
+    @Body() updateEmployeeDto: UpdateEmployeeDto,
+  ) {
+    const employeeId = parseInt(id, 10);
+    return this.employeeService.updateEmployee(employeeId, updateEmployeeDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('list')
   async getCompanyUsers(@Request() req) {
     const companyId = req.user.company_id;
     return this.employeeService.getEmployees(companyId);
   }
 
+  @Roles('Admin')
   @UseGuards(JwtAuthGuard)
   @Get('no-department')
   async getEmployeesWithoutDepartment(@Request() req) {

@@ -6,6 +6,7 @@ import * as argon2 from 'argon2';
 import { Readable } from 'stream';
 import * as csvParser from 'csv-parser';
 import * as ExcelJS from 'exceljs';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 @Injectable()
 export class EmployeeService {
@@ -79,6 +80,16 @@ export class EmployeeService {
       message: 'Employees added successfully',
       addedEmployees: createdEmployees,
     };
+  }
+
+  async updateEmployee(
+    employeeId: number,
+    updateEmployeeDto: UpdateEmployeeDto,
+  ) {
+    return this.employeeRepository.updateEmployee(
+      employeeId,
+      updateEmployeeDto,
+    );
   }
 
   async addEmployeesFromFile(adminId: number, file: Express.Multer.File) {

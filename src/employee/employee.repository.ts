@@ -62,6 +62,68 @@ export class EmployeeRepository {
     });
   }
 
+  updateEmployee(
+    employeeId: number,
+    updateData: {
+      email?: string;
+      managerId?: number | null; // support clearing manager
+      departmentId?: number | null; // support clearing department
+      designation?: string | null; // support clearing designation if you want
+    },
+  ): Prisma.PrismaPromise<any> {
+    const { email, managerId, departmentId, designation } = updateData;
+    return this.prisma.users.update({
+      where: { id: employeeId },
+      data: {
+        ...(email && {
+          auth: {
+            update: {
+              email,
+            },
+          },
+        }),
+        details: {
+          update: {
+            ...(managerId !== undefined
+              ? managerId !== null
+                ? { manager: { connect: { user_id: managerId } } }
+                : { manager: { disconnect: true } }
+              : {}),
+            ...(departmentId !== undefined
+              ? departmentId !== null
+                ? { department: { connect: { id: departmentId } } }
+                : { department: { disconnect: true } }
+              : {}),
+            ...(designation !== undefined
+              ? designation !== null
+                ? {
+                    designation: {
+                      connectOrCreate: {
+                        where: { title: designation },
+                        create: { title: designation },
+                      },
+                    },
+                  }
+                : { designation: { disconnect: true } }
+              : {}),
+          },
+        },
+      },
+      include: {
+        auth: {
+          select: { email: true }, // only email, no password or other fields
+        },
+        details: {
+          include: {
+            manager: true,
+            department: true,
+            designation: true,
+          },
+        },
+      },
+    });
+  }
+
   async getManagerIdByEmail(email: string): Promise<number | null> {
     const manager = await this.prisma.user_auth.findUnique({
       where: { email },
