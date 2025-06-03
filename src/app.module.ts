@@ -27,6 +27,7 @@ import { OkrModule } from './okr/okr.module';
 import { KeyResultsModule } from './key-results/key-results.module';
 import { GoogleService } from './services/google.service';
 import { BlobModule } from './blob/blob.module';
+import { TeamModule } from './team/team.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { BlobModule } from './blob/blob.module';
     OkrModule,
     KeyResultsModule,
     BlobModule,
+    TeamModule,
   ],
   controllers: [
     AppController,
