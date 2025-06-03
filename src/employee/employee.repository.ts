@@ -282,45 +282,66 @@ export class EmployeeRepository {
     {
       user_id: number;
       name: string;
+      email: string | null;
       manager: { user_id: number; name: string } | null;
       designation: { title: string } | null;
       department: { name: string } | null;
     }[]
   > {
-    return this.prisma.user_details.findMany({
-      where: {
-        company_id: companyId,
-        user: {
-          roles: {
-            none: {
-              role: {
-                name: 'Admin', // Exclude users with the Admin role
+    return this.prisma.user_details
+      .findMany({
+        where: {
+          company_id: companyId,
+          user: {
+            roles: {
+              none: {
+                role: {
+                  name: 'Admin', // Exclude Admin users
+                },
               },
             },
           },
         },
-      },
-      select: {
-        user_id: true,
-        name: true,
-        manager: {
-          select: {
-            user_id: true,
-            name: true,
+        select: {
+          user_id: true,
+          name: true,
+          user: {
+            select: {
+              auth: {
+                select: {
+                  email: true,
+                },
+              },
+            },
+          },
+          manager: {
+            select: {
+              user_id: true,
+              name: true,
+            },
+          },
+          designation: {
+            select: {
+              title: true,
+            },
+          },
+          department: {
+            select: {
+              name: true,
+            },
           },
         },
-        designation: {
-          select: {
-            title: true,
-          },
-        },
-        department: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
+      })
+      .then((results) =>
+        results.map((emp) => ({
+          user_id: emp.user_id,
+          name: emp.name,
+          email: emp.user?.auth?.email ?? null,
+          manager: emp.manager,
+          designation: emp.designation,
+          department: emp.department,
+        })),
+      );
   }
 
   async getAdminCompanyId(adminId: number): Promise<number | null> {
