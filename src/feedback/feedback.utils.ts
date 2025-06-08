@@ -9,6 +9,7 @@ export function filterAndFormatFeedbacks(
       const isSender = fb.sender_id === currentUser.id;
       const isManager = fb.receiver?.manager_id === currentUser.id;
       const sameCompany = fb.receiver?.company_id === currentUser.companyId;
+      console.log(visibility);
 
       // Always show feedback sent by the user, regardless of visibility
       if (isSender) return true;

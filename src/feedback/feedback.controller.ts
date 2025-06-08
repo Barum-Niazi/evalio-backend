@@ -48,6 +48,14 @@ export class FeedbackController {
     return this.feedbackService.createFeedback(createFeedbackDto);
   }
 
+  @Get('/user/:userId')
+  async getFeedbackByUser(@Param('userId') userId: number, @Request() req) {
+    userId = parseInt(userId.toString(), 10);
+    console.log(userId);
+    const companyId = req.user.companyId;
+    return this.feedbackService.getFeedbackByUser(userId, companyId);
+  }
+
   @Get('/id/:feedbackId')
   async getFeedback(@Param('feedbackId') feedbackId: number) {
     const getFeedbackDto = new GetFeedbackDto();

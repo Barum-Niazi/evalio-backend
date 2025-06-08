@@ -70,6 +70,33 @@ export class FeedbackRepository {
     });
   }
 
+  // feedback.repository.ts
+  async getFeedbackByUser(userId: number): Promise<feedback[]> {
+    const feedback = await this.prisma.feedback.findMany({
+      where: {
+        OR: [{ sender_id: userId }, { receiver_id: userId }],
+      },
+      orderBy: { id: 'desc' },
+      include: {
+        visibility: true, // for visibilityType string
+        sender: {
+          select: {
+            user_id: true,
+            name: true,
+          },
+        },
+        receiver: {
+          select: {
+            user_id: true,
+            name: true,
+            company_id: true,
+          },
+        },
+      },
+    });
+    return feedback;
+  }
+
   /**
    * ✅ Update feedback entry.
    */

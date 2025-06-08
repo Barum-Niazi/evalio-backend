@@ -95,6 +95,100 @@ export class FeedbackService {
 
     return feedback;
   }
+  async getFeedbackByUser(
+    userId: number,
+    companyId: number,
+    query?: ListAccessibleFeedbackDto,
+  ) {
+    // Step 1: Get all feedback for the user (either as sender or receiver)
+    const feedbacks = await this.feedbackRepository.getFeedbackByUser(userId);
+    console.log(feedbacks);
+    console.log(companyId);
+
+    // Step 2: Apply filters and format feedback (if needed)
+    let visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, {
+      id: userId,
+      companyId: companyId,
+    });
+
+    // Step 3: Filter by sentiment if provided
+    if (query?.sentiment) {
+      visibleFeedbacks = visibleFeedbacks.filter(
+        (fb) => fb.sentiment === query.sentiment,
+      );
+    }
+
+    // Step 4: Filter by team member if provided (this would use the `receiver_id` as team member in case of feedback directed towards them)
+    if (query?.teamMemberId) {
+      visibleFeedbacks = visibleFeedbacks.filter(
+        (fb) => fb.receiver_id === query.teamMemberId,
+      );
+    }
+
+    // Step 5: Get all the feedback IDs for later use with tags
+    const feedbackIds = visibleFeedbacks.map((fb) => fb.id);
+
+    // Step 6: Get tags for the feedbacks
+    const taggedEntities = await this.tagRepository.getTagsForEntities(
+      feedbackIds,
+      'FEEDBACK',
+    );
+
+    // Step 7: Add tags to the feedbacks
+    let feedbacksWithTags = visibleFeedbacks.map((fb) => {
+      const tags = taggedEntities
+        .filter((te) => te.entity_id === fb.id)
+        .map((te) => te.tag);
+
+      return {
+        ...fb,
+        tags,
+      };
+    });
+
+    // Step 8: Filter by tags if provided
+    if (query?.tags?.length) {
+      feedbacksWithTags = feedbacksWithTags.filter((fb) =>
+        query.tags.every((requestedTag) =>
+          (fb.tags ?? []).some((tag) => tag.name === requestedTag),
+        ),
+      );
+    }
+
+    // Step 9: Collect all user IDs involved in feedback (sender/receiver)
+    const userIds = Array.from(
+      new Set([
+        ...feedbacksWithTags.map((fb) => fb.sender_id),
+        ...feedbacksWithTags.map((fb) => fb.receiver_id),
+      ]),
+    );
+
+    // Step 10: Get profile blobs for the involved users (both sender and receiver)
+    const userBlobs =
+      await this.userRepository.getProfileBlobsForUserIds(userIds);
+
+    // Step 11: Map user profile blobs to user IDs
+    const profileBlobMap = new Map<number, any>();
+    userBlobs.forEach((ub) => {
+      if (ub.profile_blob) {
+        profileBlobMap.set(ub.user_id, {
+          id: ub.profile_blob.id,
+          name: ub.profile_blob.name,
+          mimeType: ub.profile_blob.mime_type,
+          size: ub.profile_blob.size,
+          url: `/blob/${ub.profile_blob.id}/view`,
+        });
+      }
+    });
+
+    // Step 12: Transform feedbacks to include profile images
+    return feedbacksWithTags.map((fb) =>
+      transformFeedback(fb, userId, {
+        senderProfileImage: profileBlobMap.get(fb.sender_id) || null,
+        receiverProfileImage: profileBlobMap.get(fb.receiver_id) || null,
+      }),
+    );
+  }
 
   /**
    * ✅ Update feedback entry
