@@ -46,6 +46,17 @@ export class CompanyRepository {
         },
       });
 
+      await prisma.company_settings.create({
+        data: {
+          company_id: company.id,
+          allow_anonymous_feedback: true, // default or customizable later
+          enable_okrs: true,
+          enable_1on1s: true,
+          enable_note_to_self: true,
+          enable_feedback_requests: true,
+        },
+      });
+
       return company;
     });
   }
