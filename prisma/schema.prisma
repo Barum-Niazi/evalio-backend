@@ -212,11 +212,15 @@ model meetings {
 }
 
 model company_settings {
-  id                  Int     @id @default(autoincrement())
-  company_id           Int     @unique
-  company             companies @relation("company_to_setting", fields: [company_id], references: [id])
-  allow_anonymous_feedback Boolean @default(true)
-  audit               Json    @default("{}") // Replaces createdAt and updatedAt
+  id                       Int      @id @default(autoincrement())
+  company_id              Int      @unique
+  company                 companies @relation("company_to_setting", fields: [company_id], references: [id])
+  allow_anonymous_feedback Boolean  @default(true)
+  enable_okrs              Boolean  @default(true)
+  enable_1on1s             Boolean  @default(true)
+  enable_note_to_self     Boolean  @default(true)
+  enable_feedback_requests Boolean @default(true)
+  audit                    Json     @default("{}")
 }
 
 model meeting_attendees {

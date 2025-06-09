@@ -1,5 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateCompanyDto } from './dto/create-company.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  CreateCompanyDto,
+  UpdateCompanyDto,
+  UpdateCompanySettingsDto,
+} from './dto/company.dto';
 import { CompanyRepository } from './company.repository';
 import { EmployeeRepository } from 'src/employee/employee.repository';
 import { EmailService } from 'src/services/email.service';
@@ -116,6 +124,29 @@ export class CompanyService {
         'Company and associated employees and departments created successfully.',
       company,
     };
+  }
+  async updateCompany(id: number, dto: UpdateCompanyDto) {
+    const company = await this.companyRepository.findById(id);
+    if (!company) throw new NotFoundException('Company not found');
+
+    const updatedMetadata = {
+      ...((company.metadata ?? {}) as Record<string, any>),
+      ...((dto.metadata ?? {}) as Record<string, any>),
+    };
+
+    return this.companyRepository.updateCompany(id, {
+      name: dto.name,
+      address: dto.address,
+      description: dto.description,
+      metadata: updatedMetadata,
+    });
+  }
+
+  async updateSettings(companyId: number, dto: UpdateCompanySettingsDto) {
+    const settings = await this.companyRepository.getSettings(companyId);
+    if (!settings) throw new NotFoundException('Settings not found');
+
+    return this.companyRepository.updateSettings(companyId, dto);
   }
 
   async getCompanyStats(adminId: number) {

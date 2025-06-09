@@ -4,6 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { companies, company_settings } from '@prisma/client';
 
 @Injectable()
 export class CompanyRepository {
@@ -84,6 +85,30 @@ export class CompanyRepository {
         department: { select: { id: true, name: true } }, // Department information
         designation: { select: { id: true, title: true } }, // Designation details
       },
+    });
+  }
+
+  async findById(id: number) {
+    return this.prisma.companies.findUnique({ where: { id } });
+  }
+
+  async updateCompany(id: number, data: Partial<companies>) {
+    return this.prisma.companies.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async getSettings(companyId: number) {
+    return this.prisma.company_settings.findUnique({
+      where: { company_id: companyId },
+    });
+  }
+
+  async updateSettings(companyId: number, data: Partial<company_settings>) {
+    return this.prisma.company_settings.update({
+      where: { company_id: companyId },
+      data,
     });
   }
 }

@@ -9,12 +9,20 @@ import {
   BadRequestException,
   Get,
   UploadedFiles,
+  Param,
+  ParseIntPipe,
+  Patch,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
-import { CreateCompanyDto } from './dto/create-company.dto';
+import {
+  CreateCompanyDto,
+  UpdateCompanyDto,
+  UpdateCompanySettingsDto,
+} from './dto/company.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorators/roles.decorators';
+import { RolesGuard } from 'src/guards/roles.guard';
 
 @Controller('company')
 export class CompanyController {
@@ -76,5 +84,24 @@ export class CompanyController {
   async getCompanyDashboard(@Request() req) {
     const companyId = req.user.companyId;
     return this.companyService.getCompanyStats(companyId);
+  }
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  updateCompany(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCompanyDto,
+  ) {
+    return this.companyService.updateCompany(id, dto);
+  }
+
+  @Patch(':id/settings')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  updateCompanySettings(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCompanySettingsDto,
+  ) {
+    return this.companyService.updateSettings(id, dto);
   }
 }
