@@ -19,7 +19,7 @@ import { GoogleService } from 'src/services/google.service';
       useFactory: async (config: ConfigService) => ({
         secret: config.get('JWT_SECRET'),
         signOptions: {
-          expiresIn: config.get('JWT_EXPIRATION', '1h'),
+          expiresIn: config.get('JWT_EXPIRATION', '24h'),
         },
       }),
     }),
