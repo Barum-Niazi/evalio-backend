@@ -10,7 +10,7 @@ async function seedLookupData() {
     await seedNotificationStatuses();
     await seedFeedbackVisibility();
     await seedFeedbackRequestStatuses();
-    await seedRoles();
+    await seedRolesAndPermissions();
     await seedTags();
 
     console.log('All lookup data seeded successfully.');
@@ -133,7 +133,8 @@ async function seedFeedbackRequestStatuses() {
   }
 }
 
-async function seedRoles() {
+async function seedRolesAndPermissions() {
+  // Default roles to be created
   const roles = [
     { name: 'Admin' },
     { name: 'Employee' },
@@ -143,6 +144,51 @@ async function seedRoles() {
     { name: 'Executive' },
   ];
 
+  // Default permissions for the app
+  const permissions = [
+    { name: 'view_meetings', label: 'View Meetings' },
+    { name: 'create_meeting', label: 'Create Meeting' },
+    { name: 'edit_meeting', label: 'Edit Meeting' },
+    { name: 'delete_meeting', label: 'Delete Meeting' },
+    { name: 'attend_meeting', label: 'Attend Meeting' },
+    { name: 'schedule_meeting', label: 'Schedule Meeting for Others' },
+    { name: 'give_feedback', label: 'Give Feedback' },
+    { name: 'view_given_feedback', label: 'View Given Feedback' },
+    { name: 'request_feedback', label: 'Request Feedback' },
+    { name: 'view_received_feedback', label: 'View Received Feedback' },
+    { name: 'edit_feedback', label: 'Edit Feedback' },
+    { name: 'manage_feedback_requests', label: 'Manage Feedback Requests' },
+    { name: 'create_okr', label: 'Create OKRs' },
+    { name: 'edit_okr', label: 'Edit OKRs' },
+    { name: 'view_okr', label: 'View OKRs' },
+    { name: 'delete_okr', label: 'Delete OKRs' },
+    { name: 'approve_okr', label: 'Approve OKRs' },
+    { name: 'manage_okr_progress', label: 'Manage OKR Progress' },
+    { name: 'manage_users', label: 'Manage Users' },
+    { name: 'manage_roles', label: 'Manage Roles' },
+    { name: 'manage_departments', label: 'Manage Departments' },
+    { name: 'view_company_data', label: 'View Company Data' },
+    {
+      name: 'assign_employee_to_department',
+      label: 'Assign Employee to Department',
+    },
+    { name: 'assign_employee_to_manager', label: 'Assign Manager to Employee' },
+    { name: 'create_role', label: 'Create Role' },
+    { name: 'delete_role', label: 'Delete Role' },
+  ];
+
+  // Seed permissions if they don't exist already
+  for (const permission of permissions) {
+    await prisma.permissions.upsert({
+      where: { name: permission.name },
+      update: {},
+      create: permission,
+    });
+  }
+
+  console.log('Permissions seeded successfully.');
+
+  // Seed roles
   for (const role of roles) {
     await prisma.roles.upsert({
       where: { name: role.name },
@@ -154,7 +200,38 @@ async function seedRoles() {
   }
 
   console.log('Roles seeded successfully.');
+
+  // Get the Admin role by name
+  const adminRole = await prisma.roles.findUnique({
+    where: { name: 'Admin' },
+  });
+
+  // Get all permissions
+  const allPermissions = await prisma.permissions.findMany();
+
+  // Assign all permissions to the Admin role
+  for (const permission of allPermissions) {
+    await prisma.role_permissions.upsert({
+      where: {
+        role_id_permission_id: {
+          role_id: adminRole.id,
+          permission_id: permission.id,
+        },
+      },
+      update: {},
+      create: {
+        role_id: adminRole.id,
+        permission_id: permission.id,
+      },
+    });
+  }
+
+  console.log('Admin role assigned all permissions successfully.');
 }
+
+seedRolesAndPermissions().catch((error) => {
+  console.error('Error seeding roles and permissions:', error);
+});
 
 async function seedTags() {
   const genericTags = [

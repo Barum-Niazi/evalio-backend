@@ -24,6 +24,8 @@ model users {
   roles         user_roles[]    // Many-to-many relationship with roles
   audit         Json            @default("{}") // Audit JSON
   details       user_details?   @relation("user_to_details") // Strict 1-to-1 relationship
+  created_roles roles[]         @relation("created_roles") // Roles created by this user
+  created_at    DateTime        @default(now()) // Creation timestamp
 }
 
 model user_details {
@@ -55,19 +57,48 @@ model user_details {
   user_okrs      user_okrs[]
 }
 
-model roles {
-  id    Int          @id @default(autoincrement())
-  name  String       @unique
-  users user_roles[] // Many-to-many relationship
-  audit Json         @default("{}") // Audit JSON
+model permissions {
+  id    Int    @id @default(autoincrement())
+  name  String @unique   // Unique identifier like 'view_feedback'
+  label String          // Human-readable permission (e.g., 'View Feedback')
+  audit Json   @default("{}") // Audit JSON (for tracking changes)
+  
+  // Many-to-many relationship with roles
+  role_permissions role_permissions[]
 }
+
+model roles {
+  id               Int             @id @default(autoincrement())
+  name             String          @unique                     // e.g., "admin", "viewer", "custom_hr_role"
+  summary          String?                                       // Human-readable summary like "Full Access"
+  user_roles       user_roles[]                                // Users assigned to this role
+  role_permissions role_permissions[]                         // Permissions attached to this role
+  created_by       Int?                                         // User ID of creator (optional)
+  created_by_user  users?           @relation("created_roles", fields: [created_by], references: [id])
+  audit            Json            @default("{}")              // Audit info
+}
+
+model role_permissions {
+  role_id       Int
+  permission_id Int
+
+  // Many-to-one relations
+  role          roles       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission    permissions @relation(fields: [permission_id], references: [id])
+
+  @@id([role_id, permission_id])  // Composite primary key
+  audit         Json        @default("{}")
+}
+
 model user_roles {
   user_id Int
   role_id Int
+
   user   users @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  role   roles @relation(fields: [role_id], references: [id])
+  role   roles @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
   @@id([user_id, role_id]) // Composite primary key
-  audit  Json   @default("{}") // Audit JSON
+  audit Json @default("{}")
 }
 model notifications {
   id          Int                 @id @default(autoincrement())
