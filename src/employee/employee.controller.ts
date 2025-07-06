@@ -74,7 +74,7 @@ export class EmployeeController {
   @UseGuards(JwtAuthGuard)
   @Get('list')
   async getCompanyUsers(@Request() req) {
-    const companyId = req.user.company_id;
+    const companyId = req.user.companyId;
     return this.employeeService.getEmployees(companyId);
   }
 
@@ -82,7 +82,7 @@ export class EmployeeController {
   @UseGuards(JwtAuthGuard)
   @Get('no-department')
   async getEmployeesWithoutDepartment(@Request() req) {
-    const companyId = req.user.company_id;
+    const companyId = req.user.companyId;
     return this.employeeService.getEmployeesWithoutDepartment(companyId);
   }
 }
