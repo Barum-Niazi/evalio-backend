@@ -23,6 +23,8 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorators/roles.decorators';
 import { RolesGuard } from 'src/guards/roles.guard';
+import { Permissions } from 'src/decorators/permissions.decorators';
+import { PermissionsGuard } from 'src/guards/permissions.guard';
 
 @Controller('company')
 export class CompanyController {
@@ -81,6 +83,7 @@ export class CompanyController {
   @Get('dashboard')
   @UseGuards(JwtAuthGuard)
   @Roles('Admin')
+  @Permissions('view_company_data')
   async getCompanyDashboard(@Request() req) {
     const companyId = req.user.companyId;
     return this.companyService.getCompanyStats(companyId);

@@ -209,25 +209,24 @@ async function seedRolesAndPermissions() {
   // Get all permissions
   const allPermissions = await prisma.permissions.findMany();
 
-  // Assign all permissions to the Admin role
-  for (const permission of allPermissions) {
-    await prisma.role_permissions.upsert({
-      where: {
-        role_id_permission_id: {
-          role_id: adminRole.id,
-          permission_id: permission.id,
-        },
-      },
-      update: {},
-      create: {
-        role_id: adminRole.id,
-        permission_id: permission.id,
-      },
-    });
-  }
+  // Prepare the role_permission data
+  const rolePermissionsData = allPermissions.map((permission) => ({
+    role_id: adminRole.id,
+    permission_id: permission.id,
+  }));
+
+  // Insert the role_permissions, skipping duplicates
+  await prisma.role_permissions.createMany({
+    data: rolePermissionsData,
+    skipDuplicates: true, // Skip if a role_permission entry already exists
+  });
 
   console.log('Admin role assigned all permissions successfully.');
 }
+
+seedRolesAndPermissions().catch((error) => {
+  console.error('Error seeding roles and permissions:', error);
+});
 
 seedRolesAndPermissions().catch((error) => {
   console.error('Error seeding roles and permissions:', error);
