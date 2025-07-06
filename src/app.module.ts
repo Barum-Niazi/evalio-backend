@@ -28,6 +28,8 @@ import { KeyResultsModule } from './key-results/key-results.module';
 import { GoogleService } from './services/google.service';
 import { BlobModule } from './blob/blob.module';
 import { TeamModule } from './team/team.module';
+import { RolesController } from './roles/roles.controller';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
@@ -49,6 +51,7 @@ import { TeamModule } from './team/team.module';
     KeyResultsModule,
     BlobModule,
     TeamModule,
+    RolesModule,
   ],
   controllers: [
     AppController,
@@ -60,6 +63,7 @@ import { TeamModule } from './team/team.module';
     FeedbackController,
     NotificationController,
     OkrController,
+    RolesController,
   ],
   providers: [AppService, NotificationService, GoogleService],
 })

@@ -44,8 +44,6 @@ export class PermissionsGuard implements CanActivate {
 
     // The decoded token should have the user data
     const user = decoded; // Extract user data from the decoded token
-    console.log('Decoded user data:', user); // For debugging purposes
-
     // Fetch user roles and permissions from DB
     const userRoles = await this.prisma.user_roles.findMany({
       where: { user_id: user.sub },
@@ -65,10 +63,6 @@ export class PermissionsGuard implements CanActivate {
     // Check if the user has all the required permissions
     const hasPermissions = requiredPermissions.every((permission) =>
       userPermissions.includes(permission),
-    );
-
-    console.log(
-      `User ${user.sub} has permissions: ${userPermissions.join(', ')}`,
     );
 
     if (!hasPermissions) {
