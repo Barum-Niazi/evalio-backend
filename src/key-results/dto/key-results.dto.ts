@@ -24,6 +24,12 @@ export class CreateKeyResultDto {
   @Min(0)
   @Max(100)
   @IsOptional()
+  weight?: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
   progress?: number;
 }
 

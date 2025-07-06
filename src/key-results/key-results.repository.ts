@@ -32,6 +32,7 @@ export class KeyResultsRepository {
         okr_id: dto.okrId,
         parent_key_result_id: dto.parentKeyResultId,
         progress: dto.progress ?? 0,
+        weight: dto.weight ?? 0,
         audit: {
           createdAt: new Date().toISOString(),
           createdBy: userId,

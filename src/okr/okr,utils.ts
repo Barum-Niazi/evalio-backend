@@ -1,7 +1,8 @@
 type KeyResult = {
   id: number;
   parent_key_result_id: number | null;
-  progress: number;
+  progress: number; // 0-100
+  weight: number; // 0-100
 };
 
 export function calculateOkrProgress(keyResults: KeyResult[]): number {
@@ -17,25 +18,36 @@ export function calculateOkrProgress(keyResults: KeyResult[]): number {
     }
   }
 
-  // Recursively calculate a KR's true progress
+  // Recursively calculate a KR's weighted progress
   function getKRProgress(kr: KeyResult): number {
     const children = childMap.get(kr.id);
-    if (!children || children.length === 0) return kr.progress || 0;
+    if (!children || children.length === 0) {
+      return kr.progress;
+    }
 
-    const total = children.reduce(
-      (acc, child) => acc + getKRProgress(child),
+    const totalWeight =
+      children.reduce((sum, child) => sum + child.weight, 0) || 1;
+
+    const weightedSum = children.reduce(
+      (acc, child) => acc + getKRProgress(child) * (child.weight / totalWeight),
       0,
     );
-    return total / children.length;
+
+    return weightedSum;
   }
 
-  // Get only top-level key results (no parent)
+  // Get top-level key results
   const topLevelKRs = keyResults.filter(
     (kr) => kr.parent_key_result_id === null,
   );
-
   if (!topLevelKRs.length) return 0;
 
-  const total = topLevelKRs.reduce((acc, kr) => acc + getKRProgress(kr), 0);
-  return Math.round(total / topLevelKRs.length);
+  const totalWeight = topLevelKRs.reduce((sum, kr) => sum + kr.weight, 0) || 1;
+
+  const weightedTotal = topLevelKRs.reduce(
+    (acc, kr) => acc + getKRProgress(kr) * (kr.weight / totalWeight),
+    0,
+  );
+
+  return Math.round(weightedTotal);
 }
