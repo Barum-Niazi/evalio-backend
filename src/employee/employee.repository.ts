@@ -46,6 +46,9 @@ export class EmployeeRepository {
         details: {
           create: {
             name,
+            profile_blob: {
+              connect: { id: Math.floor(Math.random() * 2) + 1 }, // Randomly assign a profile image
+            },
             company: { connect: { id: companyId } },
             manager: managerId
               ? { connect: { user_id: managerId } }
@@ -152,6 +155,9 @@ export class EmployeeRepository {
             details: {
               create: {
                 name: employee.name,
+                profile_blob: {
+                  connect: { id: Math.floor(Math.random() * 2) + 1 },
+                },
                 company: {
                   connect: { id: employee.companyId },
                 },
@@ -286,62 +292,84 @@ export class EmployeeRepository {
       manager: { user_id: number; name: string } | null;
       designation: { title: string } | null;
       department: { name: string } | null;
+      profileImage: {
+        id: number;
+        name: string;
+        mimeType: string;
+        size: number;
+        url: string;
+      } | null;
     }[]
   > {
-    return this.prisma.user_details
-      .findMany({
-        where: {
-          company_id: companyId,
-          user: {
-            roles: {
-              none: {
-                role: {
-                  name: 'Admin', // Exclude Admin users
-                },
+    const results = await this.prisma.user_details.findMany({
+      where: {
+        company_id: companyId,
+        user: {
+          roles: {
+            none: {
+              role: {
+                name: 'Admin',
               },
             },
           },
         },
-        select: {
-          user_id: true,
-          name: true,
-          user: {
-            select: {
-              auth: {
-                select: {
-                  email: true,
-                },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        profile_blob: {
+          select: {
+            id: true,
+            name: true,
+            mime_type: true,
+            size: true,
+          },
+        },
+        user: {
+          select: {
+            auth: {
+              select: {
+                email: true,
               },
             },
           },
-          manager: {
-            select: {
-              user_id: true,
-              name: true,
-            },
-          },
-          designation: {
-            select: {
-              title: true,
-            },
-          },
-          department: {
-            select: {
-              name: true,
-            },
+        },
+        manager: {
+          select: {
+            user_id: true,
+            name: true,
           },
         },
-      })
-      .then((results) =>
-        results.map((emp) => ({
-          user_id: emp.user_id,
-          name: emp.name,
-          email: emp.user?.auth?.email ?? null,
-          manager: emp.manager,
-          designation: emp.designation,
-          department: emp.department,
-        })),
-      );
+        designation: {
+          select: {
+            title: true,
+          },
+        },
+        department: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return results.map((emp) => ({
+      user_id: emp.user_id,
+      name: emp.name,
+      email: emp.user?.auth?.email ?? null,
+      manager: emp.manager,
+      designation: emp.designation,
+      department: emp.department,
+      profileImage: emp.profile_blob
+        ? {
+            id: emp.profile_blob.id,
+            name: emp.profile_blob.name,
+            mimeType: emp.profile_blob.mime_type,
+            size: emp.profile_blob.size,
+            url: `/blob/${emp.profile_blob.id}/view`,
+          }
+        : null,
+    }));
   }
 
   async getAdminCompanyId(adminId: number): Promise<number | null> {

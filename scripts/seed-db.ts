@@ -1,6 +1,41 @@
 import { PrismaClient } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
+import { promisify } from 'util';
+import * as mime from 'mime-types';
 
+const readFile = promisify(fs.readFile);
+const readdir = promisify(fs.readdir);
 const prisma = new PrismaClient();
+
+async function seedAvatars() {
+  console.log('Seeding avatars...');
+
+  const avatarDir = path.join(__dirname, '..', 'avatars');
+  const files = await readdir(avatarDir);
+
+  for (const file of files) {
+    const filePath = path.join(avatarDir, file);
+    const fileStat = fs.statSync(filePath);
+
+    if (!fileStat.isFile()) continue;
+
+    const data = await readFile(filePath);
+    const mimeType = mime.lookup(filePath) || 'application/octet-stream';
+
+    await prisma.blob.create({
+      data: {
+        name: file,
+        mime_type: mimeType,
+        data: data,
+        size: fileStat.size,
+        audit: {},
+      },
+    });
+  }
+
+  console.log('Avatars seeded successfully.');
+}
 
 async function seedLookupData() {
   try {
@@ -12,6 +47,7 @@ async function seedLookupData() {
     await seedFeedbackRequestStatuses();
     await seedRolesAndPermissions();
     await seedTags();
+    await seedAvatars();
 
     console.log('All lookup data seeded successfully.');
   } catch (error) {
