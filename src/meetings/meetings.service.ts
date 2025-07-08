@@ -120,6 +120,15 @@ export class MeetingService {
           attendeeEmails,
         );
 
+      const message = `Your meeting "${dto.title ?? meeting.title}" has been updated.`;
+      for (const attendeeId of attendeeIds) {
+        await this.notificationService.create(
+          attendeeId,
+          1, // Replace with correct notification type ID if needed
+          message,
+          meetLink,
+        );
+      }
       if (newTokens?.access_token) {
         await this.repo.updateUserGoogleTokens(userId, {
           access_token: newTokens.access_token,
@@ -128,5 +137,39 @@ export class MeetingService {
     }
 
     return this.repo.updateMeeting(meetingId, dto);
+  }
+  async deleteMeeting(meetingId: number, userId: number) {
+    const meeting = await this.repo.findById(meetingId);
+    if (!meeting) throw new NotFoundException('Meeting not found');
+    if (meeting.scheduled_by_id !== userId)
+      throw new ForbiddenException('You can only delete meetings you created');
+
+    if (meeting.google_event_id) {
+      const auth = await this.repo.getUserGoogleTokens(userId);
+      if (!auth?.google_access_token || !auth?.google_refresh_token) {
+        throw new ForbiddenException('Google tokens not found for user');
+      }
+
+      this.googleService.setToken({
+        access_token: auth.google_access_token,
+        refresh_token: auth.google_refresh_token,
+      });
+      const message = `Your meeting "${meeting.title}" has been deleted.`;
+      for (const attendee of meeting.attendees) {
+        await this.notificationService.create(
+          attendee.user_id,
+          1, // Replace with correct notification type ID if needed
+          message,
+          null, // No link since the meeting is deleted
+        );
+      }
+      try {
+        await this.googleService.deleteGoogleEvent(meeting.google_event_id);
+      } catch (err) {
+        console.error('Failed to delete Google event:', err.message);
+      }
+    }
+
+    return this.repo.deleteMeeting(meetingId);
   }
 }

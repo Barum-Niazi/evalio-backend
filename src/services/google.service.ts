@@ -185,4 +185,34 @@ export class GoogleService {
       throw err;
     }
   }
+
+  async deleteGoogleEvent(eventId: string): Promise<void> {
+    const calendar = google.calendar({
+      version: 'v3',
+      auth: this.oauth2Client,
+    });
+
+    try {
+      await calendar.events.delete({
+        calendarId: 'primary',
+        eventId,
+      });
+    } catch (err) {
+      if (err.code === 401 && this.oauth2Client.credentials.refresh_token) {
+        try {
+          const { credentials } = await this.oauth2Client.refreshAccessToken();
+          this.oauth2Client.setCredentials(credentials);
+
+          await calendar.events.delete({
+            calendarId: 'primary',
+            eventId,
+          });
+        } catch (refreshErr) {
+          throw new Error('Token refresh failed: ' + refreshErr.message);
+        }
+      }
+
+      throw err;
+    }
+  }
 }

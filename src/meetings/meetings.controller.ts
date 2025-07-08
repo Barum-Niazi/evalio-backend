@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
@@ -41,5 +42,11 @@ export class MeetingController {
   ) {
     const userId = req.user.id;
     return this.meetingService.updateMeeting(+id, dto, userId);
+  }
+
+  @Delete(':id')
+  async deleteMeeting(@Param('id') id: string, @Request() req) {
+    const userId = req.user.id;
+    return this.meetingService.deleteMeeting(+id, userId);
   }
 }

@@ -113,4 +113,14 @@ export class MeetingRepository {
       },
     });
   }
+
+  async deleteMeeting(id: number) {
+    await this.prisma.meeting_attendees.deleteMany({
+      where: { meeting_id: id },
+    });
+
+    return this.prisma.meetings.delete({
+      where: { id },
+    });
+  }
 }
