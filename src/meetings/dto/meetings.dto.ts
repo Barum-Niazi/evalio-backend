@@ -4,6 +4,7 @@ import {
   IsDateString,
   IsArray,
   IsInt,
+  IsNumber,
 } from 'class-validator';
 
 export class CreateMeetingDto {
@@ -36,4 +37,38 @@ export class CreateMeetingDto {
   @IsArray()
   @IsInt({ each: true })
   attendee_ids: number[];
+}
+
+export class UpdateMeetingDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsDateString()
+  scheduled_at?: string;
+
+  @IsOptional()
+  @IsNumber()
+  duration_minutes?: number;
+
+  @IsOptional()
+  @IsString()
+  agenda?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsString()
+  note_to_self?: string;
+
+  @IsOptional()
+  @IsArray()
+  attendee_ids?: number[];
 }

@@ -14,7 +14,7 @@ export class GoogleService {
     );
   }
 
-  getAuthUrl(state) {
+  getAuthUrl(state: string) {
     return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: [
@@ -41,7 +41,7 @@ export class GoogleService {
     return { tokens, email };
   }
 
-  setToken(token) {
+  setToken(token: { access_token: string; refresh_token: string }) {
     this.oauth2Client.setCredentials(token);
   }
 
@@ -51,7 +51,11 @@ export class GoogleService {
     startTime: Date,
     endTime: Date,
     attendeeEmails: string[],
-  ): Promise<{ meetLink: string | null; newTokens?: any }> {
+  ): Promise<{
+    meetLink: string | null;
+    eventId: string | null;
+    newTokens?: any;
+  }> {
     const calendar = google.calendar({
       version: 'v3',
       auth: this.oauth2Client,
@@ -87,12 +91,13 @@ export class GoogleService {
 
       return {
         meetLink: response.data?.conferenceData?.entryPoints?.[0]?.uri ?? null,
+        eventId: response.data?.id ?? null,
       };
     } catch (err) {
       if (err.code === 401 && this.oauth2Client.credentials.refresh_token) {
         console.warn('Access token expired, refreshing...');
         try {
-          const { credentials } = await this.oauth2Client.refreshAccessToken(); // deprecated but fine here
+          const { credentials } = await this.oauth2Client.refreshAccessToken(); // deprecated but okay
           this.oauth2Client.setCredentials(credentials);
 
           const retryResponse = await calendar.events.insert({
@@ -105,6 +110,71 @@ export class GoogleService {
           return {
             meetLink:
               retryResponse.data?.conferenceData?.entryPoints?.[0]?.uri ?? null,
+            eventId: retryResponse.data?.id ?? null,
+            newTokens: credentials,
+          };
+        } catch (refreshErr) {
+          throw new Error('Token refresh failed: ' + refreshErr.message);
+        }
+      }
+
+      throw err;
+    }
+  }
+
+  async updateGoogleEvent(
+    eventId: string,
+    summary: string,
+    description: string,
+    startTime: Date,
+    endTime: Date,
+    attendeeEmails: string[],
+  ): Promise<{ meetLink: string | null; newTokens?: any }> {
+    const calendar = google.calendar({
+      version: 'v3',
+      auth: this.oauth2Client,
+    });
+
+    const updatedEvent = {
+      summary,
+      description,
+      start: {
+        dateTime: startTime.toISOString(),
+        timeZone: 'UTC',
+      },
+      end: {
+        dateTime: endTime.toISOString(),
+        timeZone: 'UTC',
+      },
+      attendees: attendeeEmails.map((email) => ({ email })),
+    };
+
+    try {
+      const response = await calendar.events.update({
+        calendarId: 'primary',
+        eventId,
+        requestBody: updatedEvent,
+        sendUpdates: 'all',
+      });
+
+      return {
+        meetLink: response.data?.hangoutLink ?? null,
+      };
+    } catch (err) {
+      if (err.code === 401 && this.oauth2Client.credentials.refresh_token) {
+        try {
+          const { credentials } = await this.oauth2Client.refreshAccessToken();
+          this.oauth2Client.setCredentials(credentials);
+
+          const retryResponse = await calendar.events.update({
+            calendarId: 'primary',
+            eventId,
+            requestBody: updatedEvent,
+            sendUpdates: 'all',
+          });
+
+          return {
+            meetLink: retryResponse.data?.hangoutLink ?? null,
             newTokens: credentials,
           };
         } catch (refreshErr) {

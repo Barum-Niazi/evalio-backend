@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service'; // adjust path
-import { CreateMeetingDto } from './dto/meetings.dto';
+import { CreateMeetingDto, UpdateMeetingDto } from './dto/meetings.dto';
 
 @Injectable()
 export class MeetingRepository {
@@ -8,30 +8,27 @@ export class MeetingRepository {
 
   async createMeeting(
     dto: CreateMeetingDto,
-    scheduled_by_id: number,
-    google_meet_link: string,
+    userId: number,
+    meetLink: string,
+    eventId: string,
   ) {
-    const allAttendeeIds = new Set(dto.attendee_ids);
-    allAttendeeIds.add(scheduled_by_id); // Ensure creator is also added
-
     return this.prisma.meetings.create({
       data: {
         title: dto.title,
         description: dto.description,
+        scheduled_by_id: userId,
         scheduled_at: new Date(dto.scheduled_at),
         agenda: dto.agenda,
         notes: dto.notes,
-        note_to_self: dto.note_to_self,
-        scheduled_by_id,
-        google_meet_link,
+        note_to_self: null,
+        google_meet_link: meetLink,
+        google_event_id: eventId,
+        audit: {},
         attendees: {
-          createMany: {
-            data: Array.from(allAttendeeIds).map((user_id) => ({ user_id })),
-          },
+          create: dto.attendee_ids.map((id) => ({
+            user_id: id,
+          })),
         },
-      },
-      include: {
-        attendees: true,
       },
     });
   }
@@ -91,6 +88,28 @@ export class MeetingRepository {
       where: { user_id: userId },
       data: {
         google_access_token: tokens.access_token,
+      },
+    });
+  }
+
+  async findById(id: number) {
+    return this.prisma.meetings.findUnique({
+      where: { id },
+      include: { attendees: true },
+    });
+  }
+
+  async updateMeeting(id: number, dto: UpdateMeetingDto) {
+    return this.prisma.meetings.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        description: dto.description,
+        scheduled_at: dto.scheduled_at ? new Date(dto.scheduled_at) : undefined,
+        agenda: dto.agenda,
+        notes: dto.notes,
+        note_to_self: dto.note_to_self,
+        audit: { updated_at: new Date() }, // if you're using audit
       },
     });
   }
