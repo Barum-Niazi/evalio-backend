@@ -30,6 +30,7 @@ import { BlobModule } from './blob/blob.module';
 import { TeamModule } from './team/team.module';
 import { RolesController } from './roles/roles.controller';
 import { RolesModule } from './roles/roles.module';
+import { PermissionsModule } from './permissions/permissions.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { RolesModule } from './roles/roles.module';
     BlobModule,
     TeamModule,
     RolesModule,
+    PermissionsModule,
   ],
   controllers: [
     AppController,
