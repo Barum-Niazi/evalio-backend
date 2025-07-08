@@ -92,9 +92,32 @@ export class CompanyRepository {
     return this.prisma.user_details.findMany({
       where: { company_id: companyId },
       include: {
-        manager: { select: { user_id: true, name: true } }, // Manager information
-        department: { select: { id: true, name: true } }, // Department information
-        designation: { select: { id: true, title: true } }, // Designation details
+        manager: {
+          select: {
+            user_id: true,
+            name: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        designation: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        profile_blob: {
+          select: {
+            id: true,
+            name: true,
+            mime_type: true,
+            size: true,
+          },
+        },
       },
     });
   }

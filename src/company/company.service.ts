@@ -34,7 +34,7 @@ export class CompanyService {
   ) {
     const { name, description, address } = createCompanyDto;
 
-    // Step 1: Create the company
+    // Create the company
     const company = await this.companyRepository.createCompanyWithLogo(
       adminId,
       { name, description, address },
@@ -48,7 +48,7 @@ export class CompanyService {
       };
     }
 
-    // Step 2: Parse the file for employees and departments
+    // Parse the file for employees and departments
     const { employees, departments } = await this.parseInitialSetupFile(
       employeesFile,
       company.id,
@@ -67,11 +67,11 @@ export class CompanyService {
         throw new BadRequestException('Error hashing employee password.');
       }
     }
-    // Step 3: Create employees in the database
+    // Create employees in the database
     const createdEmployees =
       await this.employeeRepository.createManyEmployees(employees);
 
-    // Step 4: Fetch email-to-user_id mapping
+    // Fetch email-to-user_id mapping
     const emailToUserId: Record<string, number> = {};
     createdEmployees.createdEmployees.forEach((employee) => {
       const email = employee.email?.trim().toLowerCase(); // Normalize email
@@ -82,7 +82,7 @@ export class CompanyService {
 
     console.log('Email to User ID mapping:', emailToUserId);
 
-    // Step 5: Create or update departments with resolved head and employee IDs
+    // Create or update departments with resolved head and employee IDs
     for (const department of departments) {
       const normalizedDepartmentName = department.name.trim().toLowerCase();
       const headId = department.headEmail
@@ -160,28 +160,37 @@ export class CompanyService {
     const employees =
       await this.companyRepository.getOrganizationalData(companyId);
 
-    // Group employees by their `manager_id`
-    const groupedByManager = employees.reduce((acc, employee) => {
-      const managerId = employee.manager_id || null; // null for top-level nodes
-      if (!acc[managerId]) {
-        acc[managerId] = [];
-      }
-      acc[managerId].push(employee);
-      return acc;
-    }, {});
+    const groupedByManager = employees.reduce(
+      (acc, employee) => {
+        const managerId = employee.manager_id || null;
+        if (!acc[managerId]) {
+          acc[managerId] = [];
+        }
+        acc[managerId].push(employee);
+        return acc;
+      },
+      {} as Record<number | null, typeof employees>,
+    );
 
-    // Recursive function to build the hierarchy
     const buildHierarchy = (managerId: number | null) => {
       return (groupedByManager[managerId] || []).map((employee) => ({
         id: employee.user_id,
         name: employee.name,
         designation: employee.designation?.title || 'N/A',
         department: employee.department?.name || 'Unassigned',
-        subordinates: buildHierarchy(employee.user_id), // Recursively add subordinates
+        profileImage: employee.profile_blob
+          ? {
+              id: employee.profile_blob.id,
+              name: employee.profile_blob.name,
+              mimeType: employee.profile_blob.mime_type,
+              size: employee.profile_blob.size,
+              url: `/blob/${employee.profile_blob.id}/view`,
+            }
+          : null,
+        subordinates: buildHierarchy(employee.user_id),
       }));
     };
 
-    // Build hierarchy starting from employees with no manager
     const hierarchy = buildHierarchy(null);
 
     return {
