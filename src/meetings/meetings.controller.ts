@@ -31,6 +31,7 @@ export class MeetingController {
   @Get()
   async getMyMeetings(@Request() req) {
     const userId = req.user.id;
+    console.log('Fetching meetings for user:', userId);
     return this.meetingService.getMeetingsForUser(userId);
   }
 

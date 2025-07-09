@@ -34,25 +34,60 @@ export class MeetingRepository {
   }
 
   async findAllForUser(user_id: number) {
-    return this.prisma.meeting_attendees.findMany({
-      where: { user_id },
-      include: {
-        meeting: {
-          include: {
-            attendees: {
-              include: {
-                user: {
-                  select: {
-                    user_id: true,
-                    name: true,
+    const [scheduledByUser, attendingOnly] = await this.prisma.$transaction([
+      // Meetings you scheduled
+      this.prisma.meetings.findMany({
+        where: { scheduled_by_id: user_id },
+        include: {
+          attendees: {
+            include: {
+              user: {
+                select: {
+                  user_id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+
+      // Meetings where you're an attendee, but not the scheduler
+      this.prisma.meeting_attendees.findMany({
+        where: {
+          user_id,
+          meeting: {
+            NOT: {
+              scheduled_by_id: user_id,
+            },
+          },
+        },
+        include: {
+          meeting: {
+            include: {
+              attendees: {
+                include: {
+                  user: {
+                    select: {
+                      user_id: true,
+                      name: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
+      }),
+    ]);
+
+    // Normalize structure of attendingOnly
+    const attendingMeetings = attendingOnly.map((att) => att.meeting);
+
+    return {
+      scheduledByYou: scheduledByUser,
+      youAreAttending: attendingMeetings,
+    };
   }
 
   async getUserGoogleTokens(user_id: number) {
