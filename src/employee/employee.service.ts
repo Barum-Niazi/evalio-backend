@@ -24,17 +24,32 @@ export class EmployeeService {
 
     const employees = await Promise.all(
       addEmployeeDto.employees.map(async (employee) => {
-        const { name, email, designation, managerId } = employee;
+        const { name, email, designation, managerId, departmentId, roles } =
+          employee;
 
         // Generate a set password for now
         const password = '12345678';
         const hashedPassword = await argon2.hash(password);
 
-        // Fetch the company name (optional, for sending welcome email)
+        // Fetch the company name (for sending welcome email)
         const company = await this.prisma.companies.findUnique({
           where: { id: companyId },
           select: { name: true },
         });
+
+        // Validate department belongs to this company
+        if (departmentId) {
+          const department = await this.prisma.department.findUnique({
+            where: { id: departmentId },
+            select: { company_id: true },
+          });
+
+          if (!department || department.company_id !== companyId) {
+            throw new BadRequestException(
+              `Invalid departmentId ${departmentId} for company ${companyId}`,
+            );
+          }
+        }
 
         return {
           name,
@@ -43,16 +58,26 @@ export class EmployeeService {
           password: hashedPassword,
           companyId,
           managerId,
+          departmentId,
+          roles,
+          plainPassword: password, // needed for email
           companyName: company?.name,
         };
       }),
     );
 
-    // Insert all employees within a transaction
     const createdEmployees = await this.prisma.$transaction(
       employees.map((employee) => {
-        const { name, email, password, designation, companyId, managerId } =
-          employee;
+        const {
+          name,
+          email,
+          password,
+          designation,
+          companyId,
+          managerId,
+          departmentId,
+          roles,
+        } = employee;
 
         return this.employeeRepository.createEmployee({
           name,
@@ -61,21 +86,27 @@ export class EmployeeService {
           designation,
           companyId,
           managerId,
+          departmentId,
+          roles,
         });
       }),
     );
 
-    // // Send email with credentials
-    // await this.emailService.sendEmail(
-    //   email,
-    //   `Welcome to ${company.name}`,
-    //   `Hello ${name},
-    //    Your account has been created.
-    //    Email: ${email}
-    //    Password: ${password}
-    //    Please log in and change your password as soon as possible.`,
+    // // Send emails after creation
+    // await Promise.all(
+    //   employees.map(({ name, email, plainPassword, companyName }) =>
+    //     this.emailService.sendEmail(
+    //       email,
+    //       `Welcome to ${companyName}`,
+    //       `Hello ${name},
+    //       Your account has been created.
+    //       Email: ${email}
+    //       Password: ${plainPassword}
+    //       Please log in and change your password as soon as possible.`,
+    //     ),
+    //   ),
     // );
-    // Return a response indicating success
+
     return {
       message: 'Employees added successfully',
       addedEmployees: createdEmployees,

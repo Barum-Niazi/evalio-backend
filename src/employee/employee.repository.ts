@@ -5,7 +5,6 @@ import { Prisma } from '@prisma/client';
 @Injectable()
 export class EmployeeRepository {
   constructor(private readonly prisma: PrismaService) {}
-
   createEmployee(employee: {
     name: string;
     email: string;
@@ -13,7 +12,8 @@ export class EmployeeRepository {
     designation: string;
     companyId: number;
     managerId?: number;
-    roles?: string[]; // new
+    roles?: string[];
+    departmentId?: number; // new
   }): Prisma.PrismaPromise<any> {
     const {
       name,
@@ -22,7 +22,8 @@ export class EmployeeRepository {
       designation,
       companyId,
       managerId,
-      roles = ['Employee'], // default fallback
+      roles = ['Employee'],
+      departmentId,
     } = employee;
 
     return this.prisma.users.create({
@@ -47,11 +48,14 @@ export class EmployeeRepository {
           create: {
             name,
             profile_blob: {
-              connect: { id: Math.floor(Math.random() * 2) + 1 }, // Randomly assign a profile image
+              connect: { id: Math.floor(Math.random() * 2) + 1 },
             },
             company: { connect: { id: companyId } },
             manager: managerId
               ? { connect: { user_id: managerId } }
+              : undefined,
+            department: departmentId
+              ? { connect: { id: departmentId } }
               : undefined,
             designation: {
               connectOrCreate: {

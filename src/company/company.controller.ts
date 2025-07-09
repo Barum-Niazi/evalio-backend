@@ -73,7 +73,7 @@ export class CompanyController {
   }
 
   @Get('org-chart')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles('Admin')
   async getOrganizationalChart(@Request() req) {
     const companyId = req.user.companyId;
@@ -81,7 +81,7 @@ export class CompanyController {
   }
 
   @Get('dashboard')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles('Admin')
   @Permissions('view_company_data')
   async getCompanyDashboard(@Request() req) {

@@ -4,6 +4,7 @@ import {
   IsOptional,
   ValidateNested,
   IsString,
+  IsInt,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -25,6 +26,11 @@ class SingleEmployeeDto {
   designation: string;
 
   @IsOptional()
+  @IsInt()
+  departmentId?: number;
+
+  @IsOptional()
+  @IsInt()
   managerId?: number;
 
   @IsOptional()

@@ -17,12 +17,13 @@ import { Roles } from 'src/decorators/roles.decorators';
 import { AddEmployeeDto } from './dto/add-employee.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { RolesGuard } from 'src/guards/roles.guard';
 
 @Controller('employee')
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
   @Post('add')
   async addEmployees(@Body() addEmployeeDto: AddEmployeeDto, @Request() req) {
@@ -46,7 +47,7 @@ export class EmployeeController {
       },
     }),
   )
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
   @Post('upload')
   async uploadEmployees(
@@ -60,7 +61,7 @@ export class EmployeeController {
     return this.employeeService.addEmployeesFromFile(adminId, file);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
   @Put('update/:id')
   async updateEmployee(
@@ -71,15 +72,15 @@ export class EmployeeController {
     return this.employeeService.updateEmployee(employeeId, updateEmployeeDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('list')
   async getCompanyUsers(@Request() req) {
     const companyId = req.user.companyId;
     return this.employeeService.getEmployees(companyId);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
-  @UseGuards(JwtAuthGuard)
   @Get('no-department')
   async getEmployeesWithoutDepartment(@Request() req) {
     const companyId = req.user.companyId;
