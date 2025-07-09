@@ -7,13 +7,15 @@ import { CreateMeetingDto, UpdateMeetingDto } from './dto/meetings.dto';
 import { MeetingRepository } from './meetings.repository';
 import { GoogleService } from 'src/services/google.service'; // adjust path
 import { NotificationService } from 'src/notification/notification.service';
+import { TagService } from 'src/tags/tag.service';
 
 @Injectable()
 export class MeetingService {
   constructor(
     private readonly repo: MeetingRepository,
     private readonly googleService: GoogleService,
-    private readonly notificationService: NotificationService, // Assuming you have a notification service
+    private readonly notificationService: NotificationService,
+    private readonly tagService: TagService,
   ) {}
 
   async createMeeting(dto: CreateMeetingDto, userId: number) {
@@ -67,6 +69,13 @@ export class MeetingService {
         meetLink,
       );
     }
+
+    await this.tagService.createTagforEntities(
+      meeting.title,
+      meeting.description,
+      meeting.id,
+      'MEETING',
+    );
 
     return meeting;
   }

@@ -56,6 +56,11 @@ export class FeedbackService {
       sentiment,
     );
 
+    // if feedback for some reason is not created, throw an error
+    if (!feedback) {
+      throw new NotFoundException('Feedback could not be created');
+    }
+
     if (tags && tags.length > 0) {
       await this.tagService.tagEntity(
         tags, // Array of tag titles
@@ -100,41 +105,41 @@ export class FeedbackService {
     companyId: number,
     query?: ListAccessibleFeedbackDto,
   ) {
-    // Step 1: Get all feedback for the user (either as sender or receiver)
+    //  Get all feedback for the user (either as sender or receiver)
     const feedbacks = await this.feedbackRepository.getFeedbackByUser(userId);
     console.log(feedbacks);
     console.log(companyId);
 
-    // Step 2: Apply filters and format feedback (if needed)
+    // Apply filters and format feedback (if needed)
     let visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, {
       id: userId,
       companyId: companyId,
     });
 
-    // Step 3: Filter by sentiment if provided
+    // Filter by sentiment if provided
     if (query?.sentiment) {
       visibleFeedbacks = visibleFeedbacks.filter(
         (fb) => fb.sentiment === query.sentiment,
       );
     }
 
-    // Step 4: Filter by team member if provided (this would use the `receiver_id` as team member in case of feedback directed towards them)
+    // Filter by team member if provided (this would use the `receiver_id` as team member in case of feedback directed towards them)
     if (query?.teamMemberId) {
       visibleFeedbacks = visibleFeedbacks.filter(
         (fb) => fb.receiver_id === query.teamMemberId,
       );
     }
 
-    // Step 5: Get all the feedback IDs for later use with tags
+    // Get all the feedback IDs for later use with tags
     const feedbackIds = visibleFeedbacks.map((fb) => fb.id);
 
-    // Step 6: Get tags for the feedbacks
+    // Get tags for the feedbacks
     const taggedEntities = await this.tagRepository.getTagsForEntities(
       feedbackIds,
       'FEEDBACK',
     );
 
-    // Step 7: Add tags to the feedbacks
+    //  Add tags to the feedbacks
     let feedbacksWithTags = visibleFeedbacks.map((fb) => {
       const tags = taggedEntities
         .filter((te) => te.entity_id === fb.id)
@@ -146,7 +151,7 @@ export class FeedbackService {
       };
     });
 
-    // Step 8: Filter by tags if provided
+    // Filter by tags if provided
     if (query?.tags?.length) {
       feedbacksWithTags = feedbacksWithTags.filter((fb) =>
         query.tags.every((requestedTag) =>
@@ -155,7 +160,7 @@ export class FeedbackService {
       );
     }
 
-    // Step 9: Collect all user IDs involved in feedback (sender/receiver)
+    // Collect all user IDs involved in feedback (sender/receiver)
     const userIds = Array.from(
       new Set([
         ...feedbacksWithTags.map((fb) => fb.sender_id),
@@ -163,11 +168,11 @@ export class FeedbackService {
       ]),
     );
 
-    // Step 10: Get profile blobs for the involved users (both sender and receiver)
+    //  Get profile blobs for the involved users (both sender and receiver)
     const userBlobs =
       await this.userRepository.getProfileBlobsForUserIds(userIds);
 
-    // Step 11: Map user profile blobs to user IDs
+    // Map user profile blobs to user IDs
     const profileBlobMap = new Map<number, any>();
     userBlobs.forEach((ub) => {
       if (ub.profile_blob) {
@@ -181,7 +186,7 @@ export class FeedbackService {
       }
     });
 
-    // Step 12: Transform feedbacks to include profile images
+    // Transform feedbacks to include profile images
     return feedbacksWithTags.map((fb) =>
       transformFeedback(fb, userId, {
         senderProfileImage: profileBlobMap.get(fb.sender_id) || null,
@@ -433,6 +438,7 @@ export class FeedbackService {
     };
   }
 
+  // this is all tagging info related to feedbacks
   async getTopTagsVisibleToUser(currentUser: {
     id: number;
     companyId: number;
