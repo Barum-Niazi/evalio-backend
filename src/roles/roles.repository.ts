@@ -62,38 +62,56 @@ export class RolesRepository {
   }
 
   async getAllRoles() {
-    return this.prisma.roles.findMany({
+    const roles = await this.prisma.roles.findMany({
       include: {
         role_permissions: {
           include: {
-            permission: {
-              select: {
-                name: true,
-                label: true,
-              },
-            },
+            permission: true,
           },
         },
       },
     });
+
+    return roles.map((role) => ({
+      id: role.id,
+      name: role.name,
+      summary: role.summary,
+      created_by: role.created_by,
+      audit: role.audit,
+      permissions_count: role.role_permissions.length,
+      permissions: role.role_permissions.map((rolePerm) => ({
+        name: rolePerm.permission.name,
+        label: rolePerm.permission.label,
+      })),
+    }));
   }
 
   async getRoleById(id: number) {
-    return this.prisma.roles.findUnique({
+    const role = await this.prisma.roles.findUnique({
       where: { id },
       include: {
         role_permissions: {
           include: {
-            permission: {
-              select: {
-                name: true,
-                label: true,
-              },
-            },
+            permission: true, // Include permission data
           },
         },
       },
     });
+
+    if (!role) return null;
+
+    return {
+      id: role.id,
+      name: role.name,
+      summary: role.summary,
+      created_by: role.created_by,
+      audit: role.audit,
+      permissions_count: role.role_permissions.length,
+      permissions: role.role_permissions.map((rolePerm) => ({
+        name: rolePerm.permission.name,
+        label: rolePerm.permission.label,
+      })),
+    };
   }
   // Delete a role
   async deleteRole(id: number) {
