@@ -6,10 +6,17 @@ import { GoogleService } from 'src/services/google.service'; // shared Google se
 import { PrismaService } from 'src/prisma/prisma.service'; // your Prisma provider
 import { NotificationModule } from 'src/notification/notification.module';
 import { TagModule } from 'src/tags/tag.module';
+import { MeetingFormatter } from './meeting.formatter';
 
 @Module({
   imports: [NotificationModule, TagModule], // Assuming you have a NotificationModule
   controllers: [MeetingController],
-  providers: [MeetingService, MeetingRepository, GoogleService, PrismaService],
+  providers: [
+    MeetingService,
+    MeetingRepository,
+    GoogleService,
+    PrismaService,
+    MeetingFormatter,
+  ],
 })
 export class MeetingModule {}

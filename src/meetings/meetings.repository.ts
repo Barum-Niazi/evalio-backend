@@ -187,27 +187,88 @@ export class MeetingRepository {
     });
   }
 
-  async updateMeeting(id: number, dto: UpdateMeetingDto) {
+  async updateMeetingMetadata(id: number, dto: UpdateMeetingDto) {
     return this.prisma.meetings.update({
       where: { id },
       data: {
         title: dto.title,
         description: dto.description,
         scheduled_at: dto.scheduled_at ? new Date(dto.scheduled_at) : undefined,
-        agenda: dto.agenda,
-        audit: { updated_at: new Date() }, // if you're using audit
+        audit: { updated_at: new Date() },
       },
     });
   }
 
-  async deleteMeeting(id: number) {
-    await this.prisma.meeting_attendees.deleteMany({
-      where: { meeting_id: id },
+  async addMeetingNote({
+    meeting_id,
+    author_id,
+    content,
+    visible_to_other,
+  }: {
+    meeting_id: number;
+    author_id: number;
+    content: string;
+    visible_to_other: boolean;
+  }) {
+    return this.prisma.meeting_notes.create({
+      data: {
+        meeting_id,
+        author_id,
+        content,
+        visible_to_other,
+      },
+    });
+  }
+
+  async replaceAgendaItems(
+    meetingId: number,
+    authorId: number,
+    contents: string[],
+  ) {
+    await this.prisma.meeting_agenda_item.deleteMany({
+      where: {
+        meeting_id: meetingId,
+        author_id: authorId,
+      },
     });
 
-    return this.prisma.meetings.delete({
-      where: { id },
+    return this.prisma.meeting_agenda_item.createMany({
+      data: contents.map((content) => ({
+        meeting_id: meetingId,
+        author_id: authorId,
+        content,
+      })),
     });
+  }
+
+  async deleteMeeting(id: number) {
+    const [notesResult, agendaResult, attendeesResult, meeting, tagsResult] =
+      await this.prisma.$transaction([
+        this.prisma.meeting_notes.deleteMany({ where: { meeting_id: id } }),
+        this.prisma.meeting_agenda_item.deleteMany({
+          where: { meeting_id: id },
+        }),
+        this.prisma.meeting_attendees.deleteMany({ where: { meeting_id: id } }),
+        this.prisma.meetings.delete({ where: { id } }), // returns the deleted meeting
+        this.prisma.tags.deleteMany({
+          where: { parent_entity_id: id, parent_entity_type: 'MEETING' },
+        }),
+      ]);
+
+    return {
+      deleted_meeting: {
+        id: meeting.id,
+        title: meeting.title,
+        scheduled_at: meeting.scheduled_at,
+        google_meet_link: meeting.google_meet_link,
+      },
+      deleted_counts: {
+        notes: notesResult.count,
+        agenda_items: agendaResult.count,
+        attendees: attendeesResult.count,
+        tags: tagsResult.count,
+      },
+    };
   }
 
   async getUserDetails(userId: number) {

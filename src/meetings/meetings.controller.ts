@@ -59,7 +59,7 @@ export class MeetingController {
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Permissions('delete_meeting')
+  // @Permissions('delete_meeting')
   @Delete(':id')
   async deleteMeeting(@Param('id') id: string, @Request() req) {
     const userId = req.user.id;

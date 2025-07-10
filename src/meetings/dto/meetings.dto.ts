@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsOptional,
@@ -5,6 +6,8 @@ import {
   IsArray,
   IsInt,
   IsNumber,
+  IsBoolean,
+  ValidateNested,
 } from 'class-validator';
 
 export class CreateMeetingDto {
@@ -36,6 +39,15 @@ export class CreateMeetingDto {
     visible_to_other?: boolean;
   };
 }
+class NoteUpdateDto {
+  @IsString()
+  content: string;
+
+  @IsOptional()
+  @IsBoolean()
+  visible_to_other?: boolean;
+}
+
 export class UpdateMeetingDto {
   @IsOptional()
   @IsString()
@@ -54,18 +66,16 @@ export class UpdateMeetingDto {
   duration_minutes?: number;
 
   @IsOptional()
-  @IsString()
-  agenda?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
-
-  @IsOptional()
-  @IsString()
-  note_to_self?: string;
+  @IsInt()
+  attendee_id?: number;
 
   @IsOptional()
   @IsArray()
-  attendee_ids?: number[];
+  @IsString({ each: true })
+  agenda_items?: string[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NoteUpdateDto)
+  note_update?: NoteUpdateDto;
 }
