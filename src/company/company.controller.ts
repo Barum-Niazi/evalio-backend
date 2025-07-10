@@ -96,14 +96,12 @@ export class CompanyController {
     const companyId = req.user.companyId;
     return this.companyService.getCompanySettings(companyId);
   }
-  @Patch(':id')
+  @Patch()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
-  updateCompany(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateCompanyDto,
-  ) {
-    return this.companyService.updateCompany(id, dto);
+  updateCompany(@Body() dto: UpdateCompanyDto, @Request() req) {
+    const companyId = req.user.companyId;
+    return this.companyService.updateCompany(companyId, dto);
   }
 
   @Patch('settings')
