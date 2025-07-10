@@ -45,12 +45,35 @@ export class RolesService {
 
   // Get all roles
   async getAllRoles() {
-    return this.rolesRepository.getAllRoles();
+    const roles = await this.rolesRepository.getAllRoles();
+    return roles.map((role) => ({
+      id: role.id,
+      name: role.name,
+      summary: role.summary,
+      created_by: role.created_by,
+      permissions: role.role_permissions.map((rp) => ({
+        name: rp.permission.name,
+        label: rp.permission.label,
+      })),
+    }));
   }
 
   // Get a role by ID
   async getRoleById(id: number) {
-    return this.rolesRepository.getRoleById(id);
+    const role = await this.rolesRepository.getRoleById(id);
+    if (!role) {
+      return null; // or throw an exception if preferred
+    }
+    return {
+      id: role.id,
+      name: role.name,
+      summary: role.summary,
+      created_by: role.created_by,
+      permissions: role.role_permissions.map((rp) => ({
+        name: rp.permission.name,
+        label: rp.permission.label,
+      })),
+    };
   }
 
   // Delete a role

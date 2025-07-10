@@ -61,18 +61,36 @@ export class RolesRepository {
     });
   }
 
-  // Fetch all roles
   async getAllRoles() {
-    return this.prisma.roles.findMany();
+    return this.prisma.roles.findMany({
+      include: {
+        role_permissions: {
+          include: {
+            permission: {
+              select: {
+                name: true,
+                label: true,
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
-  // Fetch a specific role by ID
   async getRoleById(id: number) {
     return this.prisma.roles.findUnique({
       where: { id },
       include: {
         role_permissions: {
-          include: { permission: true },
+          include: {
+            permission: {
+              select: {
+                name: true,
+                label: true,
+              },
+            },
+          },
         },
       },
     });

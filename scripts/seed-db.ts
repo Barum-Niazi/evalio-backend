@@ -41,13 +41,27 @@ async function seedLookupData() {
   try {
     console.log('Seeding Lookup Data...');
 
-    await seedNotificationTypes();
-    await seedNotificationStatuses();
-    await seedFeedbackVisibility();
-    await seedFeedbackRequestStatuses();
-    await seedRolesAndPermissions();
-    await seedTags();
-    await seedAvatars();
+    await seedNotificationTypes().catch((error) => {
+      console.error('Error seeding notification types:', error);
+    });
+    await seedNotificationStatuses().catch((error) => {
+      console.error('Error seeding notification statuses:', error);
+    });
+    await seedFeedbackVisibility().catch((error) => {
+      console.error('Error seeding feedback visibility:', error);
+    });
+    await seedFeedbackRequestStatuses().catch((error) => {
+      console.error('Error seeding feedback request statuses:', error);
+    });
+    await seedRolesAndPermissions().catch((error) => {
+      console.error('Error seeding roles and permissions:', error);
+    });
+    await seedTags().catch((error) => {
+      console.error('Error seeding tags:', error);
+    });
+    await seedAvatars().catch((error) => {
+      console.error('Error seeding avatars:', error);
+    });
 
     console.log('All lookup data seeded successfully.');
   } catch (error) {
@@ -245,28 +259,156 @@ async function seedRolesAndPermissions() {
   // Get all permissions
   const allPermissions = await prisma.permissions.findMany();
 
-  // Prepare the role_permission data
+  // Prepare the role_permission data for Admin (all permissions)
   const rolePermissionsData = allPermissions.map((permission) => ({
     role_id: adminRole.id,
     permission_id: permission.id,
   }));
 
-  // Insert the role_permissions, skipping duplicates
+  // Insert the role_permissions for Admin, skipping duplicates
   await prisma.role_permissions.createMany({
     data: rolePermissionsData,
     skipDuplicates: true, // Skip if a role_permission entry already exists
   });
 
   console.log('Admin role assigned all permissions successfully.');
+
+  // Now assign specific permissions for other roles (Employee, Manager, etc.)
+
+  // Get the Employee role by name
+  const employeeRole = await prisma.roles.findUnique({
+    where: { name: 'Employee' },
+  });
+
+  // Assign permissions to the Employee role
+  const employeePermissions = [
+    'view_meetings',
+    'give_feedback',
+    'view_given_feedback',
+    'view_received_feedback',
+  ];
+  const employeePermissionsData = allPermissions
+    .filter((permission) => employeePermissions.includes(permission.name))
+    .map((permission) => ({
+      role_id: employeeRole.id,
+      permission_id: permission.id,
+    }));
+
+  // Insert the role_permissions for Employee
+  await prisma.role_permissions.createMany({
+    data: employeePermissionsData,
+    skipDuplicates: true,
+  });
+
+  console.log('Employee role assigned specific permissions successfully.');
+
+  // Get the Manager role by name
+  const managerRole = await prisma.roles.findUnique({
+    where: { name: 'Manager' },
+  });
+
+  // Assign permissions to the Manager role
+  const managerPermissions = [
+    'view_meetings',
+    'create_meeting',
+    'edit_meeting',
+    'attend_meeting',
+    'schedule_meeting',
+    'give_feedback',
+    'view_given_feedback',
+  ];
+  const managerPermissionsData = allPermissions
+    .filter((permission) => managerPermissions.includes(permission.name))
+    .map((permission) => ({
+      role_id: managerRole.id,
+      permission_id: permission.id,
+    }));
+
+  // Insert the role_permissions for Manager
+  await prisma.role_permissions.createMany({
+    data: managerPermissionsData,
+    skipDuplicates: true,
+  });
+
+  console.log('Manager role assigned specific permissions successfully.');
+
+  // Get the HR role by name
+  const hrRole = await prisma.roles.findUnique({
+    where: { name: 'HR' },
+  });
+
+  // Assign permissions to the HR role
+  const hrPermissions = ['manage_users', 'manage_roles', 'manage_departments'];
+  const hrPermissionsData = allPermissions
+    .filter((permission) => hrPermissions.includes(permission.name))
+    .map((permission) => ({
+      role_id: hrRole.id,
+      permission_id: permission.id,
+    }));
+
+  // Insert the role_permissions for HR
+  await prisma.role_permissions.createMany({
+    data: hrPermissionsData,
+    skipDuplicates: true,
+  });
+
+  console.log('HR role assigned specific permissions successfully.');
+
+  // Get the DepartmentHead role by name
+  const departmentHeadRole = await prisma.roles.findUnique({
+    where: { name: 'DepartmentHead' },
+  });
+
+  // Assign permissions to the DepartmentHead role
+  const departmentHeadPermissions = [
+    'manage_users',
+    'view_company_data',
+    'assign_employee_to_department',
+    'assign_employee_to_manager',
+  ];
+  const departmentHeadPermissionsData = allPermissions
+    .filter((permission) => departmentHeadPermissions.includes(permission.name))
+    .map((permission) => ({
+      role_id: departmentHeadRole.id,
+      permission_id: permission.id,
+    }));
+
+  // Insert the role_permissions for DepartmentHead
+  await prisma.role_permissions.createMany({
+    data: departmentHeadPermissionsData,
+    skipDuplicates: true,
+  });
+
+  console.log(
+    'DepartmentHead role assigned specific permissions successfully.',
+  );
+
+  // Get the Executive role by name
+  const executiveRole = await prisma.roles.findUnique({
+    where: { name: 'Executive' },
+  });
+
+  // Assign permissions to the Executive role
+  const executivePermissions = [
+    'view_company_data',
+    'manage_okr_progress',
+    'approve_okr',
+  ];
+  const executivePermissionsData = allPermissions
+    .filter((permission) => executivePermissions.includes(permission.name))
+    .map((permission) => ({
+      role_id: executiveRole.id,
+      permission_id: permission.id,
+    }));
+
+  // Insert the role_permissions for Executive
+  await prisma.role_permissions.createMany({
+    data: executivePermissionsData,
+    skipDuplicates: true,
+  });
+
+  console.log('Executive role assigned specific permissions successfully.');
 }
-
-seedRolesAndPermissions().catch((error) => {
-  console.error('Error seeding roles and permissions:', error);
-});
-
-seedRolesAndPermissions().catch((error) => {
-  console.error('Error seeding roles and permissions:', error);
-});
 
 async function seedTags() {
   const genericTags = [
