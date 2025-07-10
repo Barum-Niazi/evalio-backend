@@ -13,13 +13,16 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { MeetingService } from './meetings.service';
 import { CreateMeetingDto, UpdateMeetingDto } from './dto/meetings.dto';
+import { PermissionsGuard } from 'src/guards/permissions.guard';
+import { Permissions } from 'src/decorators/permissions.decorators';
 
 @Controller('meetings')
 @UseGuards(JwtAuthGuard)
 export class MeetingController {
   constructor(private readonly meetingService: MeetingService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  // @Permissions('create_meeting')
   @Post()
   async create(@Body() dto: CreateMeetingDto, @Request() req) {
     console.log(req);
@@ -28,6 +31,7 @@ export class MeetingController {
     return this.meetingService.createMeeting(dto, userId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   async getMyMeetings(@Request() req) {
     const userId = req.user.id;
@@ -35,6 +39,15 @@ export class MeetingController {
     return this.meetingService.getMeetingsForUser(userId);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getMeetingById(@Param('id') id: string, @Request() req) {
+    const userId = req.user.id;
+    console.log('Fetching meeting by ID:', id, 'for user:', userId);
+    return this.meetingService.getMeetingById(+id, userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async updateMeeting(
     @Param('id') id: string,
@@ -45,6 +58,8 @@ export class MeetingController {
     return this.meetingService.updateMeeting(+id, dto, userId);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('delete_meeting')
   @Delete(':id')
   async deleteMeeting(@Param('id') id: string, @Request() req) {
     const userId = req.user.id;

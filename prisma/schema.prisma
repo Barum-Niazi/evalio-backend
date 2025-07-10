@@ -239,8 +239,6 @@ model meetings {
   attendees        meeting_attendees[]
   scheduled_at     DateTime
   agenda           String?
-  notes            String?
-  note_to_self     String?
   google_meet_link String?
   google_event_id  String?
   audit            Json      @default("{}")

@@ -5,7 +5,6 @@ import { CreateMeetingDto, UpdateMeetingDto } from './dto/meetings.dto';
 @Injectable()
 export class MeetingRepository {
   constructor(private readonly prisma: PrismaService) {}
-
   async createMeeting(
     dto: CreateMeetingDto,
     userId: number,
@@ -18,62 +17,86 @@ export class MeetingRepository {
         description: dto.description,
         scheduled_by_id: userId,
         scheduled_at: new Date(dto.scheduled_at),
-        agenda: dto.agenda,
-        notes: dto.notes,
-        note_to_self: null,
+        agenda: null,
         google_meet_link: meetLink,
         google_event_id: eventId,
         audit: {},
+
         attendees: {
-          create: dto.attendee_ids.map((id) => ({
-            user_id: id,
-          })),
+          create: [
+            { user_id: dto.attendee_id },
+            { user_id: userId }, // the creator/scheduler
+          ],
+        },
+      },
+      include: {
+        attendees: {
+          include: {
+            user: {
+              select: {
+                user_id: true,
+                name: true,
+              },
+            },
+          },
         },
       },
     });
   }
 
-  async findAllForUser(user_id: number) {
-    const [scheduledByUser, attendingOnly] = await this.prisma.$transaction([
-      // Meetings you scheduled
+  async createAgendaItems(
+    contents: string[],
+    meetingId: number,
+    authorId: number,
+  ) {
+    return Promise.all(
+      contents.map((content) =>
+        this.prisma.meeting_agenda_item.create({
+          data: {
+            content,
+            meeting_id: meetingId,
+            author_id: authorId,
+          },
+        }),
+      ),
+    );
+  }
+
+  async createInitialMeetingNote(params: {
+    meeting_id: number;
+    author_id: number;
+    content: string;
+    visible_to_other: boolean;
+  }) {
+    return this.prisma.meeting_notes.create({
+      data: {
+        meeting_id: params.meeting_id,
+        author_id: params.author_id,
+        content: params.content,
+        visible_to_other: params.visible_to_other,
+      },
+    });
+  }
+  async findAllForUser(userId: number) {
+    const [scheduled, attendingRaw] = await this.prisma.$transaction([
       this.prisma.meetings.findMany({
-        where: { scheduled_by_id: user_id },
+        where: { scheduled_by_id: userId },
         include: {
           attendees: {
-            include: {
-              user: {
-                select: {
-                  user_id: true,
-                  name: true,
-                },
-              },
-            },
+            include: { user: { select: { user_id: true, name: true } } },
           },
         },
       }),
-
-      // Meetings where you're an attendee, but not the scheduler
       this.prisma.meeting_attendees.findMany({
         where: {
-          user_id,
-          meeting: {
-            NOT: {
-              scheduled_by_id: user_id,
-            },
-          },
+          user_id: userId,
+          meeting: { NOT: { scheduled_by_id: userId } },
         },
         include: {
           meeting: {
             include: {
               attendees: {
-                include: {
-                  user: {
-                    select: {
-                      user_id: true,
-                      name: true,
-                    },
-                  },
-                },
+                include: { user: { select: { user_id: true, name: true } } },
               },
             },
           },
@@ -81,13 +104,32 @@ export class MeetingRepository {
       }),
     ]);
 
-    // Normalize structure of attendingOnly
-    const attendingMeetings = attendingOnly.map((att) => att.meeting);
+    const attending = attendingRaw.map((entry) => entry.meeting);
 
     return {
-      scheduledByYou: scheduledByUser,
-      youAreAttending: attendingMeetings,
+      scheduledByUser: scheduled,
+      youAreAttending: attending,
     };
+  }
+
+  async getAgendaItemsForMeetings(meetingIds: number | number[]) {
+    const ids = Array.isArray(meetingIds) ? meetingIds : [meetingIds];
+
+    return this.prisma.meeting_agenda_item.findMany({
+      where: {
+        meeting_id: { in: ids },
+      },
+      orderBy: { created_at: 'asc' },
+    });
+  }
+  async getNotesForMeetings(meetingIds: number | number[]) {
+    const ids = Array.isArray(meetingIds) ? meetingIds : [meetingIds];
+
+    return this.prisma.meeting_notes.findMany({
+      where: {
+        meeting_id: { in: ids },
+      },
+    });
   }
 
   async getUserGoogleTokens(user_id: number) {
@@ -127,10 +169,21 @@ export class MeetingRepository {
     });
   }
 
-  async findById(id: number) {
+  async findById(meetingId: number) {
     return this.prisma.meetings.findUnique({
-      where: { id },
-      include: { attendees: true },
+      where: { id: meetingId },
+      include: {
+        attendees: {
+          include: {
+            user: {
+              select: {
+                user_id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -142,8 +195,6 @@ export class MeetingRepository {
         description: dto.description,
         scheduled_at: dto.scheduled_at ? new Date(dto.scheduled_at) : undefined,
         agenda: dto.agenda,
-        notes: dto.notes,
-        note_to_self: dto.note_to_self,
         audit: { updated_at: new Date() }, // if you're using audit
       },
     });
@@ -156,6 +207,16 @@ export class MeetingRepository {
 
     return this.prisma.meetings.delete({
       where: { id },
+    });
+  }
+
+  async getUserDetails(userId: number) {
+    return this.prisma.user_details.findUnique({
+      where: { user_id: userId },
+      select: {
+        user_id: true,
+        name: true,
+      },
     });
   }
 }

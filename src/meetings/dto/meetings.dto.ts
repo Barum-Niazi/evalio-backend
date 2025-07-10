@@ -19,26 +19,23 @@ export class CreateMeetingDto {
   scheduled_at: string;
 
   @IsOptional()
-  @IsString()
-  agenda?: string;
-
-  @IsOptional()
   @IsInt()
   duration_minutes?: number;
 
-  @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsInt()
+  attendee_id: number;
 
   @IsOptional()
-  @IsString()
-  note_to_self?: string;
-
   @IsArray()
-  @IsInt({ each: true })
-  attendee_ids: number[];
-}
+  @IsString({ each: true })
+  agenda_items?: string[];
 
+  @IsOptional()
+  initial_note?: {
+    content: string;
+    visible_to_other?: boolean;
+  };
+}
 export class UpdateMeetingDto {
   @IsOptional()
   @IsString()
