@@ -52,6 +52,8 @@ model user_details {
   meetings_scheduled meetings[]    @relation("scheduled_meetings") // Meetings created by this user
   meeting_attendees meeting_attendees[]
   notifications  notifications[] // Notifications for the user
+  meeting_notes   meeting_notes[]  // Meeting notes created by this user
+  meeting_agenda_items meeting_agenda_item[] // Agenda items created by this user
   metadata       Json            @default("{}") // Additional metadata
   audit          Json            @default("{}") // Audit JSON for metadata
   user_okrs      user_okrs[]
@@ -242,6 +244,36 @@ model meetings {
   google_meet_link String?
   google_event_id  String?
   audit            Json      @default("{}")
+  meeting_notes    meeting_notes[] // Notes related to the meeting
+  agenda_items     meeting_agenda_item[] // Agenda items for the meeting
+}
+
+model meeting_notes {
+  id               Int      @id @default(autoincrement())
+  meeting_id       Int
+  author_id        Int
+  content          String
+  visible_to_other Boolean  @default(false) // false = private, true = shared
+  rating           Int?     // Optional rating (1-5)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  meeting meetings     @relation(fields: [meeting_id], references: [id])
+  author  user_details @relation(fields: [author_id], references: [user_id])
+
+  @@unique([meeting_id, author_id, content]) // Optional, prevents dupes
+}
+
+model meeting_agenda_item {
+  id         Int      @id @default(autoincrement())
+  meeting_id Int
+  author_id  Int
+  content    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  meeting meetings     @relation(fields: [meeting_id], references: [id])
+  author  user_details @relation(fields: [author_id], references: [user_id])
 }
 
 model company_settings {
