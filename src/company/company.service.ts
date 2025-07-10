@@ -142,6 +142,12 @@ export class CompanyService {
     });
   }
 
+  async getCompanySettings(companyId: number) {
+    const settings = await this.companyRepository.getSettings(companyId);
+    if (!settings) throw new NotFoundException('Settings not found');
+    return settings;
+  }
+
   async updateSettings(companyId: number, dto: UpdateCompanySettingsDto) {
     const settings = await this.companyRepository.getSettings(companyId);
     if (!settings) throw new NotFoundException('Settings not found');

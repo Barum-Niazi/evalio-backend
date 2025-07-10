@@ -88,6 +88,14 @@ export class CompanyController {
     const companyId = req.user.companyId;
     return this.companyService.getCompanyStats(companyId);
   }
+
+  @Get('settings')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  getCompanySettings(@Request() req) {
+    const companyId = req.user.companyId;
+    return this.companyService.getCompanySettings(companyId);
+  }
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
@@ -98,13 +106,12 @@ export class CompanyController {
     return this.companyService.updateCompany(id, dto);
   }
 
-  @Patch(':id/settings')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Patch('settings')
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @Permissions('manage_company_settings')
   @Roles('Admin')
-  updateCompanySettings(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateCompanySettingsDto,
-  ) {
+  updateCompanySettings(@Body() dto: UpdateCompanySettingsDto, @Request() req) {
+    const id = req.user.companyId;
     return this.companyService.updateSettings(id, dto);
   }
 }
