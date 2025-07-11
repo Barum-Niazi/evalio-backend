@@ -139,6 +139,15 @@ export class MeetingRepository {
       orderBy: { created_at: 'asc' },
     });
   }
+
+  async findAgendaByContent(meetingId: number, content: string) {
+    return this.prisma.meeting_agenda_item.findFirst({
+      where: {
+        meeting_id: meetingId,
+        content,
+      },
+    });
+  }
   async getNotesForMeetings(meetingIds: number | number[]) {
     const ids = Array.isArray(meetingIds) ? meetingIds : [meetingIds];
 
@@ -378,6 +387,12 @@ export class MeetingRepository {
         author_id: userId,
         content,
       },
+    });
+  }
+
+  async deleteAgendaById(agendaId: number) {
+    return this.prisma.meeting_agenda_item.delete({
+      where: { id: agendaId },
     });
   }
 }

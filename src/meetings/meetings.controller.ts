@@ -17,6 +17,7 @@ import {
   addAgendaDto,
   CreateMeetingDto,
   UpdateMeetingDto,
+  deleteAgendaDto,
 } from './dto/meetings.dto';
 import { PermissionsGuard } from 'src/guards/permissions.guard';
 import { Permissions } from 'src/decorators/permissions.decorators';
@@ -61,6 +62,21 @@ export class MeetingController {
   ) {
     const userId = req.user.id;
     return this.meetingService.addAgenda(+id, dto.agenda, userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('delete-agenda/:id')
+  async deleteAgendaItemByContent(
+    @Param('id') meetingId: string,
+    @Body() deleteAgendaDto: deleteAgendaDto,
+    @Request() req,
+  ) {
+    const userId = req.user.id;
+    return this.meetingService.deleteAgendaItemByContent(
+      +meetingId,
+      deleteAgendaDto.content,
+      userId,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

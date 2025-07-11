@@ -388,4 +388,28 @@ export class MeetingService {
       }),
     );
   }
+
+  async deleteAgendaItemByContent(
+    meetingId: number,
+    content: string,
+    userId: number,
+  ) {
+    const agenda = await this.meetingRepository.findAgendaByContent(
+      meetingId,
+      content,
+    );
+    if (!agenda) throw new NotFoundException('Agenda item not found');
+
+    const meeting = await this.meetingRepository.findById(meetingId);
+    const isCreator = meeting.scheduled_by_id === userId;
+    const isAttendee = meeting.attendees.some((a) => a.user_id === userId);
+
+    if (!isCreator && !isAttendee) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this agenda item',
+      );
+    }
+
+    return this.meetingRepository.deleteAgendaById(agenda.id);
+  }
 }

@@ -84,3 +84,8 @@ export class addAgendaDto {
   @IsString()
   agenda: string;
 }
+
+export class deleteAgendaDto {
+  @IsString()
+  content: string;
+}
