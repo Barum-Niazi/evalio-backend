@@ -28,6 +28,7 @@ export class EmployeeController {
   @Post('add')
   async addEmployees(@Body() addEmployeeDto: AddEmployeeDto, @Request() req) {
     const adminId = req.user.id;
+    console.log('Adding employees:', addEmployeeDto);
     return this.employeeService.addEmployees(adminId, addEmployeeDto);
   }
 
