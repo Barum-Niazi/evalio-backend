@@ -79,3 +79,8 @@ export class UpdateMeetingDto {
   @Type(() => NoteUpdateDto)
   note_update?: NoteUpdateDto;
 }
+
+export class addAgendaDto {
+  @IsString()
+  agenda: string;
+}

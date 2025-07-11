@@ -78,26 +78,42 @@ export class MeetingRepository {
       },
     });
   }
-  async findAllForUser(userId: number) {
+  async findAllForUser(userIds: number[] | number) {
+    const ids = Array.isArray(userIds) ? userIds : [userIds];
+
     const [scheduled, attendingRaw] = await this.prisma.$transaction([
       this.prisma.meetings.findMany({
-        where: { scheduled_by_id: userId },
+        where: {
+          scheduled_by_id: { in: ids },
+        },
         include: {
           attendees: {
-            include: { user: { select: { user_id: true, name: true } } },
+            include: {
+              user: {
+                select: { user_id: true, name: true },
+              },
+            },
           },
         },
       }),
       this.prisma.meeting_attendees.findMany({
         where: {
-          user_id: userId,
-          meeting: { NOT: { scheduled_by_id: userId } },
+          user_id: { in: ids },
+          meeting: {
+            NOT: {
+              scheduled_by_id: { in: ids },
+            },
+          },
         },
         include: {
           meeting: {
             include: {
               attendees: {
-                include: { user: { select: { user_id: true, name: true } } },
+                include: {
+                  user: {
+                    select: { user_id: true, name: true },
+                  },
+                },
               },
             },
           },
@@ -353,5 +369,15 @@ export class MeetingRepository {
     });
 
     return { scheduled, attended };
+  }
+
+  async addAgendaItem(meetingId: number, userId: number, content: string) {
+    return this.prisma.meeting_agenda_item.create({
+      data: {
+        meeting_id: meetingId,
+        author_id: userId,
+        content,
+      },
+    });
   }
 }

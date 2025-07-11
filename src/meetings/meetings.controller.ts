@@ -13,7 +13,11 @@ import {
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { MeetingService } from './meetings.service';
-import { CreateMeetingDto, UpdateMeetingDto } from './dto/meetings.dto';
+import {
+  addAgendaDto,
+  CreateMeetingDto,
+  UpdateMeetingDto,
+} from './dto/meetings.dto';
 import { PermissionsGuard } from 'src/guards/permissions.guard';
 import { Permissions } from 'src/decorators/permissions.decorators';
 
@@ -38,6 +42,25 @@ export class MeetingController {
     const userId = req.user.id;
     console.log('Fetching meetings for user:', userId);
     return this.meetingService.getMeetingsForUser(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('team')
+  async getTeamMeetings(@Request() req) {
+    const userId = req.user.id;
+    console.log('Fetching team meetings for user:', userId);
+    return this.meetingService.getTeamMeetings(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('add-agenda/:id')
+  async addAgenda(
+    @Param('id') id: string,
+    @Body() dto: addAgendaDto,
+    @Request() req,
+  ) {
+    const userId = req.user.id;
+    return this.meetingService.addAgenda(+id, dto.agenda, userId);
   }
 
   @UseGuards(JwtAuthGuard)

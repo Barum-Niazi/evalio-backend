@@ -332,4 +332,60 @@ export class MeetingService {
       };
     });
   }
+
+  async addAgenda(meetingId: number, agenda: string, userId: number) {
+    const meeting = await this.meetingRepository.findById(meetingId);
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
+    // Only allow participants or the scheduler to add agenda
+    const isCreator = meeting.scheduled_by_id === userId;
+    const isAttendee = meeting.attendees.some((a) => a.user_id === userId);
+    if (!isCreator && !isAttendee) {
+      throw new ForbiddenException('You are not part of this meeting');
+    }
+
+    return this.meetingRepository.addAgendaItem(meetingId, userId, agenda);
+  }
+
+  async getTeamMeetings(userId: number) {
+    const teamMembers = await this.teamService.getTeamMembers(userId);
+    const userIds = teamMembers.map((m) => m.user_id);
+
+    const meetings = await this.meetingRepository.findAllForUser(userIds);
+
+    return Promise.all(
+      teamMembers.map(async (member) => {
+        const scheduledMeetings = meetings.scheduledByUser.filter(
+          (m) => m.scheduled_by_id === member.user_id,
+        );
+
+        const attendingMeetings = meetings.youAreAttending.filter((m) =>
+          m.attendees.some((a) => a.user.user_id === member.user_id),
+        );
+
+        const formattedScheduled = await Promise.all(
+          scheduledMeetings.map((m) =>
+            this.formatter.formatFullMeetingResponse(m.id, userId),
+          ),
+        );
+
+        const formattedAttending = await Promise.all(
+          attendingMeetings.map((m) =>
+            this.formatter.formatFullMeetingResponse(m.id, userId),
+          ),
+        );
+
+        return {
+          user_id: member.user_id,
+          name: member.name,
+          profile_blob_id: member.profile_blob_id,
+          profile_blob_url: '/blob/' + member.profile_blob_id + '/view',
+          department: member.department?.name,
+          designation: member.designation?.title,
+          meetings_scheduled: formattedScheduled,
+          meetings_attending: formattedAttending,
+        };
+      }),
+    );
+  }
 }
