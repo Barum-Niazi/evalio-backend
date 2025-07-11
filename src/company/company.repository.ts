@@ -72,6 +72,21 @@ export class CompanyRepository {
     return admin.company_id;
   }
 
+  async findById(id: number) {
+    return this.prisma.companies.findUnique({
+      where: { id },
+      include: {
+        logo_blob: {
+          select: {
+            id: true,
+            name: true,
+            mime_type: true,
+            size: true,
+          },
+        },
+      },
+    });
+  }
   async getCompanyStats(companyId: number) {
     const [departmentCount, employeeCount] = await this.prisma.$transaction([
       this.prisma.department.count({
@@ -120,10 +135,6 @@ export class CompanyRepository {
         },
       },
     });
-  }
-
-  async findById(id: number) {
-    return this.prisma.companies.findUnique({ where: { id } });
   }
 
   async updateCompany(id: number, data: Partial<companies>) {

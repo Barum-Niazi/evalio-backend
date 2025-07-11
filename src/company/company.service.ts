@@ -141,7 +141,23 @@ export class CompanyService {
       metadata: updatedMetadata,
     });
   }
+  async getCompany(companyId: number) {
+    const company = await this.companyRepository.findById(companyId);
+    if (!company) throw new NotFoundException('Company not found');
 
+    // Construct URL for the logo blob if it exists
+    const logoBlob = company.logo_blob
+      ? {
+          ...company.logo_blob,
+          url: `/blob/${company.logo_blob.id}/view`,
+        }
+      : null;
+
+    return {
+      ...company,
+      logo_blob: logoBlob,
+    };
+  }
   async getCompanySettings(companyId: number) {
     const settings = await this.companyRepository.getSettings(companyId);
     if (!settings) throw new NotFoundException('Settings not found');

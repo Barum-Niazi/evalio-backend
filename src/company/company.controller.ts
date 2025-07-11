@@ -72,6 +72,14 @@ export class CompanyController {
     );
   }
 
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  async getCompany(@Request() req) {
+    const companyId = req.user.companyId;
+    return this.companyService.getCompany(companyId);
+  }
+
   @Get('org-chart')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles('Admin')
