@@ -130,4 +130,26 @@ export class RolesRepository {
       where: { id },
     });
   }
+
+  async getRolesWithUsers() {
+    return this.prisma.roles.findMany({
+      include: {
+        user_roles: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                details: {
+                  select: {
+                    name: true,
+                    profile_blob: true, // Fetch profile image data
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }

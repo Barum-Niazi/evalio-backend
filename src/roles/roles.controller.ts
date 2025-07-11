@@ -35,7 +35,6 @@ export class RolesController {
     console.log(req.user);
     return this.rolesService.createRole(createRoleDto, createdBy);
   }
-
   // Update an existing role
   @Put(':id')
   @UseGuards(JwtAuthGuard)
@@ -77,6 +76,12 @@ export class RolesController {
     return this.rolesService.getAllRoles();
   }
 
+  @Get('users')
+  @UseGuards(JwtAuthGuard)
+  @Permissions('manage_roles')
+  async getRolesWithUsers() {
+    return this.rolesService.getRolesWithUsers();
+  }
   // Get a specific role by ID
   @Get(':id')
   @UseGuards(JwtAuthGuard)

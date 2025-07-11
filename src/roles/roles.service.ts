@@ -57,4 +57,25 @@ export class RolesService {
   async deleteRole(id: number) {
     return this.rolesRepository.deleteRole(id);
   }
+
+  async getRolesWithUsers() {
+    const rolesWithUsers = await this.rolesRepository.getRolesWithUsers();
+
+    return rolesWithUsers.map((role) => ({
+      id: role.id,
+      name: role.name,
+      summary: role.summary,
+      users: role.user_roles.map((userRole) => ({
+        id: userRole.user.id,
+        name: userRole.user.details.name,
+        profileImage: userRole.user.details.profile_blob
+          ? {
+              id: userRole.user.details.profile_blob.id,
+              name: userRole.user.details.profile_blob.name,
+              url: `/blob/${userRole.user.details.profile_blob.id}/view`, // Construct image URL
+            }
+          : null,
+      })),
+    }));
+  }
 }
