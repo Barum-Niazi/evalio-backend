@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, ParseIntPipe } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EmployeeRepository } from 'src/employee/employee.repository';
 import { EmailService } from 'src/services/email.service';
@@ -16,11 +16,17 @@ export class EmployeeService {
     private readonly emailService: EmailService,
   ) {}
 
-  async getEmployees(companyId: number) {
-    const result =
-      await this.employeeRepository.getEmployeesByCompany(companyId);
+  async getEmployees(companyId: number, page = 1, limit = 25) {
+    const offset = (page - 1) * limit;
 
-    return result.map((emp) => ({
+    const [employees, total] =
+      await this.employeeRepository.getEmployeesByCompany(
+        companyId,
+        offset,
+        limit,
+      );
+
+    const data = employees.map((emp) => ({
       user_id: emp.user_id,
       name: emp.name,
       email: emp.user?.auth?.email ?? null,
@@ -47,6 +53,14 @@ export class EmployeeService {
           }
         : null,
     }));
+
+    return {
+      data,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async addEmployees(adminId: number, addEmployeeDto: { employees: any[] }) {

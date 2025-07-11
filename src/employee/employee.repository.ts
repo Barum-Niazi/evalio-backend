@@ -2,6 +2,38 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
+type EmployeeWithRelations = {
+  user_id: number;
+  name: string;
+  profile_blob?: {
+    id: number;
+    name: string;
+    mime_type: string;
+    size: number;
+  } | null;
+  user?: {
+    auth?: {
+      email: string;
+    } | null;
+  } | null;
+  manager?: {
+    user_id: number;
+    name: string;
+    profile_blob?: {
+      id: number;
+      name: string;
+      mime_type: string;
+      size: number;
+    } | null;
+  } | null;
+  designation?: {
+    title: string;
+  } | null;
+  department?: {
+    name: string;
+  } | null;
+};
+
 @Injectable()
 export class EmployeeRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -288,66 +320,90 @@ export class EmployeeRepository {
     }, new Map<string, number>());
   }
 
-  async getEmployeesByCompany(companyId: number) {
-    return this.prisma.user_details.findMany({
-      where: {
-        company_id: companyId,
-        user: {
-          roles: {
-            none: {
-              role: {
-                name: 'Admin',
+  async getEmployeesByCompany(
+    companyId: number,
+    offset: number,
+    limit: number,
+  ): Promise<[EmployeeWithRelations[], number]> {
+    const [employees, total] = await this.prisma.$transaction([
+      this.prisma.user_details.findMany({
+        where: {
+          company_id: companyId,
+          user: {
+            roles: {
+              none: {
+                role: {
+                  name: 'Admin',
+                },
               },
             },
           },
         },
-      },
-      select: {
-        user_id: true,
-        name: true,
-        profile_blob: {
-          select: {
-            id: true,
-            name: true,
-            mime_type: true,
-            size: true,
+        skip: offset,
+        take: limit,
+        select: {
+          user_id: true,
+          name: true,
+          profile_blob: {
+            select: {
+              id: true,
+              name: true,
+              mime_type: true,
+              size: true,
+            },
+          },
+          user: {
+            select: {
+              auth: {
+                select: {
+                  email: true,
+                },
+              },
+            },
+          },
+          manager: {
+            select: {
+              user_id: true,
+              name: true,
+              profile_blob: {
+                select: {
+                  id: true,
+                  name: true,
+                  mime_type: true,
+                  size: true,
+                },
+              },
+            },
+          },
+          designation: {
+            select: {
+              title: true,
+            },
+          },
+          department: {
+            select: {
+              name: true,
+            },
           },
         },
-        user: {
-          select: {
-            auth: {
-              select: {
-                email: true,
+      }),
+      this.prisma.user_details.count({
+        where: {
+          company_id: companyId,
+          user: {
+            roles: {
+              none: {
+                role: {
+                  name: 'Admin',
+                },
               },
             },
           },
         },
-        manager: {
-          select: {
-            user_id: true,
-            name: true,
-            profile_blob: {
-              select: {
-                id: true,
-                name: true,
-                mime_type: true,
-                size: true,
-              },
-            },
-          },
-        },
-        designation: {
-          select: {
-            title: true,
-          },
-        },
-        department: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
+      }),
+    ]);
+
+    return [employees, total];
   }
 
   async getAdminCompanyId(adminId: number): Promise<number | null> {

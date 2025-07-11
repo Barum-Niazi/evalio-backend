@@ -10,6 +10,7 @@ import {
   Get,
   Param,
   Put,
+  Query,
 } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -75,9 +76,15 @@ export class EmployeeController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('list')
-  async getCompanyUsers(@Request() req) {
+  async getCompanyUsers(
+    @Request() req,
+    @Query('page') page = '1',
+    @Query('limit') limit = '25',
+  ) {
     const companyId = req.user.companyId;
-    return this.employeeService.getEmployees(companyId);
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 25;
+    return this.employeeService.getEmployees(companyId, pageNum, limitNum);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
