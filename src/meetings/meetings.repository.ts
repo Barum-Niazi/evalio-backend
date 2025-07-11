@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service'; // adjust path
 import { CreateMeetingDto, UpdateMeetingDto } from './dto/meetings.dto';
+import { meetings } from '@prisma/client';
 
 @Injectable()
 export class MeetingRepository {
@@ -186,7 +187,12 @@ export class MeetingRepository {
       },
     });
   }
-
+  async updateMeetingFields(meetingId: number, data: Partial<meetings>) {
+    return this.prisma.meetings.update({
+      where: { id: meetingId },
+      data,
+    });
+  }
   async updateMeetingMetadata(id: number, dto: UpdateMeetingDto) {
     return this.prisma.meetings.update({
       where: { id },

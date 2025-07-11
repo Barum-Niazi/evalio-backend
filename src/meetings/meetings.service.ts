@@ -192,6 +192,12 @@ export class MeetingService {
         });
       }
 
+      await this.meetingRepository.updateMeetingFields(meetingId, {
+        title: dto.title,
+        description: dto.description,
+        scheduled_at: dto.scheduled_at ? new Date(dto.scheduled_at) : undefined,
+      });
+
       const message = `Your meeting "${dto.title ?? meeting.title}" has been updated.`;
       for (const id of attendeeIds) {
         await this.notificationService.create(id, 1, message, result.meetLink);
