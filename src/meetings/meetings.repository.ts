@@ -280,4 +280,28 @@ export class MeetingRepository {
       },
     });
   }
+
+  async getMeetingsScheduledCount(userIds: number[]) {
+    return this.prisma.meetings.groupBy({
+      by: ['scheduled_by_id'],
+      where: { scheduled_by_id: { in: userIds } },
+      _count: true,
+    });
+  }
+
+  async getMeetingsAttendedCount(userIds: number[]) {
+    return this.prisma.meeting_attendees.groupBy({
+      by: ['user_id'],
+      where: { user_id: { in: userIds } },
+      _count: true,
+    });
+  }
+
+  async getNotesContributedCount(userIds: number[]) {
+    return this.prisma.meeting_notes.groupBy({
+      by: ['author_id'],
+      where: { author_id: { in: userIds } },
+      _count: true,
+    });
+  }
 }

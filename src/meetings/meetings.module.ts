@@ -7,9 +7,10 @@ import { PrismaService } from 'src/prisma/prisma.service'; // your Prisma provid
 import { NotificationModule } from 'src/notification/notification.module';
 import { TagModule } from 'src/tags/tag.module';
 import { MeetingFormatter } from './meeting.formatter';
+import { TeamModule } from 'src/team/team.module';
 
 @Module({
-  imports: [NotificationModule, TagModule], // Assuming you have a NotificationModule
+  imports: [NotificationModule, TagModule, TeamModule],
   controllers: [MeetingController],
   providers: [
     MeetingService,

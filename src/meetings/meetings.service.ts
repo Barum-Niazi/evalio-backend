@@ -9,6 +9,7 @@ import { GoogleService } from 'src/services/google.service'; // adjust path
 import { NotificationService } from 'src/notification/notification.service';
 import { TagService } from 'src/tags/tag.service';
 import { MeetingFormatter } from './meeting.formatter';
+import { TeamService } from 'src/team/team.service';
 
 @Injectable()
 export class MeetingService {
@@ -18,6 +19,7 @@ export class MeetingService {
     private readonly notificationService: NotificationService,
     private readonly tagService: TagService,
     private readonly formatter: MeetingFormatter,
+    private readonly teamService: TeamService,
   ) {}
 
   async createMeeting(dto: CreateMeetingDto, userId: number) {
@@ -248,5 +250,28 @@ export class MeetingService {
     }
 
     return this.meetingRepository.deleteMeeting(meetingId);
+  }
+
+  async getParticipationReport(userId: number, includeTeam: boolean) {
+    let userIds = [userId];
+
+    if (includeTeam) {
+      const team = await this.teamService.getTeamMembers(userId);
+      userIds = team.map((u) => u.user_id);
+    }
+
+    const [scheduled, attended, notes] = await Promise.all([
+      this.meetingRepository.getMeetingsScheduledCount(userIds),
+      this.meetingRepository.getMeetingsAttendedCount(userIds),
+      this.meetingRepository.getNotesContributedCount(userIds),
+    ]);
+
+    return userIds.map((id) => ({
+      user_id: id,
+      meetings_scheduled:
+        scheduled.find((x) => x.scheduled_by_id === id)?._count || 0,
+      meetings_attended: attended.find((x) => x.user_id === id)?._count || 0,
+      notes_contributed: notes.find((x) => x.author_id === id)?._count || 0,
+    }));
   }
 }

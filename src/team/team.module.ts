@@ -6,5 +6,6 @@ import { TeamRepository } from './team.repository';
 @Module({
   controllers: [TeamController],
   providers: [TeamService, TeamRepository],
+  exports: [TeamService],
 })
 export class TeamModule {}

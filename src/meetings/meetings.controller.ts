@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
@@ -39,6 +40,16 @@ export class MeetingController {
     return this.meetingService.getMeetingsForUser(userId);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('participation')
+  async getMeetingParticipationReport(
+    @Query('team') team: string,
+    @Request() req,
+  ) {
+    const userId = req.user.id;
+    const includeTeam = team === 'true';
+    return this.meetingService.getParticipationReport(userId, includeTeam);
+  }
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async getMeetingById(@Param('id') id: string, @Request() req) {
