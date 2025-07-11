@@ -259,6 +259,26 @@ export class UserRepository {
       },
     });
   }
+  async findBasicUserDetails(userIds: number[]) {
+    return this.prisma.user_details.findMany({
+      where: { user_id: { in: userIds } },
+      select: {
+        user_id: true,
+        name: true,
+        profile_blob_id: true,
+        department: {
+          select: {
+            name: true,
+          },
+        },
+        designation: {
+          select: {
+            title: true,
+          },
+        },
+      },
+    });
+  }
 
   async deleteUser(userId: number) {
     return this.prisma.users.delete({ where: { id: userId } });

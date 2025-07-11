@@ -10,6 +10,8 @@ import { NotificationService } from 'src/notification/notification.service';
 import { TagService } from 'src/tags/tag.service';
 import { MeetingFormatter } from './meeting.formatter';
 import { TeamService } from 'src/team/team.service';
+import { getISOWeek } from 'src/utils/dates';
+import { UserRepository } from 'src/user/user.repository';
 
 @Injectable()
 export class MeetingService {
@@ -20,6 +22,7 @@ export class MeetingService {
     private readonly tagService: TagService,
     private readonly formatter: MeetingFormatter,
     private readonly teamService: TeamService,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async createMeeting(dto: CreateMeetingDto, userId: number) {
@@ -273,5 +276,54 @@ export class MeetingService {
       meetings_attended: attended.find((x) => x.user_id === id)?._count || 0,
       notes_contributed: notes.find((x) => x.author_id === id)?._count || 0,
     }));
+  }
+
+  async getWeeklyLoadReport(userId: number, includeTeam: boolean) {
+    let userIds = [userId];
+
+    if (includeTeam) {
+      const team = await this.teamService.getTeamMembers(userId);
+      userIds = team.map((u) => u.user_id);
+    }
+
+    const { scheduled, attended } =
+      await this.meetingRepository.getWeeklyMeetingLoad(userIds);
+
+    // Initialize weekly counters per user
+    const result: Record<
+      number,
+      Record<string, { scheduled: number; attended: number }>
+    > = {};
+
+    for (const { scheduled_by_id, scheduled_at } of scheduled) {
+      const week = getISOWeek(new Date(scheduled_at));
+      result[scheduled_by_id] ??= {};
+      result[scheduled_by_id][week] ??= { scheduled: 0, attended: 0 };
+      result[scheduled_by_id][week].scheduled += 1;
+    }
+
+    for (const { user_id, meeting } of attended) {
+      const week = getISOWeek(new Date(meeting.scheduled_at));
+      result[user_id] ??= {};
+      result[user_id][week] ??= { scheduled: 0, attended: 0 };
+      result[user_id][week].attended += 1;
+    }
+
+    const users = await this.userRepository.findBasicUserDetails(userIds);
+
+    return users.map((user) => {
+      const weeks = result[user.user_id] || {};
+      const weekly_load = Object.entries(weeks).map(([week, data]) => ({
+        week,
+        scheduled: data.scheduled,
+        attended: data.attended,
+      }));
+
+      return {
+        user_id: user.user_id,
+        name: user.name,
+        weekly_load,
+      };
+    });
   }
 }

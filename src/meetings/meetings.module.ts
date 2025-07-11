@@ -8,9 +8,10 @@ import { NotificationModule } from 'src/notification/notification.module';
 import { TagModule } from 'src/tags/tag.module';
 import { MeetingFormatter } from './meeting.formatter';
 import { TeamModule } from 'src/team/team.module';
+import { UserModule } from 'src/user/users.module';
 
 @Module({
-  imports: [NotificationModule, TagModule, TeamModule],
+  imports: [NotificationModule, TagModule, TeamModule, UserModule],
   controllers: [MeetingController],
   providers: [
     MeetingService,

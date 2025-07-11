@@ -304,4 +304,48 @@ export class MeetingRepository {
       _count: true,
     });
   }
+
+  async getWeeklyMeetingLoad(
+    userIds: number[],
+    startDate?: Date,
+    endDate?: Date,
+  ) {
+    // apply date filters
+    const whereClause = {
+      scheduled_at: {
+        ...(startDate && { gte: startDate }),
+        ...(endDate && { lte: endDate }),
+      },
+    };
+
+    const scheduled = await this.prisma.meetings.findMany({
+      where: {
+        scheduled_by_id: { in: userIds },
+        ...whereClause,
+      },
+      select: {
+        scheduled_by_id: true,
+        scheduled_at: true,
+      },
+    });
+
+    const attended = await this.prisma.meeting_attendees.findMany({
+      where: {
+        user_id: { in: userIds },
+        meeting: {
+          scheduled_at: whereClause.scheduled_at,
+        },
+      },
+      select: {
+        user_id: true,
+        meeting: {
+          select: {
+            scheduled_at: true,
+          },
+        },
+      },
+    });
+
+    return { scheduled, attended };
+  }
 }

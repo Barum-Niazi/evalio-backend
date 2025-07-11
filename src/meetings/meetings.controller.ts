@@ -50,6 +50,14 @@ export class MeetingController {
     const includeTeam = team === 'true';
     return this.meetingService.getParticipationReport(userId, includeTeam);
   }
+
+  @Get('weekly-load')
+  @UseGuards(JwtAuthGuard)
+  async getWeeklyLoadReport(@Query('team') team: string, @Request() req) {
+    const userId = req.user.id;
+    const includeTeam = team === 'true';
+    return this.meetingService.getWeeklyLoadReport(userId, includeTeam);
+  }
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async getMeetingById(@Param('id') id: string, @Request() req) {
