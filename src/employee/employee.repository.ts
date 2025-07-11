@@ -323,7 +323,7 @@ export class EmployeeRepository {
   async getEmployeesByCompany(
     companyId: number,
     offset: number,
-    limit: number,
+    limit?: number,
   ): Promise<[EmployeeWithRelations[], number]> {
     const [employees, total] = await this.prisma.$transaction([
       this.prisma.user_details.findMany({
@@ -340,7 +340,7 @@ export class EmployeeRepository {
           },
         },
         skip: offset,
-        take: limit,
+        ...(limit !== undefined ? { take: limit } : {}),
         select: {
           user_id: true,
           name: true,

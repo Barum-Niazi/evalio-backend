@@ -80,10 +80,15 @@ export class EmployeeController {
     @Request() req,
     @Query('page') page = '1',
     @Query('limit') limit = '25',
+    @Query('all') all?: string,
   ) {
     const companyId = req.user.companyId;
-    const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 25;
+
+    const isAll = all === 'true';
+
+    const pageNum = isAll ? 1 : parseInt(page, 10) || 1;
+    const limitNum = isAll ? undefined : parseInt(limit, 10) || 25;
+
     return this.employeeService.getEmployees(companyId, pageNum, limitNum);
   }
 

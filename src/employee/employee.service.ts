@@ -16,8 +16,8 @@ export class EmployeeService {
     private readonly emailService: EmailService,
   ) {}
 
-  async getEmployees(companyId: number, page = 1, limit = 25) {
-    const offset = (page - 1) * limit;
+  async getEmployees(companyId: number, page = 1, limit?: number) {
+    const offset = limit ? (page - 1) * limit : 0;
 
     const [employees, total] =
       await this.employeeRepository.getEmployeesByCompany(
@@ -57,9 +57,9 @@ export class EmployeeService {
     return {
       data,
       page,
-      limit,
+      limit: limit ?? total,
       total,
-      totalPages: Math.ceil(total / limit),
+      totalPages: limit ? Math.ceil(total / limit) : 1,
     };
   }
 
