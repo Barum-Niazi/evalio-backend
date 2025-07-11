@@ -288,24 +288,8 @@ export class EmployeeRepository {
     }, new Map<string, number>());
   }
 
-  async getEmployeesByCompany(companyId: number): Promise<
-    {
-      user_id: number;
-      name: string;
-      email: string | null;
-      manager: { user_id: number; name: string } | null;
-      designation: { title: string } | null;
-      department: { name: string } | null;
-      profileImage: {
-        id: number;
-        name: string;
-        mimeType: string;
-        size: number;
-        url: string;
-      } | null;
-    }[]
-  > {
-    const results = await this.prisma.user_details.findMany({
+  async getEmployeesByCompany(companyId: number) {
+    return this.prisma.user_details.findMany({
       where: {
         company_id: companyId,
         user: {
@@ -342,6 +326,14 @@ export class EmployeeRepository {
           select: {
             user_id: true,
             name: true,
+            profile_blob: {
+              select: {
+                id: true,
+                name: true,
+                mime_type: true,
+                size: true,
+              },
+            },
           },
         },
         designation: {
@@ -356,24 +348,6 @@ export class EmployeeRepository {
         },
       },
     });
-
-    return results.map((emp) => ({
-      user_id: emp.user_id,
-      name: emp.name,
-      email: emp.user?.auth?.email ?? null,
-      manager: emp.manager,
-      designation: emp.designation,
-      department: emp.department,
-      profileImage: emp.profile_blob
-        ? {
-            id: emp.profile_blob.id,
-            name: emp.profile_blob.name,
-            mimeType: emp.profile_blob.mime_type,
-            size: emp.profile_blob.size,
-            url: `/blob/${emp.profile_blob.id}/view`,
-          }
-        : null,
-    }));
   }
 
   async getAdminCompanyId(adminId: number): Promise<number | null> {

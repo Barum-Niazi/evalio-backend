@@ -17,8 +17,38 @@ export class EmployeeService {
   ) {}
 
   async getEmployees(companyId: number) {
-    return this.employeeRepository.getEmployeesByCompany(companyId);
+    const result =
+      await this.employeeRepository.getEmployeesByCompany(companyId);
+
+    return result.map((emp) => ({
+      user_id: emp.user_id,
+      name: emp.name,
+      email: emp.user?.auth?.email ?? null,
+      manager: emp.manager
+        ? {
+            user_id: emp.manager.user_id,
+            name: emp.manager.name,
+            profileImage: emp.manager.profile_blob
+              ? {
+                  id: emp.manager.profile_blob.id,
+                  name: emp.manager.profile_blob.name,
+                  url: `/blob/${emp.manager.profile_blob.id}/view`,
+                }
+              : null,
+          }
+        : null,
+      designation: emp.designation,
+      department: emp.department,
+      profileImage: emp.profile_blob
+        ? {
+            id: emp.profile_blob.id,
+            name: emp.profile_blob.name,
+            url: `/blob/${emp.profile_blob.id}/view`,
+          }
+        : null,
+    }));
   }
+
   async addEmployees(adminId: number, addEmployeeDto: { employees: any[] }) {
     const companyId = await this.employeeRepository.getAdminCompanyId(adminId);
 
