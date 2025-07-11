@@ -23,6 +23,7 @@ export class UserRepository {
       select: {
         email: true,
         password: true, // Include the email field
+        google_email: true, // Include Google email if available
         user: {
           select: {
             id: true, // Include user ID

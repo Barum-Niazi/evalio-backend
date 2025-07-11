@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import * as argon2 from 'argon2'; // Import Argon2
+import { google } from 'googleapis';
 
 @Injectable()
 export class AuthService {
@@ -54,14 +55,13 @@ export class AuthService {
     if (!user || !user.roles || user.roles.length === 0) {
       throw new UnauthorizedException('User has no assigned role');
     }
-
     const roles = user.roles.map((ur) => ur.role.name); // Extract role names
-
     return {
       id: user.id,
       email: userAuth.email,
       roles,
       companyId: user.details?.company_id,
+      googleEmail: userAuth.google_email || null,
     };
   }
 
@@ -71,6 +71,7 @@ export class AuthService {
       email: user.email,
       roles: user.roles,
       companyId: user.companyId,
+      googleEmail: user.googleEmail || null, // Handle optional Google email
     };
 
     return {
@@ -78,6 +79,7 @@ export class AuthService {
       roles: user.roles,
       access_token: this.jwtService.sign(payload),
       companyId: user.companyId,
+      googleEmail: user.googleEmail || null, // Handle optional Google email
     };
   }
 
