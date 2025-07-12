@@ -487,4 +487,40 @@ export class FeedbackService {
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
   }
+
+  async getFeedbackEngagement(companyId: number) {
+    return this.feedbackRepository.getFeedbackEngagement(companyId);
+  }
+
+  async getTopFeedbackGivers(companyId: number) {
+    return this.feedbackRepository.getTopFeedbackGivers(companyId);
+  }
+
+  async getFeedbackByDepartment(companyId: number) {
+    return this.feedbackRepository.getFeedbackByDepartment(companyId);
+  }
+
+  async getDisengagedUsers(companyId: number) {
+    return this.feedbackRepository.getDisengagedUsers(companyId);
+  }
+
+  async getAnonymousFeedbackCount(companyId: number) {
+    return this.feedbackRepository.getAnonymousFeedbackCount(companyId);
+  }
+  async getUsersNeverReceivedFeedback(companyId: number) {
+    return this.feedbackRepository.getUsersNeverReceivedFeedback(companyId);
+  }
+
+  async getUsersNeverGivenFeedback(companyId: number) {
+    return this.feedbackRepository.getUsersNeverGivenFeedback(companyId);
+  }
+  async getTopReceiversThisMonth(companyId: number) {
+    return this.feedbackRepository.getTopReceiversThisMonth(companyId);
+  }
+  async getNegativeSentimentCount(companyId: number) {
+    return this.feedbackRepository.getNegativeSentimentCount(companyId);
+  }
+  async getFeedbacksReceivedThisWeek(companyId: number) {
+    return this.feedbackRepository.getFeedbacksReceivedThisWeek(companyId);
+  }
 }

@@ -29,6 +29,8 @@ import {
   UpdateFeedbackRequestDto,
 } from './dto/feedback-request.dto';
 import { FeedbackRequestService } from './feedback-request.service';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { Roles } from 'src/decorators/roles.decorators';
 
 @UseGuards(JwtAuthGuard)
 @Controller('feedback')
@@ -112,6 +114,78 @@ export class FeedbackController {
     }
   }
 
+  @Get('engagement')
+  @UseGuards(RolesGuard)
+  @Roles('Admin')
+  getFeedbackEngagement(@Request() req) {
+    return this.feedbackService.getFeedbackEngagement(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('top-givers')
+  getTopFeedbackGivers(@Request() req) {
+    return this.feedbackService.getTopFeedbackGivers(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('by-department')
+  getFeedbackByDepartment(@Request() req) {
+    return this.feedbackService.getFeedbackByDepartment(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('disengaged-users')
+  getDisengagedUsers(@Request() req) {
+    return this.feedbackService.getDisengagedUsers(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('anonymous-count')
+  getAnonymousFeedbackCount(@Request() req) {
+    return this.feedbackService.getAnonymousFeedbackCount(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('never-received')
+  getUsersNeverReceivedFeedback(@Request() req) {
+    return this.feedbackService.getUsersNeverReceivedFeedback(
+      req.user.companyId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('never-given')
+  getUsersNeverGivenFeedback(@Request() req) {
+    return this.feedbackService.getUsersNeverGivenFeedback(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('top-receivers-month')
+  getTopReceiversThisMonth(@Request() req) {
+    return this.feedbackService.getTopReceiversThisMonth(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('negative-sentiment-count')
+  getNegativeSentimentCount(@Request() req) {
+    return this.feedbackService.getNegativeSentimentCount(req.user.companyId);
+  }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('weekly-received')
+  getFeedbacksReceivedThisWeek(@Request() req) {
+    return this.feedbackService.getFeedbacksReceivedThisWeek(
+      req.user.companyId,
+    );
+  }
   @Post('/request')
   async createRequest(
     @Request() req,
