@@ -417,21 +417,55 @@ export class EmployeeRepository {
     return admin.company_id;
   }
 
-  async getEmployeesWithoutDepartment(companyId: number): Promise<
-    {
-      user_id: number;
-      name: string;
-      designation: { title: string } | null;
-    }[]
-  > {
+  async getEmployeesWithoutDepartment(companyId: number) {
     return this.prisma.user_details.findMany({
       where: {
         company_id: companyId,
-        department: null, // Filter for employees without a department
+        department: null,
+        user: {
+          roles: {
+            none: {
+              role: {
+                name: 'Admin',
+              },
+            },
+          },
+        },
       },
       select: {
         user_id: true,
         name: true,
+        profile_blob: {
+          select: {
+            id: true,
+            name: true,
+            mime_type: true,
+            size: true,
+          },
+        },
+        user: {
+          select: {
+            auth: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        },
+        manager: {
+          select: {
+            user_id: true,
+            name: true,
+            profile_blob: {
+              select: {
+                id: true,
+                name: true,
+                mime_type: true,
+                size: true,
+              },
+            },
+          },
+        },
         designation: {
           select: {
             title: true,
