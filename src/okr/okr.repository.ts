@@ -444,4 +444,100 @@ export class OkrRepository {
       overdue,
     };
   }
+
+  async getOverdueKeyResults(companyId: number) {
+    const today = new Date();
+
+    const count = await this.prisma.key_results.count({
+      where: {
+        progress: {
+          lt: 100,
+        },
+        okr: {
+          company_id: companyId,
+          due_date: {
+            lt: today,
+          },
+        },
+      },
+    });
+
+    return { overdue_key_results: count };
+  }
+  async getUsersWithoutOkrs(companyId: number) {
+    const allUsers = await this.prisma.user_details.findMany({
+      where: {
+        company_id: companyId,
+      },
+      select: {
+        user_id: true,
+        name: true,
+        profile_blob_id: true,
+        designation: {
+          select: { title: true },
+        },
+      },
+    });
+
+    const assignedUserIds = await this.prisma.user_okrs.findMany({
+      where: {
+        user: {
+          company_id: companyId,
+        },
+      },
+      select: {
+        user_id: true,
+      },
+      distinct: ['user_id'],
+    });
+
+    const assignedSet = new Set(assignedUserIds.map((u) => u.user_id));
+
+    const unassignedUsers = allUsers.filter((u) => !assignedSet.has(u.user_id));
+
+    return {
+      usersWithoutOkrs: unassignedUsers.length,
+      //   users: unassignedUsers.map((u) => ({
+      //     userId: u.user_id,
+      //     name: u.name,
+      //     designation: u.designation?.title ?? null,
+      //     profileImageUrl: u.profile_blob_id
+      //       ? `/blob/${u.profile_blob_id}/view`
+      //       : null,
+      //   })),
+    };
+  }
+
+  async getDepartmentsWithoutOkrs(companyId: number) {
+    const departments = await this.prisma.department.findMany({
+      where: {
+        company_id: companyId,
+        okrs: {
+          none: {},
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    return {
+      departmentsWithoutOkrs: departments.length,
+      departments,
+    };
+  }
+
+  async getKeyResultsWithZeroProgress(companyId: number) {
+    const count = await this.prisma.key_results.count({
+      where: {
+        progress: 0,
+        okr: {
+          company_id: companyId,
+        },
+      },
+    });
+
+    return { keyResultsWithZeroProgress: count };
+  }
 }

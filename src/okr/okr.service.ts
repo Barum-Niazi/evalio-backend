@@ -241,4 +241,31 @@ export class OkrService {
   async getOkrDueStatus(companyId: number) {
     return this.okrRepository.getOkrDueStatus(companyId);
   }
+
+  async getOverdueKeyResults(companyId: number) {
+    return this.okrRepository.getOverdueKeyResults(companyId);
+  }
+
+  async getCompletedOkrs(companyId: number) {
+    const okrs = await this.okrRepository.getOkrsWithKeyResults(companyId);
+
+    const completed = okrs.filter((okr) => {
+      const progress = calculateOkrProgress(okr.key_results);
+      return progress === 100;
+    });
+
+    return { completedOkrCount: completed.length };
+  }
+
+  async getUsersWithoutOkrs(companyId: number) {
+    return this.okrRepository.getUsersWithoutOkrs(companyId);
+  }
+
+  async getDepartmentsWithoutOkrs(companyId: number) {
+    return this.okrRepository.getDepartmentsWithoutOkrs(companyId);
+  }
+
+  async getKeyResultsWithZeroProgress(companyId: number) {
+    return this.okrRepository.getKeyResultsWithZeroProgress(companyId);
+  }
 }

@@ -112,7 +112,40 @@ export class OkrController {
   getOkrDueStatus(@Request() req) {
     return this.okrService.getOkrDueStatus(req.user.companyId);
   }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('overdue-key-results')
+  getOverdueKeyResults(@Request() req) {
+    return this.okrService.getOverdueKeyResults(req.user.companyId);
+  }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('completed-okrs')
+  getCompletedOkrs(@Request() req) {
+    return this.okrService.getCompletedOkrs(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('users-without-okrs')
+  getUsersWithoutOkrs(@Request() req) {
+    return this.okrService.getUsersWithoutOkrs(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('departments-without-okrs')
+  getDepartmentsWithoutOkrs(@Request() req) {
+    return this.okrService.getDepartmentsWithoutOkrs(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('key-results-zero-progress')
+  getKeyResultsWithZeroProgress(@Request() req) {
+    return this.okrService.getKeyResultsWithZeroProgress(req.user.companyId);
+  }
   // Always keep this last!
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {

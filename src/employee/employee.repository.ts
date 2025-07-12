@@ -80,7 +80,7 @@ export class EmployeeRepository {
           create: {
             name,
             profile_blob: {
-              connect: { id: Math.floor(Math.random() * 2) + 1 },
+              connect: { id: Math.floor(Math.random() * 5) + 1 },
             },
             company: { connect: { id: companyId } },
             manager: managerId
@@ -192,7 +192,7 @@ export class EmployeeRepository {
               create: {
                 name: employee.name,
                 profile_blob: {
-                  connect: { id: Math.floor(Math.random() * 2) + 1 },
+                  connect: { id: Math.floor(Math.random() * 5) + 1 },
                 },
                 company: {
                   connect: { id: employee.companyId },
