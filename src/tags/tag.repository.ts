@@ -41,6 +41,16 @@ export class TagRepository {
     });
   }
 
+  async findSimilarTags(name: string): Promise<tags[]> {
+    return this.prisma.tags.findMany({
+      where: {
+        name: {
+          startsWith: name,
+          mode: 'insensitive',
+        },
+      },
+    });
+  }
   /**
    * ✅ Link an entity to an existing tag (auto-tagging an entity).
    */

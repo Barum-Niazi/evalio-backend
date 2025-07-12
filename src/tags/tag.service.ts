@@ -38,13 +38,24 @@ export class TagService {
     parentId?: number,
     parentType?: string,
   ) {
-    const existingTag = await this.tagRepository.findTagByName(name);
+    const similarTags = await this.tagRepository.findSimilarTags(name);
 
-    if (existingTag) {
-      throw new BadRequestException('Tag already exists');
+    let finalName = name;
+
+    if (similarTags.length > 0) {
+      // Extract the highest numbered tag (e.g., "Q1 Review #3")
+      const nextIndex = similarTags
+        .map((tag) => {
+          const match = tag.name.match(/#(\d+)$/);
+          return match ? parseInt(match[1], 10) : 1;
+        })
+        .reduce((max, n) => Math.max(max, n), 1);
+
+      finalName = `${name} #${nextIndex + 1}`;
     }
+
     return this.tagRepository.createTagforEntities(
-      name,
+      finalName,
       description,
       parentId,
       parentType,
