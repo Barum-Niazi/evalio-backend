@@ -212,20 +212,16 @@ export class MeetingRepository {
       },
     });
   }
-  async updateMeetingFields(meetingId: number, data: Partial<meetings>) {
+  async updateMeeting(meetingId: number, dto: UpdateMeetingDto) {
     return this.prisma.meetings.update({
       where: { id: meetingId },
-      data,
-    });
-  }
-  async updateMeetingMetadata(id: number, dto: UpdateMeetingDto) {
-    return this.prisma.meetings.update({
-      where: { id },
       data: {
         title: dto.title,
         description: dto.description,
         scheduled_at: dto.scheduled_at ? new Date(dto.scheduled_at) : undefined,
-        audit: { updated_at: new Date() },
+        audit: {
+          updated_at: new Date(),
+        },
       },
     });
   }
@@ -247,6 +243,7 @@ export class MeetingRepository {
         author_id,
         content,
         visible_to_other,
+        // rating: null, // assuming rating is optional and can be null
       },
     });
   }
@@ -393,6 +390,26 @@ export class MeetingRepository {
   async deleteAgendaById(agendaId: number) {
     return this.prisma.meeting_agenda_item.delete({
       where: { id: agendaId },
+    });
+  }
+
+  async findNoteByContent(
+    meetingId: number,
+    content: string,
+    authorId: number,
+  ) {
+    return this.prisma.meeting_notes.findFirst({
+      where: {
+        meeting_id: meetingId,
+        content,
+        author_id: authorId,
+      },
+    });
+  }
+
+  async deleteNoteById(noteId: number) {
+    return this.prisma.meeting_notes.delete({
+      where: { id: noteId },
     });
   }
 }

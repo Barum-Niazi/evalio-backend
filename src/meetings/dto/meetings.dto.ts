@@ -39,13 +39,17 @@ export class CreateMeetingDto {
     visible_to_other?: boolean;
   };
 }
-class NoteUpdateDto {
+export class AddNoteDto {
   @IsString()
   content: string;
 
   @IsOptional()
   @IsBoolean()
   visible_to_other?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  rating?: number;
 }
 
 export class UpdateMeetingDto {
@@ -68,16 +72,6 @@ export class UpdateMeetingDto {
   @IsOptional()
   @IsInt()
   attendee_id?: number;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  agenda_items?: string[];
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => NoteUpdateDto)
-  note_update?: NoteUpdateDto;
 }
 
 export class addAgendaDto {
@@ -86,6 +80,11 @@ export class addAgendaDto {
 }
 
 export class deleteAgendaDto {
+  @IsString()
+  content: string;
+}
+
+export class DeleteNoteDto {
   @IsString()
   content: string;
 }

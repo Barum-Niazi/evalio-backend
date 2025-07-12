@@ -18,6 +18,8 @@ import {
   CreateMeetingDto,
   UpdateMeetingDto,
   deleteAgendaDto,
+  AddNoteDto,
+  DeleteNoteDto,
 } from './dto/meetings.dto';
 import { PermissionsGuard } from 'src/guards/permissions.guard';
 import { Permissions } from 'src/decorators/permissions.decorators';
@@ -65,6 +67,16 @@ export class MeetingController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('add-note/:id')
+  async addNote(
+    @Param('id') meetingId: string,
+    @Body() dto: AddNoteDto,
+    @Request() req,
+  ) {
+    const userId = req.user.id;
+    return this.meetingService.addNote(+meetingId, dto, userId);
+  }
+  @UseGuards(JwtAuthGuard)
   @Delete('delete-agenda/:id')
   async deleteAgendaItemByContent(
     @Param('id') meetingId: string,
@@ -75,6 +87,20 @@ export class MeetingController {
     return this.meetingService.deleteAgendaItemByContent(
       +meetingId,
       deleteAgendaDto.content,
+      userId,
+    );
+  }
+  @UseGuards(JwtAuthGuard)
+  @Delete('delete-note/:id')
+  async deleteNoteByContent(
+    @Param('id') meetingId: string,
+    @Body() dto: DeleteNoteDto,
+    @Request() req,
+  ) {
+    const userId = req.user.id;
+    return this.meetingService.deleteNoteByContent(
+      +meetingId,
+      dto.content,
       userId,
     );
   }

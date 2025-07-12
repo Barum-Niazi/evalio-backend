@@ -17,6 +17,7 @@ export class MeetingFormatter {
       .filter((n) => n.author_id === userId)
       .map((n) => ({
         content: n.content,
+        author_id: n.author_id,
         visible_to_other: n.visible_to_other,
         created_at: n.created_at,
       }));

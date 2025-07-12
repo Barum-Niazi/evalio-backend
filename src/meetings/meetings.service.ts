@@ -3,7 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateMeetingDto, UpdateMeetingDto } from './dto/meetings.dto';
+import {
+  AddNoteDto,
+  CreateMeetingDto,
+  UpdateMeetingDto,
+} from './dto/meetings.dto';
 import { MeetingRepository } from './meetings.repository';
 import { GoogleService } from 'src/services/google.service'; // adjust path
 import { NotificationService } from 'src/notification/notification.service';
@@ -12,6 +16,7 @@ import { MeetingFormatter } from './meeting.formatter';
 import { TeamService } from 'src/team/team.service';
 import { getISOWeek } from 'src/utils/dates';
 import { UserRepository } from 'src/user/user.repository';
+import { meetings } from '@prisma/client';
 
 @Injectable()
 export class MeetingService {
@@ -133,7 +138,6 @@ export class MeetingService {
 
     return this.formatter.formatFullMeetingResponse(meetingId, userId);
   }
-
   async updateMeeting(
     meetingId: number,
     dto: UpdateMeetingDto,
@@ -142,39 +146,27 @@ export class MeetingService {
     const meeting = await this.meetingRepository.findById(meetingId);
     if (!meeting) throw new NotFoundException('Meeting not found');
 
-    const isCreator = meeting.scheduled_by_id === userId;
-    if (!isCreator) {
-      throw new ForbiddenException('Only the creator can update the meeting');
+    if (meeting.scheduled_by_id !== userId) {
+      throw new ForbiddenException('Only the creator can update this meeting');
     }
 
-    const updatedAttendeeId =
-      dto.attendee_id ??
-      meeting.attendees.find((a) => a.user_id !== userId)?.user_id;
+    const start = new Date(dto.scheduled_at || meeting.scheduled_at);
+    const duration = dto.duration_minutes ?? 30;
+    const end = new Date(start.getTime() + duration * 60000);
 
-    const attendeeIds = [userId, updatedAttendeeId];
-
-    const shouldSync =
-      dto.scheduled_at || dto.attendee_id || dto.title || dto.description;
-
-    if (shouldSync && meeting.google_event_id) {
-      const auth = await this.meetingRepository.getUserGoogleTokens(userId);
-      if (!auth?.google_access_token || !auth?.google_refresh_token) {
-        throw new ForbiddenException('Google tokens not found for user');
+    if (meeting.google_event_id) {
+      const tokens = await this.meetingRepository.getUserGoogleTokens(userId);
+      if (!tokens?.google_access_token || !tokens?.google_refresh_token) {
+        throw new ForbiddenException('Google tokens not found');
       }
 
       this.googleService.setToken({
-        access_token: auth.google_access_token,
-        refresh_token: auth.google_refresh_token,
+        access_token: tokens.google_access_token,
+        refresh_token: tokens.google_refresh_token,
       });
 
-      const start = dto.scheduled_at
-        ? new Date(dto.scheduled_at)
-        : new Date(meeting.scheduled_at);
-
-      const duration = dto.duration_minutes ?? 30;
-      const end = new Date(start.getTime() + duration * 60 * 1000);
-
-      const attendeeEmails =
+      const attendeeIds = meeting.attendees.map((a) => a.user_id);
+      const emails =
         await this.meetingRepository.getGoogleEmailsByUserIds(attendeeIds);
 
       const result = await this.googleService.updateGoogleEvent(
@@ -183,7 +175,7 @@ export class MeetingService {
         dto.description ?? meeting.description ?? '',
         start,
         end,
-        attendeeEmails,
+        emails,
       );
 
       if (result.newTokens?.access_token) {
@@ -192,36 +184,13 @@ export class MeetingService {
         });
       }
 
-      await this.meetingRepository.updateMeetingFields(meetingId, {
-        title: dto.title,
-        description: dto.description,
-        scheduled_at: dto.scheduled_at ? new Date(dto.scheduled_at) : undefined,
-      });
-
       const message = `Your meeting "${dto.title ?? meeting.title}" has been updated.`;
       for (const id of attendeeIds) {
         await this.notificationService.create(id, 1, message, result.meetLink);
       }
     }
 
-    // 📝 Update note if provided
-    if (dto.note_update?.content) {
-      await this.meetingRepository.addMeetingNote({
-        meeting_id: meetingId,
-        author_id: userId,
-        content: dto.note_update.content,
-        visible_to_other: dto.note_update.visible_to_other ?? false,
-      });
-    }
-
-    // Replace agenda items if provided
-    if (dto.agenda_items?.length) {
-      await this.meetingRepository.replaceAgendaItems(
-        meetingId,
-        userId,
-        dto.agenda_items,
-      );
-    }
+    await this.meetingRepository.updateMeeting(meetingId, dto);
 
     return this.formatter.formatFullMeetingResponse(meetingId, userId);
   }
@@ -411,5 +380,49 @@ export class MeetingService {
     }
 
     return this.meetingRepository.deleteAgendaById(agenda.id);
+  }
+
+  async addNote(meetingId: number, dto: AddNoteDto, userId: number) {
+    const meeting = await this.meetingRepository.findById(meetingId);
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
+    const isAttendee = meeting.attendees.some((a) => a.user_id === userId);
+    const isCreator = meeting.scheduled_by_id === userId;
+
+    if (!isAttendee && !isCreator) {
+      throw new ForbiddenException('You are not part of this meeting');
+    }
+
+    return this.meetingRepository.addMeetingNote({
+      meeting_id: meetingId,
+      author_id: userId,
+      content: dto.content,
+      visible_to_other: dto.visible_to_other ?? false,
+    });
+  }
+
+  async deleteNoteByContent(
+    meetingId: number,
+    content: string,
+    userId: number,
+  ) {
+    const note = await this.meetingRepository.findNoteByContent(
+      meetingId,
+      content,
+      userId,
+    );
+    if (!note) throw new NotFoundException('Note not found');
+
+    const meeting = await this.meetingRepository.findById(meetingId);
+    const isCreator = meeting.scheduled_by_id === userId;
+    const isAuthor = note.author_id === userId;
+
+    if (!isCreator && !isAuthor) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this note',
+      );
+    }
+
+    return this.meetingRepository.deleteNoteById(note.id);
   }
 }
