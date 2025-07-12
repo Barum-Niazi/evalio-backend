@@ -15,6 +15,8 @@ import {
 import { OkrService } from './okr.service';
 import { CreateOkrDto, UpdateOkrDto } from './dto/okr.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { Roles } from 'src/decorators/roles.decorators';
 
 @UseGuards(JwtAuthGuard)
 @Controller('okrs')
@@ -67,6 +69,34 @@ export class OkrController {
     @Param('departmentId', ParseIntPipe) departmentId: number,
   ) {
     return this.okrService.getByDepartment(departmentId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('user-okr-count')
+  getUserOkrCount(@Request() req) {
+    return this.okrService.getUserOkrCount(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('avg-progress-per-okr')
+  getAvgProgressPerOkr(@Request() req) {
+    return this.okrService.getAvgProgressPerOkr(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('department-okr-count')
+  getOkrCountByDepartment(@Request() req) {
+    return this.okrService.getOkrCountByDepartment(req.user.companyId);
+  }
+
+  @Get('empty-okrs')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  getOkrsWithNoKeyResults(@Request() req) {
+    return this.okrService.getOkrsWithNoKeyResults(req.user.companyId);
   }
 
   @Get(':id')

@@ -189,7 +189,7 @@ model key_results {
   title       String   // Description of the Key Result
   okr_id       Int      // Relation to OKR
   okr         okrs     @relation(fields: [okr_id], references: [id])
-  weight     Int      @default(0) // Weight of the Key Result (0-100)
+  weight     Int      @default(100) // Weight of the Key Result (0-100)
   child_key_results key_results[] @relation("parent_key_result") // Relation for child key results
   parent_key_result key_results? @relation("parent_key_result", fields: [parent_key_result_id], references: [id]) // Relation for parent key result
   progress    Float    @default(0) // Progress percentage (0-100)

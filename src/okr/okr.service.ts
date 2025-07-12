@@ -173,4 +173,30 @@ export class OkrService {
       departments,
     }));
   }
+
+  async getUserOkrCount(companyId: number) {
+    return this.okrRepository.getUserOkrCount(companyId);
+  }
+
+  async getAvgProgressPerOkr(companyId: number) {
+    const okrsWithKRs =
+      await this.okrRepository.getOkrsWithKeyResults(companyId);
+
+    return okrsWithKRs.map((okr) => {
+      const progress = calculateOkrProgress(okr.key_results);
+      return {
+        okrId: okr.id,
+        title: okr.title,
+        avgProgress: progress,
+      };
+    });
+  }
+
+  async getOkrCountByDepartment(companyId: number) {
+    return this.okrRepository.getOkrCountByDepartment(companyId);
+  }
+
+  async getOkrsWithNoKeyResults(companyId: number) {
+    return this.okrRepository.getOkrsWithNoKeyResults(companyId);
+  }
 }

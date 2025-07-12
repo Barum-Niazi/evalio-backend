@@ -286,4 +286,105 @@ export class OkrRepository {
       },
     });
   }
+
+  async getUserOkrCount(companyId: number) {
+    const data = await this.prisma.user_okrs.groupBy({
+      by: ['user_id'],
+      _count: true,
+      where: {
+        user: {
+          company_id: companyId,
+        },
+      },
+    });
+
+    const withNames = await Promise.all(
+      data.map(async (entry) => {
+        const user = await this.prisma.user_details.findUnique({
+          where: { user_id: entry.user_id },
+          select: {
+            name: true,
+            profile_blob_id: true,
+          },
+        });
+
+        return {
+          userId: entry.user_id,
+          name: user?.name ?? 'Unknown',
+          count: entry._count,
+          profileImageUrl: user?.profile_blob_id
+            ? `/blob/${user.profile_blob_id}/view`
+            : null,
+        };
+      }),
+    );
+
+    return withNames;
+  }
+
+  async getOkrsWithKeyResults(companyId: number) {
+    return this.prisma.okrs.findMany({
+      where: { company_id: companyId },
+      select: {
+        id: true,
+        title: true,
+        key_results: {
+          select: {
+            id: true,
+            parent_key_result_id: true,
+            progress: true,
+            weight: true,
+          },
+        },
+      },
+    });
+  }
+  async getOkrCountByDepartment(companyId: number) {
+    const data = await this.prisma.okrs.groupBy({
+      by: ['department_id'],
+      _count: true,
+      where: {
+        company_id: companyId,
+      },
+    });
+
+    const withNames = await Promise.all(
+      data.map(async (entry) => {
+        const dept = entry.department_id
+          ? await this.prisma.department.findUnique({
+              where: { id: entry.department_id },
+              select: { name: true },
+            })
+          : null;
+
+        return {
+          departmentId: entry.department_id,
+          departmentName: dept?.name ?? 'Unassigned',
+          count: entry._count,
+        };
+      }),
+    );
+
+    return withNames;
+  }
+
+  async getOkrsWithNoKeyResults(companyId: number) {
+    const okrs = await this.prisma.okrs.findMany({
+      where: {
+        company_id: companyId,
+        key_results: {
+          none: {}, // means no key_results
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+    return {
+      count: okrs.length,
+      items: okrs,
+    };
+  }
 }
