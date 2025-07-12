@@ -4,6 +4,7 @@ import { UserRepository } from 'src/user/user.repository';
 import { AddEmployeesToDepartmentsDto } from './dto/add-employees.dto';
 import { calculateOkrProgress } from 'src/okr/okr,utils';
 import { transformDepartmentResponse } from './department.utils';
+import { RemoveEmployeesFromDepartmentsDto } from './dto/remove-employees.dto';
 
 @Injectable()
 export class DepartmentService {
@@ -78,5 +79,16 @@ export class DepartmentService {
       ...department,
       progressBreakdown: stats,
     });
+  }
+
+  async removeEmployeesFromDepartments(
+    dto: RemoveEmployeesFromDepartmentsDto,
+    companyId: number,
+  ): Promise<{ removed: number[]; notFound: number[] }> {
+    return this.departmentRepository.removeEmployeesFromDepartment(
+      dto.departmentId,
+      dto.employeeIds,
+      companyId,
+    );
   }
 }

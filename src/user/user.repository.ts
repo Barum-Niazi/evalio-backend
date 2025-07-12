@@ -197,6 +197,7 @@ export class UserRepository {
                 size: true,
               },
             },
+            metadata: true, // Include metadata if available
           },
         },
       },

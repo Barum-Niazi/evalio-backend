@@ -19,12 +19,14 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Roles } from '../decorators/roles.decorators';
 import { AddEmployeesToDepartmentsDto } from './dto/add-employees.dto';
 import { use } from 'passport';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { RemoveEmployeesFromDepartmentsDto } from './dto/remove-employees.dto';
 
 @Controller('departments')
 export class DepartmentController {
   constructor(private readonly departmentService: DepartmentService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
   @Post('create')
   async createDepartment(
@@ -38,8 +40,8 @@ export class DepartmentController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
-  // @Roles('Admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
   @Get('all')
   async getAllDepartments(@Request() req) {
     const companyId = req.user.companyId;
@@ -51,7 +53,7 @@ export class DepartmentController {
     return this.departmentService.getDepartmentsByCompany(companyId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
   @Get('details/:id')
   async getDetails(@Param('id', ParseIntPipe) id: number) {
@@ -62,7 +64,35 @@ export class DepartmentController {
     return department;
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Post('add-employees')
+  async addEmployeesToDepartments(
+    @Body() dto: AddEmployeesToDepartmentsDto,
+    @Request() req,
+  ) {
+    const adminCompanyId = req.user.companyId;
+    return this.departmentService.addEmployeesToDepartments(
+      dto,
+      adminCompanyId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Delete('remove-employees')
+  async removeEmployeesFromDepartments(
+    @Body() dto: RemoveEmployeesFromDepartmentsDto,
+    @Request() req,
+  ) {
+    const adminCompanyId = req.user.companyId;
+    return this.departmentService.removeEmployeesFromDepartments(
+      dto,
+      adminCompanyId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
   @Put(':id')
   async updateDepartment(
@@ -75,24 +105,10 @@ export class DepartmentController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
   @Delete(':id')
   async deleteDepartment(@Param('id') id: number) {
     return this.departmentService.deleteDepartment(id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Roles('Admin')
-  @Post('add-employees')
-  async addEmployeesToDepartments(
-    @Body() dto: AddEmployeesToDepartmentsDto,
-    @Request() req,
-  ) {
-    const adminCompanyId = req.user.companyId;
-    return this.departmentService.addEmployeesToDepartments(
-      dto,
-      adminCompanyId,
-    );
   }
 }

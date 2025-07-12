@@ -52,7 +52,7 @@ export class UserService {
       company: user.details?.company,
       department: user.details?.department?.name || null,
       designation: user.details?.designation?.title || null,
-
+      metadata: user.details?.metadata || null,
       manager: user.details?.manager
         ? {
             user_id: user.details.manager.user_id,

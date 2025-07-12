@@ -179,4 +179,33 @@ export class DepartmentRepository {
       },
     });
   }
+
+  async removeEmployeesFromDepartment(
+    departmentId: number,
+    employeeIds: number[],
+    companyId: number,
+  ): Promise<{ removed: number[]; notFound: number[] }> {
+    const foundEmployees = await this.prisma.user_details.findMany({
+      where: {
+        user_id: { in: employeeIds },
+        department_id: departmentId,
+        company_id: companyId,
+      },
+      select: { user_id: true },
+    });
+
+    const foundIds = foundEmployees.map((e) => e.user_id);
+    const notFound = employeeIds.filter((id) => !foundIds.includes(id));
+
+    await this.prisma.user_details.updateMany({
+      where: {
+        user_id: { in: foundIds },
+      },
+      data: {
+        department_id: null,
+      },
+    });
+
+    return { removed: foundIds, notFound };
+  }
 }
