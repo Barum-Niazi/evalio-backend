@@ -25,7 +25,6 @@ export class OkrController {
 
   @Post()
   create(@Body() dto: CreateOkrDto, @Request() req) {
-    console.log(req.user);
     dto.companyId = req.user.companyId;
     dto.userId = req.user.id;
     return this.okrService.create(dto);
@@ -71,6 +70,7 @@ export class OkrController {
     return this.okrService.getByDepartment(departmentId);
   }
 
+  // Admin-only routes
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
   @Get('user-okr-count')
@@ -92,16 +92,30 @@ export class OkrController {
     return this.okrService.getOkrCountByDepartment(req.user.companyId);
   }
 
-  @Get('empty-okrs')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
+  @Get('empty-okrs')
   getOkrsWithNoKeyResults(@Request() req) {
     return this.okrService.getOkrsWithNoKeyResults(req.user.companyId);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('top-performers')
+  getTopPerformers(@Request() req) {
+    return this.okrService.getTopPerformers(req.user.companyId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @Get('due-status-count')
+  getOkrDueStatus(@Request() req) {
+    return this.okrService.getOkrDueStatus(req.user.companyId);
+  }
+
+  // Always keep this last!
   @Get(':id')
-  findOne(@Param('id') id: number) {
-    console.log('in find one');
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.okrService.findOne(id);
   }
 
@@ -118,7 +132,7 @@ export class OkrController {
   }
 
   @Delete(':id')
-  delete(@Param('id') id: number) {
-    return this.okrService.delete(+id);
+  delete(@Param('id', ParseIntPipe) id: number) {
+    return this.okrService.delete(id);
   }
 }

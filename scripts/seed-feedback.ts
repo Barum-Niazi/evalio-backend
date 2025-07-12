@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3333';
 const TOKEN =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImVtYWlsIjoiam9obi5tYW5hZ2VyQGV4YW1wbGUuY29tIiwicm9sZXMiOlsiRW1wbG95ZWUiLCJNYW5hZ2VyIiwiRXhlY3V0aXZlIl0sImNvbXBhbnlJZCI6MywiaWF0IjoxNzQ1NDAyODQzLCJleHAiOjE3NDU0MDY0NDN9.LWHI6a6XtQ-tmn5l-4Y_6j5U1nE6iH0mxY7iB90ilf8'; // Replace with your actual JWT
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImVtYWlsIjoiamFuZS5tYW5hZ2VyQGV4YW1wbGUuY29tIiwicm9sZXMiOlsiRW1wbG95ZWUiLCJNYW5hZ2VyIl0sImNvbXBhbnlJZCI6MSwiZ29vZ2xlRW1haWwiOm51bGwsImlhdCI6MTc1MjM1MjM1MiwiZXhwIjoxNzUyNDM4NzUyfQ.Ka9rwnhrLXQjxm09eSJIpUnz4WlL66EN8ENM-6ea3HM';
 const USER_IDS = Array.from({ length: 13 }, (_, i) => i + 2); // [2..14]
 const senderId = 2; // Start sender (loop will override anyway)
 

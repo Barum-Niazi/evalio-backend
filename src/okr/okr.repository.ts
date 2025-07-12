@@ -387,4 +387,61 @@ export class OkrRepository {
       items: okrs,
     };
   }
+
+  async getUserOkrsWithKeyResults(companyId: number) {
+    return this.prisma.user_okrs.findMany({
+      where: {
+        user: {
+          company_id: companyId,
+        },
+      },
+      select: {
+        user_id: true,
+        user: {
+          select: {
+            name: true,
+            profile_blob_id: true,
+          },
+        },
+        okr: {
+          select: {
+            key_results: {
+              select: {
+                id: true,
+                progress: true,
+                weight: true,
+                parent_key_result_id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async getOkrDueStatus(companyId: number) {
+    const [upcoming, overdue] = await Promise.all([
+      this.prisma.okrs.count({
+        where: {
+          company_id: companyId,
+          due_date: {
+            gt: new Date(),
+          },
+        },
+      }),
+      this.prisma.okrs.count({
+        where: {
+          company_id: companyId,
+          due_date: {
+            lt: new Date(),
+          },
+        },
+      }),
+    ]);
+
+    return {
+      upcoming,
+      overdue,
+    };
+  }
 }

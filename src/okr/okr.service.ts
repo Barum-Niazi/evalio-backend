@@ -199,4 +199,46 @@ export class OkrService {
   async getOkrsWithNoKeyResults(companyId: number) {
     return this.okrRepository.getOkrsWithNoKeyResults(companyId);
   }
+
+  async getTopPerformers(companyId: number) {
+    const userOkrs =
+      await this.okrRepository.getUserOkrsWithKeyResults(companyId);
+
+    const userProgressMap: Record<
+      number,
+      { name: string; progressList: number[]; profile_blob_id?: number }
+    > = {};
+
+    for (const record of userOkrs) {
+      const progress = calculateOkrProgress(record.okr.key_results);
+      if (!userProgressMap[record.user_id]) {
+        userProgressMap[record.user_id] = {
+          name: record.user.name,
+          profile_blob_id: record.user.profile_blob_id ?? null,
+          progressList: [],
+        };
+      }
+      userProgressMap[record.user_id].progressList.push(progress);
+    }
+
+    const result = Object.entries(userProgressMap).map(([userId, data]) => {
+      const avg =
+        data.progressList.reduce((sum, p) => sum + p, 0) /
+        data.progressList.length;
+      return {
+        userId: +userId,
+        name: data.name,
+        avgProgress: Math.round(avg),
+        profileImageUrl: data.profile_blob_id
+          ? `/blob/${data.profile_blob_id}/view`
+          : null,
+      };
+    });
+
+    return result.sort((a, b) => b.avgProgress - a.avgProgress).slice(0, 5);
+  }
+
+  async getOkrDueStatus(companyId: number) {
+    return this.okrRepository.getOkrDueStatus(companyId);
+  }
 }
