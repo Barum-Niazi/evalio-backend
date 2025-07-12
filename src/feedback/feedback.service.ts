@@ -13,6 +13,7 @@ import { SentimentAnalysisService } from 'src/services/sentiment-analysis.servic
 import { filterAndFormatFeedbacks, transformFeedback } from './feedback.utils';
 import { TagRepository } from 'src/tags/tag.repository';
 import { UserRepository } from 'src/user/user.repository';
+import { TeamService } from 'src/team/team.service';
 
 @Injectable()
 export class FeedbackService {
@@ -23,6 +24,7 @@ export class FeedbackService {
     private readonly sentimentAnalysisService: SentimentAnalysisService,
     private readonly tagRepository: TagRepository,
     private readonly userRepository: UserRepository,
+    private readonly teamService: TeamService,
   ) {}
 
   /**
@@ -239,7 +241,6 @@ export class FeedbackService {
   ) {
     const feedbacks =
       await this.feedbackRepository.getAllFeedbackWithVisibility();
-
     let visibleFeedbacks = filterAndFormatFeedbacks(feedbacks, currentUser);
 
     if (query?.sentiment) {
@@ -248,7 +249,15 @@ export class FeedbackService {
       );
     }
 
-    if (query?.teamMemberId) {
+    // Handle team filtering logic
+    if (query?.entireTeam) {
+      const teamMembers = await this.teamService.getTeamMembers(currentUser.id);
+      const teamMemberIds = teamMembers.map((m) => m.user_id);
+
+      visibleFeedbacks = visibleFeedbacks.filter((fb) =>
+        teamMemberIds.includes(fb.receiver_id),
+      );
+    } else if (query?.teamMemberId) {
       visibleFeedbacks = visibleFeedbacks.filter(
         (fb) => fb.receiver_id === query.teamMemberId,
       );
@@ -272,7 +281,6 @@ export class FeedbackService {
       };
     });
 
-    // Filter by tags
     if (query?.tags?.length) {
       feedbacksWithTags = feedbacksWithTags.filter((fb) =>
         query.tags.every((requestedTag) =>
@@ -290,7 +298,6 @@ export class FeedbackService {
 
     const userBlobs =
       await this.userRepository.getProfileBlobsForUserIds(userIds);
-
     const profileBlobMap = new Map<number, any>();
     userBlobs.forEach((ub) => {
       if (ub.profile_blob) {

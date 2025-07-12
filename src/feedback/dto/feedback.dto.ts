@@ -87,6 +87,11 @@ export class ListAccessibleFeedbackDto {
   tags?: string[];
 
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => (value === 'true' ? true : false))
+  entireTeam?: boolean;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   teamMemberId?: number;
