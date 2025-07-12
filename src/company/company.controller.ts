@@ -12,6 +12,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  UploadedFile,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import {
@@ -20,11 +21,13 @@ import {
   UpdateCompanySettingsDto,
 } from './dto/company.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/decorators/roles.decorators';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { Permissions } from 'src/decorators/permissions.decorators';
 import { PermissionsGuard } from 'src/guards/permissions.guard';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 
 @Controller('company')
 export class CompanyController {
@@ -104,12 +107,37 @@ export class CompanyController {
     const companyId = req.user.companyId;
     return this.companyService.getCompanySettings(companyId);
   }
+
   @Patch()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
-  updateCompany(@Body() dto: UpdateCompanyDto, @Request() req) {
+  @UseInterceptors(FileInterceptor('logo'))
+  async updateCompany(
+    @Body() body: any, // skip auto-validation here
+    @Request() req,
+
+    @UploadedFile() logo?: Express.Multer.File,
+  ) {
     const companyId = req.user.companyId;
-    return this.companyService.updateCompany(companyId, dto);
+
+    // manually parse metadata JSON string
+    if (body.metadata && typeof body.metadata === 'string') {
+      try {
+        body.metadata = JSON.parse(body.metadata);
+      } catch (e) {
+        throw new BadRequestException(
+          'Invalid metadata format. Must be valid JSON.',
+        );
+      }
+    }
+
+    const dto = plainToInstance(UpdateCompanyDto, body);
+    const errors = await validate(dto);
+    if (errors.length > 0) {
+      throw new BadRequestException(errors);
+    }
+
+    return this.companyService.updateCompany(companyId, dto, logo);
   }
 
   @Patch('settings')

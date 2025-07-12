@@ -6,5 +6,6 @@ import { BlobRepository } from './blob.repository';
 @Module({
   providers: [BlobService, BlobRepository],
   controllers: [BlobController],
+  exports: [BlobService, BlobRepository],
 })
 export class BlobModule {}

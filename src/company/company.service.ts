@@ -16,6 +16,7 @@ import * as ExcelJS from 'exceljs';
 import * as csvParser from 'csv-parser';
 import { Readable } from 'stream';
 import { DepartmentRepository } from 'src/department/department.repository';
+import { BlobService } from 'src/blob/blob.service';
 
 @Injectable()
 export class CompanyService {
@@ -24,6 +25,7 @@ export class CompanyService {
     private readonly employeeRepository: EmployeeRepository,
     private readonly departmentRepository: DepartmentRepository,
     private readonly emailService: EmailService,
+    private readonly blobService: BlobService,
   ) {}
 
   async createCompany(
@@ -125,7 +127,11 @@ export class CompanyService {
       company,
     };
   }
-  async updateCompany(id: number, dto: UpdateCompanyDto) {
+  async updateCompany(
+    id: number,
+    dto: UpdateCompanyDto,
+    logo?: Express.Multer.File,
+  ) {
     const company = await this.companyRepository.findById(id);
     if (!company) throw new NotFoundException('Company not found');
 
@@ -134,12 +140,24 @@ export class CompanyService {
       ...((dto.metadata ?? {}) as Record<string, any>),
     };
 
-    return this.companyRepository.updateCompany(id, {
+    let logo_blob_id: number | undefined;
+    if (logo) {
+      const uploaded = await this.blobService.uploadBlob(logo);
+      logo_blob_id = uploaded.id;
+    }
+
+    const updatedCompany = await this.companyRepository.updateCompany(id, {
       name: dto.name,
       address: dto.address,
       description: dto.description,
       metadata: updatedMetadata,
+      ...(logo_blob_id && { logo_blob_id }),
     });
+
+    return {
+      ...updatedCompany,
+      ...(logo_blob_id && { logoUrl: `/blob/${logo_blob_id}/view` }),
+    };
   }
   async getCompany(companyId: number) {
     const company = await this.companyRepository.findById(companyId);
