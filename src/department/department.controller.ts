@@ -21,6 +21,7 @@ import { AddEmployeesToDepartmentsDto } from './dto/add-employees.dto';
 import { use } from 'passport';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { RemoveEmployeesFromDepartmentsDto } from './dto/remove-employees.dto';
+import { parse } from 'path';
 
 @Controller('departments')
 export class DepartmentController {
@@ -108,7 +109,7 @@ export class DepartmentController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('Admin')
   @Delete(':id')
-  async deleteDepartment(@Param('id') id: number) {
+  async deleteDepartment(@Param('id', ParseIntPipe) id: number) {
     return this.departmentService.deleteDepartment(id);
   }
 }

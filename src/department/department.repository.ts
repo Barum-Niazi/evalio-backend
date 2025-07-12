@@ -117,6 +117,11 @@ export class DepartmentRepository {
   }
 
   async deleteDepartment(id: number) {
+    // we need to delete the references too in user details right
+    await this.prisma.user_details.updateMany({
+      where: { department_id: id },
+      data: { department_id: null },
+    });
     return this.prisma.department.delete({
       where: { id },
       select: {
