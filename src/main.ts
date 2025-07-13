@@ -4,6 +4,7 @@ import * as bodyParser from 'body-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { PermissionsGuard } from './guards/permissions.guard';
 import { PrismaService } from './prisma/prisma.service';
+import { loggerMiddleware } from './utils/logger.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +18,7 @@ async function bootstrap() {
   });
   app.use(bodyParser.json({ limit: '50mb' })); // Adjust limits as needed
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+  app.use(loggerMiddleware);
   const prisma = app.get(PrismaService);
   app.useGlobalGuards(new PermissionsGuard(new Reflector(), prisma));
   await app.listen(3333);
