@@ -6,6 +6,7 @@ export function transformDepartmentResponse(department: any) {
       ? {
           user_id: department.head.user_id,
           name: department.head.name,
+          profileImage: department.head.profileImage ?? null,
         }
       : null,
     employees: department.employees.map((e) => ({
@@ -15,6 +16,7 @@ export function transformDepartmentResponse(department: any) {
         id: e.designation?.id,
         title: e.designation?.title,
       },
+      profileImage: e.profileImage ?? null,
     })),
     okrs: department.okrs.map((okr) => ({
       id: okr.id,

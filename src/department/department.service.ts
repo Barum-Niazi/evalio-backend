@@ -75,8 +75,27 @@ export class DepartmentService {
       else if (progress < 100) stats.inProgress++;
       else stats.completed++;
     }
+
+    const headBlobId = department.head?.profile_blob?.id;
+    const transformedEmployees = department.employees.map((emp) => {
+      const blobId = emp.profile_blob?.id;
+
+      console.log('Blob ID:', blobId);
+      console.log('Profile Image URL:', blobId ? `/blob/${blobId}/view` : null);
+
+      return {
+        ...emp,
+        profileImage: blobId ? `/blob/${blobId}/view` : null,
+      };
+    });
+
     return transformDepartmentResponse({
       ...department,
+      head: {
+        ...department.head,
+        profileImage: headBlobId ? `/blob/${headBlobId}/view` : null,
+      },
+      employees: transformedEmployees,
       progressBreakdown: stats,
     });
   }

@@ -83,20 +83,47 @@ export class DepartmentRepository {
     const departments = await this.prisma.department.findMany({
       where: { company_id: companyId },
       include: {
-        head: true,
-        employees: true,
+        head: {
+          include: {
+            profile_blob: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+        employees: {
+          include: {
+            profile_blob: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    return departments.map((department) => ({
-      id: department.id,
-      name: department.name,
-      companyId: department.company_id,
-      headId: department.headId,
-      head: department.head,
-      employees: department.employees,
-      audit: department.audit, // Assuming no transformation needed for JSON fields
-    }));
+    return departments.map((department) => {
+      const headBlobId = department.head?.profile_blob?.id;
+
+      return {
+        id: department.id,
+        name: department.name,
+        companyId: department.company_id,
+        headId: department.headId,
+        head: department.head,
+        profileImage: headBlobId ? `/blob/${headBlobId}/view` : null,
+        employees: department.employees.map((emp) => {
+          const empBlobId = emp.profile_blob?.id;
+          return {
+            ...emp,
+            profileImage: empBlobId ? `/blob/${empBlobId}/view` : null,
+          };
+        }),
+        audit: department.audit,
+      };
+    });
   }
 
   async updateDepartment(id: number, data: { name?: string; headId?: number }) {
@@ -160,7 +187,6 @@ export class DepartmentRepository {
       },
     });
   }
-
   async findByIdWithRelations(id: number) {
     return this.prisma.department.findUnique({
       where: { id },
@@ -169,6 +195,11 @@ export class DepartmentRepository {
           include: {
             user: true,
             designation: true,
+            profile_blob: {
+              select: {
+                id: true,
+              },
+            },
           },
         },
         okrs: {
@@ -179,12 +210,16 @@ export class DepartmentRepository {
         head: {
           include: {
             user: true,
+            profile_blob: {
+              select: {
+                id: true,
+              },
+            },
           },
         },
       },
     });
   }
-
   async removeEmployeesFromDepartment(
     departmentId: number,
     employeeIds: number[],
