@@ -38,9 +38,15 @@ export class UpdateKeyResultDto {
   @IsString()
   title?: string;
 
+  // @IsOptional()
+  // @IsInt()
+  // parentKeyResultId?: number;
+
   @IsOptional()
-  @IsInt()
-  parentKeyResultId?: number;
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  weight?: number;
 
   @IsOptional()
   @IsNumber()

@@ -87,4 +87,11 @@ export class KeyResultsService {
 
     return this.keyResultsRepository.update(id, dto, user.id);
   }
+
+  async delete(id: number) {
+    const kr = await this.keyResultsRepository.findById(id);
+    if (!kr) throw new NotFoundException('Key result not found');
+
+    return this.keyResultsRepository.delete(id);
+  }
 }

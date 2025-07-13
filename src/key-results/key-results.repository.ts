@@ -75,9 +75,9 @@ export class KeyResultsRepository {
 
     if (dto.title !== undefined) updateData.title = dto.title;
     if (dto.progress !== undefined) updateData.progress = dto.progress;
-    if (dto.parentKeyResultId !== undefined) {
-      updateData.parent_key_result_id = dto.parentKeyResultId;
-    }
+    // if (dto.parentKeyResultId !== undefined) {
+    //   updateData.parent_key_result_id = dto.parentKeyResultId;
+    // }
 
     // Step 3: Perform the update
     const updated = await this.prisma.key_results.update({
@@ -94,12 +94,12 @@ export class KeyResultsRepository {
     }
 
     // If parent was reassigned, update the new parent too
-    if (
-      dto.parentKeyResultId &&
-      dto.parentKeyResultId !== krBefore?.parent_key_result_id
-    ) {
-      parentsToUpdate.add(dto.parentKeyResultId);
-    }
+    // if (
+    //   dto.parentKeyResultId &&
+    //   dto.parentKeyResultId !== krBefore?.parent_key_result_id
+    // ) {
+    //   parentsToUpdate.add(dto.parentKeyResultId);
+    // }
 
     // Step 5: Update parent progress in DB
     for (const parentId of parentsToUpdate) {

@@ -52,8 +52,8 @@ export class KeyResultsController {
     });
   }
 
-  // @Delete()
-  // delete(@Body() dto: DeleteKeyResultDto) {
-  //   return this.keyResultsService.delete(dto);
-  // }
+  @Delete(':id')
+  delete(@Param('id', ParseIntPipe) id: number) {
+    return this.keyResultsService.delete(id);
+  }
 }
