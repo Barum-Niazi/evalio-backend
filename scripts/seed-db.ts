@@ -196,7 +196,7 @@ async function seedRolesAndPermissions() {
 
   // Default permissions for the app
   const permissions = [
-    { name: 'view_meetings', label: 'View Meetings' },
+    { name: 'view_meeting', label: 'View Meeting' },
     { name: 'create_meeting', label: 'Create Meeting' },
     { name: 'edit_meeting', label: 'Edit Meeting' },
     { name: 'delete_meeting', label: 'Delete Meeting' },
