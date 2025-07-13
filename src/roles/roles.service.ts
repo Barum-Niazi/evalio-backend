@@ -58,8 +58,9 @@ export class RolesService {
     return this.rolesRepository.deleteRole(id);
   }
 
-  async getRolesWithUsers() {
-    const rolesWithUsers = await this.rolesRepository.getRolesWithUsers();
+  async getRolesWithUsers(companyId: number) {
+    const rolesWithUsers =
+      await this.rolesRepository.getRolesWithUsers(companyId);
 
     return rolesWithUsers.map((role) => ({
       id: role.id,

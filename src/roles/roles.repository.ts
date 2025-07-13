@@ -131,8 +131,8 @@ export class RolesRepository {
     });
   }
 
-  async getRolesWithUsers() {
-    return this.prisma.roles.findMany({
+  async getRolesWithUsers(companyId: number) {
+    const roles = await this.prisma.roles.findMany({
       include: {
         user_roles: {
           include: {
@@ -142,7 +142,13 @@ export class RolesRepository {
                 details: {
                   select: {
                     name: true,
-                    profile_blob: true, // Fetch profile image data
+                    company_id: true,
+                    profile_blob: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
                   },
                 },
               },
@@ -151,5 +157,15 @@ export class RolesRepository {
         },
       },
     });
+
+    // Manually filter out users not in the given company
+    const filteredRoles = roles.map((role) => ({
+      ...role,
+      user_roles: role.user_roles.filter(
+        (ur) => ur.user.details?.company_id === companyId,
+      ),
+    }));
+
+    return filteredRoles;
   }
 }

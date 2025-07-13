@@ -11,6 +11,7 @@ import {
   Request,
   UseGuards,
   Delete,
+  Req,
 } from '@nestjs/common';
 import {
   CreateRoleDto,
@@ -79,8 +80,8 @@ export class RolesController {
   @Get('users')
   @UseGuards(JwtAuthGuard)
   @Permissions('manage_roles')
-  async getRolesWithUsers() {
-    return this.rolesService.getRolesWithUsers();
+  async getRolesWithUsers(@Request() req) {
+    return this.rolesService.getRolesWithUsers(req.user.companyId);
   }
   // Get a specific role by ID
   @Get(':id')
