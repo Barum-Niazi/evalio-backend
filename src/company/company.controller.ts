@@ -97,6 +97,7 @@ export class CompanyController {
   @Permissions('view_company_data')
   async getCompanyDashboard(@Request() req) {
     const companyId = req.user.companyId;
+    console.log('Fetching company dashboard for companyId:', companyId);
     return this.companyService.getCompanyStats(companyId);
   }
 

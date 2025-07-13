@@ -189,8 +189,7 @@ export class CompanyService {
     return this.companyRepository.updateSettings(companyId, dto);
   }
 
-  async getCompanyStats(adminId: number) {
-    const companyId = await this.companyRepository.getAdminCompanyId(adminId);
+  async getCompanyStats(companyId: number) {
     const data = await this.companyRepository.getCompanyStats(companyId);
 
     return data;
