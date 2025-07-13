@@ -90,12 +90,12 @@ export class OkrService {
     return this.okrRepository.delete(id);
   }
 
-  getRootOkrs() {
-    return this.okrRepository.getOkrsByParent(null);
+  getRootOkrs(companyId: number) {
+    return this.okrRepository.getOkrsByParent(companyId, null);
   }
 
-  getSubTree(parentId: number) {
-    return this.okrRepository.getOkrsByParent(parentId);
+  getSubTree(companyId: number, parentId: number) {
+    return this.okrRepository.getOkrsByParent(companyId, parentId);
   }
 
   async getByDepartment(departmentId: number) {

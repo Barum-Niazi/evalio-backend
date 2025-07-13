@@ -36,8 +36,8 @@ export class OkrController {
   }
 
   @Get('root')
-  getRootOkrs() {
-    return this.okrService.getRootOkrs();
+  getRootOkrs(@Request() req) {
+    return this.okrService.getRootOkrs(req.user.companyId);
   }
 
   @Get('progress-breakdown')
@@ -54,8 +54,8 @@ export class OkrController {
   }
 
   @Get('tree/:id')
-  getChildren(@Param('id', ParseIntPipe) id: number) {
-    return this.okrService.getSubTree(id);
+  getChildren(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    return this.okrService.getSubTree(req.user.companyId, id);
   }
 
   @Get('user/:userId')

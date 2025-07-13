@@ -119,9 +119,9 @@ export class OkrRepository {
     });
   }
 
-  async getOkrsByParent(parentId: number | null) {
+  async getOkrsByParent(companyId: number, parentId: number | null) {
     const okrs = await this.prisma.okrs.findMany({
-      where: { parent_okr_id: parentId },
+      where: { parent_okr_id: parentId, company_id: companyId },
       include: {
         key_results: true,
         // Owner: get user_details by user_id
