@@ -133,7 +133,10 @@ export class UserRepository {
       select: {
         id: true,
         auth: {
-          select: { email: true },
+          select: {
+            email: true,
+            google_email: true,
+          },
         },
         roles: {
           select: {

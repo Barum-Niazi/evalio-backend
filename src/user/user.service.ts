@@ -48,6 +48,7 @@ export class UserService {
     return {
       id: user.id,
       email: user.auth?.email,
+      googleEmail: user.auth?.google_email || null,
       name: user.details?.name,
       company: user.details?.company,
       department: user.details?.department?.name || null,
