@@ -184,17 +184,8 @@ async function seedFeedbackRequestStatuses() {
 }
 
 async function seedRolesAndPermissions() {
-  // Default roles to be created
-  const roles = [
-    { name: 'Admin' },
-    { name: 'Employee' },
-    { name: 'Manager' },
-    { name: 'HR' },
-    { name: 'DepartmentHead' },
-    { name: 'Executive' },
-  ];
+  const roles = [{ name: 'Admin' }, { name: 'Employee' }];
 
-  // Default permissions for the app
   const permissions = [
     { name: 'view_meeting', label: 'View Meeting' },
     { name: 'create_meeting', label: 'Create Meeting' },
@@ -222,12 +213,14 @@ async function seedRolesAndPermissions() {
       name: 'assign_employee_to_department',
       label: 'Assign Employee to Department',
     },
-    { name: 'assign_employee_to_manager', label: 'Assign Manager to Employee' },
+    {
+      name: 'assign_employee_to_manager',
+      label: 'Assign Manager to Employee',
+    },
     { name: 'create_role', label: 'Create Role' },
     { name: 'delete_role', label: 'Delete Role' },
   ];
 
-  // Seed permissions if they don't exist already
   for (const permission of permissions) {
     await prisma.permissions.upsert({
       where: { name: permission.name },
@@ -238,183 +231,60 @@ async function seedRolesAndPermissions() {
 
   console.log('Permissions seeded successfully.');
 
-  // Seed roles
   for (const role of roles) {
     await prisma.roles.upsert({
       where: { name: role.name },
       update: {},
-      create: {
-        name: role.name,
-      },
+      create: { name: role.name },
     });
   }
 
   console.log('Roles seeded successfully.');
 
-  // Get the Admin role by name
+  const allPermissions = await prisma.permissions.findMany();
+
   const adminRole = await prisma.roles.findUnique({
     where: { name: 'Admin' },
   });
 
-  // Get all permissions
-  const allPermissions = await prisma.permissions.findMany();
-
-  // Prepare the role_permission data for Admin (all permissions)
-  const rolePermissionsData = allPermissions.map((permission) => ({
-    role_id: adminRole.id,
-    permission_id: permission.id,
-  }));
-
-  // Insert the role_permissions for Admin, skipping duplicates
   await prisma.role_permissions.createMany({
-    data: rolePermissionsData,
-    skipDuplicates: true, // Skip if a role_permission entry already exists
+    data: allPermissions.map((permission) => ({
+      role_id: adminRole.id,
+      permission_id: permission.id,
+    })),
+    skipDuplicates: true,
   });
 
   console.log('Admin role assigned all permissions successfully.');
 
-  // Now assign specific permissions for other roles (Employee, Manager, etc.)
-
-  // Get the Employee role by name
   const employeeRole = await prisma.roles.findUnique({
     where: { name: 'Employee' },
   });
 
-  // Assign permissions to the Employee role
-  const employeePermissions = [
-    'view_meeting',
-    'give_feedback',
-    'view_given_feedback',
-    'view_received_feedback',
-    'request_feedback',
-    'view_okr',
-    'edit_okr',
-    'create_okr',
-    'attend_meeting',
-    'schedule_meeting',
-    'manage_okr_progress',
+  const adminOnlyPermissionNames = [
+    'manage_users',
+    'manage_roles',
+    'manage_departments',
+    'assign_employee_to_department',
+    'assign_employee_to_manager',
+    'create_role',
+    'delete_role',
+    'approve_okr',
   ];
-  const employeePermissionsData = allPermissions
-    .filter((permission) => employeePermissions.includes(permission.name))
-    .map((permission) => ({
+
+  const employeePermissions = allPermissions.filter(
+    (permission) => !adminOnlyPermissionNames.includes(permission.name),
+  );
+
+  await prisma.role_permissions.createMany({
+    data: employeePermissions.map((permission) => ({
       role_id: employeeRole.id,
       permission_id: permission.id,
-    }));
-
-  // Insert the role_permissions for Employee
-  await prisma.role_permissions.createMany({
-    data: employeePermissionsData,
+    })),
     skipDuplicates: true,
   });
 
-  console.log('Employee role assigned specific permissions successfully.');
-
-  // Get the Manager role by name
-  // const managerRole = await prisma.roles.findUnique({
-  //   where: { name: 'Manager' },
-  // });
-
-  // // Assign permissions to the Manager role
-  // const managerPermissions = [
-  //   'view_meetings',
-  //   'create_meeting',
-  //   'edit_meeting',
-  //   'attend_meeting',
-  //   'schedule_meeting',
-  //   'give_feedback',
-  //   'view_given_feedback',
-  // ];
-  // const managerPermissionsData = allPermissions
-  //   .filter((permission) => managerPermissions.includes(permission.name))
-  //   .map((permission) => ({
-  //     role_id: managerRole.id,
-  //     permission_id: permission.id,
-  //   }));
-
-  // // Insert the role_permissions for Manager
-  // await prisma.role_permissions.createMany({
-  //   data: managerPermissionsData,
-  //   skipDuplicates: true,
-  // });
-
-  // console.log('Manager role assigned specific permissions successfully.');
-
-  // // Get the HR role by name
-  // const hrRole = await prisma.roles.findUnique({
-  //   where: { name: 'HR' },
-  // });
-
-  // // Assign permissions to the HR role
-  // const hrPermissions = ['manage_users', 'manage_roles', 'manage_departments'];
-  // const hrPermissionsData = allPermissions
-  //   .filter((permission) => hrPermissions.includes(permission.name))
-  //   .map((permission) => ({
-  //     role_id: hrRole.id,
-  //     permission_id: permission.id,
-  //   }));
-
-  // // Insert the role_permissions for HR
-  // await prisma.role_permissions.createMany({
-  //   data: hrPermissionsData,
-  //   skipDuplicates: true,
-  // });
-
-  // console.log('HR role assigned specific permissions successfully.');
-
-  // // Get the DepartmentHead role by name
-  // const departmentHeadRole = await prisma.roles.findUnique({
-  //   where: { name: 'DepartmentHead' },
-  // });
-
-  // Assign permissions to the DepartmentHead role
-  // const departmentHeadPermissions = [
-  //   'manage_users',
-  //   'view_company_data',
-  //   'assign_employee_to_department',
-  //   'assign_employee_to_manager',
-  // ];
-  // const departmentHeadPermissionsData = allPermissions
-  //   .filter((permission) => departmentHeadPermissions.includes(permission.name))
-  //   .map((permission) => ({
-  //     role_id: departmentHeadRole.id,
-  //     permission_id: permission.id,
-  //   }));
-
-  // // Insert the role_permissions for DepartmentHead
-  // await prisma.role_permissions.createMany({
-  //   data: departmentHeadPermissionsData,
-  //   skipDuplicates: true,
-  // });
-
-  // console.log(
-  //   'DepartmentHead role assigned specific permissions successfully.',
-  // );
-
-  // // Get the Executive role by name
-  // const executiveRole = await prisma.roles.findUnique({
-  //   where: { name: 'Executive' },
-  // });
-
-  // // Assign permissions to the Executive role
-  // const executivePermissions = [
-  //   'view_company_data',
-  //   'manage_okr_progress',
-  //   'approve_okr',
-  // ];
-  // const executivePermissionsData = allPermissions
-  //   .filter((permission) => executivePermissions.includes(permission.name))
-  //   .map((permission) => ({
-  //     role_id: executiveRole.id,
-  //     permission_id: permission.id,
-  //   }));
-
-  // // Insert the role_permissions for Executive
-  // await prisma.role_permissions.createMany({
-  //   data: executivePermissionsData,
-  //   skipDuplicates: true,
-  // });
-
-  // console.log('Executive role assigned specific permissions successfully.');
+  console.log('Employee role assigned non-admin permissions successfully.');
 }
 
 async function seedTags() {
