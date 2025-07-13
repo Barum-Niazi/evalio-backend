@@ -79,11 +79,11 @@ export class KeyResultsService {
       (userOkr) => userOkr.user_id === user.id,
     );
 
-    if (!isAssigned && !isAdmin) {
-      throw new ForbiddenException(
-        'You are not authorized to update this Key Result',
-      );
-    }
+    // if (!isAssigned && !isAdmin) {
+    //   throw new ForbiddenException(
+    //     'You are not authorized to update this Key Result',
+    //   );
+    // }
 
     return this.keyResultsRepository.update(id, dto, user.id);
   }
