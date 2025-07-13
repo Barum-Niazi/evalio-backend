@@ -142,7 +142,6 @@ export class CompanyController {
 
   @Patch('settings')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-  @Permissions('manage_company_settings')
   @Roles('Admin')
   updateCompanySettings(@Body() dto: UpdateCompanySettingsDto, @Request() req) {
     const id = req.user.companyId;
